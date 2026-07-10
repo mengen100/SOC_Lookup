@@ -1,0 +1,45 @@
+{
+  "id": "1",
+  "source": "sysmon",
+  "category": "Process",
+  "name": "Process creation",
+  "priority": "P1",
+  "applicable_version": "Sysmon 1.0及以上",
+  "last_reviewed": "2026-07-10",
+  "definition": "Sysmon Event ID 1 records process creation and is one of the most important events for reconstructing command execution, parent-child process chains, and suspicious process launches.",
+  "trigger_scenarios": "Whenever Sysmon observes a new process start, it records Event ID 1 with process image, command line, parent process, hashes, user, integrity level, and related metadata according to the active Sysmon configuration.",
+  "key_fields": [
+    {
+      "field": "Image",
+      "explanation": "The executable path for the new process. Analysts use this to distinguish expected binaries from unusual paths such as user-writable directories, temp folders, or renamed tools."
+    },
+    {
+      "field": "CommandLine",
+      "explanation": "The command line used to launch the process. This field is often the strongest signal for suspicious script execution, living-off-the-land abuse, encoded commands, and tool parameters."
+    },
+    {
+      "field": "ParentImage / ParentCommandLine",
+      "explanation": "The parent process context. Office spawning PowerShell, a service spawning cmd.exe, or a browser spawning a script host can be more suspicious than the child process alone."
+    },
+    {
+      "field": "Hashes",
+      "explanation": "Configured file hashes for the process image. These help correlate binaries across hosts and support allowlisting, blocklisting, and malware triage workflows."
+    }
+  ],
+  "false_positives": [
+    "Administrative scripts and endpoint management tools can generate large volumes of PowerShell, cmd.exe, msiexec.exe, or wmic.exe process creation events.",
+    "Software installers and update agents often spawn short-lived child processes with complex command lines.",
+    "Developer workstations can legitimately run interpreters, compilers, shells, and unsigned local tools at high frequency."
+  ],
+  "related_event_ids": ["3", "7", "10", "11"],
+  "attck_mapping": [
+    { "technique_id": "T1059", "technique_name": "Command and Scripting Interpreter" },
+    { "technique_id": "T1105", "technique_name": "Ingress Tool Transfer" },
+    { "technique_id": "T1204", "technique_name": "User Execution" }
+  ],
+  "detection_notes": "Event ID 1 is high-volume and should be hunted with context rather than simple process-name matches. Useful patterns include unusual parent-child relationships, suspicious command-line switches, execution from writable paths, rare binaries per host group, and process starts followed by network connections or credential-access behavior. Build baselines for noisy administrative tools before alerting on raw counts.",
+  "kql_snippet": "Sysmon\n| where EventID == 1\n| where Image has_any (\"\\\\powershell.exe\", \"\\\\cmd.exe\", \"\\\\wscript.exe\", \"\\\\cscript.exe\", \"\\\\mshta.exe\")\n| project TimeGenerated, Computer, User, Image, CommandLine, ParentImage, ParentCommandLine\n| order by TimeGenerated desc",
+  "spl_snippet": "index=sysmon EventCode=1\n| search Image IN (\"*\\\\powershell.exe\", \"*\\\\cmd.exe\", \"*\\\\wscript.exe\", \"*\\\\cscript.exe\", \"*\\\\mshta.exe\")\n| table _time, host, User, Image, CommandLine, ParentImage, ParentCommandLine",
+  "sample_log": "UtcTime: 2026-07-10 03:20:11.123\nProcessGuid: {11111111-2222-3333-4444-555555555555}\nProcessId: 4242\nImage: C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\nCommandLine: powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\Public\\script.ps1\nCurrentDirectory: C:\\Users\\Public\\\nUser: CORP\\jsmith\nParentImage: C:\\Windows\\System32\\cmd.exe\nParentCommandLine: cmd.exe /c powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\Public\\script.ps1\nHashes: SHA256=REDACTED",
+  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+}

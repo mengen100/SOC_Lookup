@@ -1,0 +1,866 @@
+[
+  {
+    "id": "1",
+    "source": "sysmon",
+    "category": "Process",
+    "name": "Process creation",
+    "priority": "P1",
+    "notes": "极高频查询词，SOC分析师最常查的Sysmon事件之一"
+  },
+  {
+    "id": "2",
+    "source": "sysmon",
+    "category": "File",
+    "name": "A process changed a file creation time",
+    "priority": "P2",
+    "notes": "常用于检测时间戳篡改(timestomping)"
+  },
+  {
+    "id": "3",
+    "source": "sysmon",
+    "category": "Network",
+    "name": "Network connection detected",
+    "priority": "P1",
+    "notes": "高频查询，网络连接可见性核心事件"
+  },
+  {
+    "id": "4",
+    "source": "sysmon",
+    "category": "Service",
+    "name": "Sysmon service state changed",
+    "priority": "P3",
+    "notes": "运维类，非攻击检测重点"
+  },
+  {
+    "id": "5",
+    "source": "sysmon",
+    "category": "Process",
+    "name": "Process terminated",
+    "priority": "P2",
+    "notes": "常与Event 1配对做进程生命周期分析"
+  },
+  {
+    "id": "6",
+    "source": "sysmon",
+    "category": "Driver",
+    "name": "Driver loaded",
+    "priority": "P2",
+    "notes": "内核级检测关键事件，查询量中等"
+  },
+  {
+    "id": "7",
+    "source": "sysmon",
+    "category": "Image",
+    "name": "Image loaded (DLL/EXE)",
+    "priority": "P2",
+    "notes": "DLL劫持/侧加载检测相关，噪音较大需说明"
+  },
+  {
+    "id": "8",
+    "source": "sysmon",
+    "category": "Process",
+    "name": "CreateRemoteThread",
+    "priority": "P1",
+    "notes": "经典代码注入检测事件，高价值查询"
+  },
+  {
+    "id": "9",
+    "source": "sysmon",
+    "category": "Disk",
+    "name": "RawAccessRead",
+    "priority": "P3",
+    "notes": "较冷门，反取证/直接磁盘读取检测"
+  },
+  {
+    "id": "10",
+    "source": "sysmon",
+    "category": "Process",
+    "name": "ProcessAccess",
+    "priority": "P1",
+    "notes": "LSASS凭据窃取检测核心事件，高价值查询"
+  },
+  {
+    "id": "11",
+    "source": "sysmon",
+    "category": "File",
+    "name": "FileCreate",
+    "priority": "P1",
+    "notes": "高频，文件落地检测基础事件"
+  },
+  {
+    "id": "12",
+    "source": "sysmon",
+    "category": "Registry",
+    "name": "RegistryEvent (Object create/delete)",
+    "priority": "P2",
+    "notes": "注册表持久化检测相关"
+  },
+  {
+    "id": "13",
+    "source": "sysmon",
+    "category": "Registry",
+    "name": "RegistryEvent (Value Set)",
+    "priority": "P2",
+    "notes": "注册表持久化检测相关，常与12/14一起讲解"
+  },
+  {
+    "id": "14",
+    "source": "sysmon",
+    "category": "Registry",
+    "name": "RegistryEvent (Key/Value Rename)",
+    "priority": "P3",
+    "notes": "较冷门"
+  },
+  {
+    "id": "15",
+    "source": "sysmon",
+    "category": "File",
+    "name": "FileCreateStreamHash",
+    "priority": "P3",
+    "notes": "ADS(备用数据流)检测相关，较冷门但有专业价值"
+  },
+  {
+    "id": "16",
+    "source": "sysmon",
+    "category": "Config",
+    "name": "ServiceConfigurationChange (Sysmon config change)",
+    "priority": "P2",
+    "notes": "检测Sysmon是否被篡改，安全运维视角很重要"
+  },
+  {
+    "id": "17",
+    "source": "sysmon",
+    "category": "Pipe",
+    "name": "PipeEvent - Pipe Created",
+    "priority": "P2",
+    "notes": "命名管道横向移动/C2检测相关"
+  },
+  {
+    "id": "18",
+    "source": "sysmon",
+    "category": "Pipe",
+    "name": "PipeEvent - Pipe Connected",
+    "priority": "P2",
+    "notes": "命名管道横向移动/C2检测相关"
+  },
+  {
+    "id": "19",
+    "source": "sysmon",
+    "category": "WMI",
+    "name": "WmiEvent - WmiEventFilter activity detected",
+    "priority": "P2",
+    "notes": "WMI持久化检测，红队/APT常用手法"
+  },
+  {
+    "id": "20",
+    "source": "sysmon",
+    "category": "WMI",
+    "name": "WmiEvent - WmiEventConsumer activity detected",
+    "priority": "P2",
+    "notes": "WMI持久化检测"
+  },
+  {
+    "id": "21",
+    "source": "sysmon",
+    "category": "WMI",
+    "name": "WmiEvent - WmiEventConsumerToFilter activity detected",
+    "priority": "P2",
+    "notes": "WMI持久化检测"
+  },
+  {
+    "id": "22",
+    "source": "sysmon",
+    "category": "Network",
+    "name": "DNSEvent (DNS query)",
+    "priority": "P1",
+    "notes": "高频，C2域名/DNS隧道检测核心事件"
+  },
+  {
+    "id": "23",
+    "source": "sysmon",
+    "category": "File",
+    "name": "FileDelete (archived)",
+    "priority": "P2",
+    "notes": "勒索软件/反取证检测相关"
+  },
+  {
+    "id": "24",
+    "source": "sysmon",
+    "category": "Clipboard",
+    "name": "ClipboardChange",
+    "priority": "P3",
+    "notes": "较新事件，隐私和数据泄露检测场景"
+  },
+  {
+    "id": "25",
+    "source": "sysmon",
+    "category": "Process",
+    "name": "ProcessTampering",
+    "priority": "P2",
+    "notes": "进程镂空(process hollowing)检测，高级恶意软件相关"
+  },
+  {
+    "id": "26",
+    "source": "sysmon",
+    "category": "File",
+    "name": "FileDeleteDetected",
+    "priority": "P3",
+    "notes": "与23类似但不归档内容"
+  },
+  {
+    "id": "27",
+    "source": "sysmon",
+    "category": "File",
+    "name": "FileBlockExecutable",
+    "priority": "P3",
+    "notes": "较新版本功能，主动阻断场景"
+  },
+  {
+    "id": "28",
+    "source": "sysmon",
+    "category": "File",
+    "name": "FileBlockShredding",
+    "priority": "P3",
+    "notes": "较新版本功能"
+  },
+  {
+    "id": "29",
+    "source": "sysmon",
+    "category": "File",
+    "name": "FileExecutableDetected",
+    "priority": "P2",
+    "notes": "可执行文件落地检测，较新版本高价值功能"
+  },
+  {
+    "id": "255",
+    "source": "sysmon",
+    "category": "Error",
+    "name": "Sysmon service error report",
+    "priority": "P3",
+    "notes": "故障排查用途，非攻击检测"
+  },
+  {
+    "id": "4624",
+    "source": "windows_security",
+    "category": "Logon",
+    "name": "An account was successfully logged on",
+    "priority": "P1",
+    "notes": "全网最高频查询的Windows事件ID之一"
+  },
+  {
+    "id": "4625",
+    "source": "windows_security",
+    "category": "Logon",
+    "name": "An account failed to log on",
+    "priority": "P1",
+    "notes": "全网最高频查询的Windows事件ID之一，暴力破解检测核心"
+  },
+  {
+    "id": "4634",
+    "source": "windows_security",
+    "category": "Logon",
+    "name": "An account was logged off",
+    "priority": "P1",
+    "notes": "与4624配对分析会话时长"
+  },
+  {
+    "id": "4647",
+    "source": "windows_security",
+    "category": "Logon",
+    "name": "User initiated logoff",
+    "priority": "P2",
+    "notes": "与4634区分用户主动/被动登出"
+  },
+  {
+    "id": "4648",
+    "source": "windows_security",
+    "category": "Logon",
+    "name": "A logon was attempted using explicit credentials",
+    "priority": "P1",
+    "notes": "横向移动/凭据滥用检测经典事件"
+  },
+  {
+    "id": "4672",
+    "source": "windows_security",
+    "category": "Logon",
+    "name": "Special privileges assigned to new logon",
+    "priority": "P1",
+    "notes": "特权账户登录检测，高价值"
+  },
+  {
+    "id": "4768",
+    "source": "windows_security",
+    "category": "Kerberos",
+    "name": "A Kerberos authentication ticket (TGT) was requested",
+    "priority": "P1",
+    "notes": "Kerberoasting/黄金票据检测相关，高价值"
+  },
+  {
+    "id": "4769",
+    "source": "windows_security",
+    "category": "Kerberos",
+    "name": "A Kerberos service ticket was requested",
+    "priority": "P1",
+    "notes": "Kerberoasting检测核心事件"
+  },
+  {
+    "id": "4770",
+    "source": "windows_security",
+    "category": "Kerberos",
+    "name": "A Kerberos service ticket was renewed",
+    "priority": "P3",
+    "notes": "查询量较低"
+  },
+  {
+    "id": "4771",
+    "source": "windows_security",
+    "category": "Kerberos",
+    "name": "Kerberos pre-authentication failed",
+    "priority": "P2",
+    "notes": "AS-REP Roasting检测相关"
+  },
+  {
+    "id": "4776",
+    "source": "windows_security",
+    "category": "Logon",
+    "name": "The domain controller attempted to validate credentials (NTLM)",
+    "priority": "P1",
+    "notes": "NTLM认证失败/暴力破解检测高频事件"
+  },
+  {
+    "id": "4778",
+    "source": "windows_security",
+    "category": "Session",
+    "name": "A session was reconnected to a Window Station",
+    "priority": "P3",
+    "notes": "RDP会话重连，较冷门"
+  },
+  {
+    "id": "4779",
+    "source": "windows_security",
+    "category": "Session",
+    "name": "A session was disconnected from a Window Station",
+    "priority": "P3",
+    "notes": "RDP会话断开，较冷门"
+  },
+  {
+    "id": "4688",
+    "source": "windows_security",
+    "category": "Process",
+    "name": "A new process has been created",
+    "priority": "P1",
+    "notes": "全网最高频查询事件之一，进程创建监控核心"
+  },
+  {
+    "id": "4689",
+    "source": "windows_security",
+    "category": "Process",
+    "name": "A process has exited",
+    "priority": "P2",
+    "notes": "与4688配对分析"
+  },
+  {
+    "id": "4697",
+    "source": "windows_security",
+    "category": "Service",
+    "name": "A service was installed in the system",
+    "priority": "P1",
+    "notes": "持久化/横向移动检测经典事件(PsExec等)"
+  },
+  {
+    "id": "4698",
+    "source": "windows_security",
+    "category": "ScheduledTask",
+    "name": "A scheduled task was created",
+    "priority": "P1",
+    "notes": "计划任务持久化检测高价值事件"
+  },
+  {
+    "id": "4699",
+    "source": "windows_security",
+    "category": "ScheduledTask",
+    "name": "A scheduled task was deleted",
+    "priority": "P2",
+    "notes": ""
+  },
+  {
+    "id": "4700",
+    "source": "windows_security",
+    "category": "ScheduledTask",
+    "name": "A scheduled task was enabled",
+    "priority": "P3",
+    "notes": ""
+  },
+  {
+    "id": "4701",
+    "source": "windows_security",
+    "category": "ScheduledTask",
+    "name": "A scheduled task was disabled",
+    "priority": "P3",
+    "notes": ""
+  },
+  {
+    "id": "4702",
+    "source": "windows_security",
+    "category": "ScheduledTask",
+    "name": "A scheduled task was updated",
+    "priority": "P2",
+    "notes": ""
+  },
+  {
+    "id": "4657",
+    "source": "windows_security",
+    "category": "Registry",
+    "name": "A registry value was modified",
+    "priority": "P2",
+    "notes": "需要SACL配置才能触发，注册表持久化检测"
+  },
+  {
+    "id": "4663",
+    "source": "windows_security",
+    "category": "ObjectAccess",
+    "name": "An attempt was made to access an object",
+    "priority": "P2",
+    "notes": "文件/对象访问审计，配置和解读门槛较高，适合详细讲解"
+  },
+  {
+    "id": "4670",
+    "source": "windows_security",
+    "category": "ObjectAccess",
+    "name": "Permissions on an object were changed",
+    "priority": "P3",
+    "notes": ""
+  },
+  {
+    "id": "4720",
+    "source": "windows_security",
+    "category": "AccountMgmt",
+    "name": "A user account was created",
+    "priority": "P1",
+    "notes": "账户创建检测高价值事件"
+  },
+  {
+    "id": "4722",
+    "source": "windows_security",
+    "category": "AccountMgmt",
+    "name": "A user account was enabled",
+    "priority": "P2",
+    "notes": ""
+  },
+  {
+    "id": "4723",
+    "source": "windows_security",
+    "category": "AccountMgmt",
+    "name": "An attempt was made to change an account's password",
+    "priority": "P2",
+    "notes": ""
+  },
+  {
+    "id": "4724",
+    "source": "windows_security",
+    "category": "AccountMgmt",
+    "name": "An attempt was made to reset an account's password",
+    "priority": "P1",
+    "notes": "账户接管检测高价值事件"
+  },
+  {
+    "id": "4725",
+    "source": "windows_security",
+    "category": "AccountMgmt",
+    "name": "A user account was disabled",
+    "priority": "P2",
+    "notes": ""
+  },
+  {
+    "id": "4726",
+    "source": "windows_security",
+    "category": "AccountMgmt",
+    "name": "A user account was deleted",
+    "priority": "P2",
+    "notes": ""
+  },
+  {
+    "id": "4728",
+    "source": "windows_security",
+    "category": "GroupMgmt",
+    "name": "A member was added to a security-enabled global group",
+    "priority": "P2",
+    "notes": ""
+  },
+  {
+    "id": "4729",
+    "source": "windows_security",
+    "category": "GroupMgmt",
+    "name": "A member was removed from a security-enabled global group",
+    "priority": "P3",
+    "notes": ""
+  },
+  {
+    "id": "4732",
+    "source": "windows_security",
+    "category": "GroupMgmt",
+    "name": "A member was added to a security-enabled local group",
+    "priority": "P1",
+    "notes": "权限提升检测高价值事件(常见于加入Administrators组)"
+  },
+  {
+    "id": "4733",
+    "source": "windows_security",
+    "category": "GroupMgmt",
+    "name": "A member was removed from a security-enabled local group",
+    "priority": "P3",
+    "notes": ""
+  },
+  {
+    "id": "4735",
+    "source": "windows_security",
+    "category": "GroupMgmt",
+    "name": "A security-enabled local group was changed",
+    "priority": "P3",
+    "notes": ""
+  },
+  {
+    "id": "4738",
+    "source": "windows_security",
+    "category": "AccountMgmt",
+    "name": "A user account was changed",
+    "priority": "P1",
+    "notes": "高频，账户属性变更检测"
+  },
+  {
+    "id": "4740",
+    "source": "windows_security",
+    "category": "AccountMgmt",
+    "name": "A user account was locked out",
+    "priority": "P1",
+    "notes": "高频，账户锁定/暴力破解相关"
+  },
+  {
+    "id": "4756",
+    "source": "windows_security",
+    "category": "GroupMgmt",
+    "name": "A member was added to a security-enabled universal group",
+    "priority": "P3",
+    "notes": ""
+  },
+  {
+    "id": "4767",
+    "source": "windows_security",
+    "category": "AccountMgmt",
+    "name": "A user account was unlocked",
+    "priority": "P2",
+    "notes": ""
+  },
+  {
+    "id": "1102",
+    "source": "windows_security",
+    "category": "AuditLog",
+    "name": "The audit log was cleared",
+    "priority": "P1",
+    "notes": "极高价值，攻击者清理痕迹的经典信号"
+  },
+  {
+    "id": "4719",
+    "source": "windows_security",
+    "category": "AuditPolicy",
+    "name": "System audit policy was changed",
+    "priority": "P1",
+    "notes": "高价值，审计策略被篡改的信号"
+  },
+  {
+    "id": "4907",
+    "source": "windows_security",
+    "category": "AuditPolicy",
+    "name": "Auditing settings on object were changed",
+    "priority": "P3",
+    "notes": ""
+  },
+  {
+    "id": "4616",
+    "source": "windows_security",
+    "category": "System",
+    "name": "The system time was changed",
+    "priority": "P2",
+    "notes": "反取证/时间戳篡改相关"
+  },
+  {
+    "id": "5140",
+    "source": "windows_security",
+    "category": "FileShare",
+    "name": "A network share object was accessed",
+    "priority": "P1",
+    "notes": "高频，横向移动/数据渗出检测"
+  },
+  {
+    "id": "5145",
+    "source": "windows_security",
+    "category": "FileShare",
+    "name": "A network share object was checked for access",
+    "priority": "P2",
+    "notes": "比5140更详细但更嘈杂"
+  },
+  {
+    "id": "4103",
+    "source": "windows_security",
+    "category": "PowerShell",
+    "name": "PowerShell Module Logging",
+    "priority": "P1",
+    "notes": "高价值，PowerShell攻击链检测基础"
+  },
+  {
+    "id": "4104",
+    "source": "windows_security",
+    "category": "PowerShell",
+    "name": "PowerShell Script Block Logging",
+    "priority": "P1",
+    "notes": "全网高频查询，恶意PowerShell脚本检测核心事件"
+  },
+  {
+    "id": "4608",
+    "source": "windows_security",
+    "category": "System",
+    "name": "Windows is starting up",
+    "priority": "P3",
+    "notes": "基础系统事件，查询量低但适合做完整性收录"
+  },
+  {
+    "id": "4609",
+    "source": "windows_security",
+    "category": "System",
+    "name": "Windows is shutting down",
+    "priority": "P3",
+    "notes": "同上"
+  },
+  {
+    "id": "4610",
+    "source": "windows_security",
+    "category": "LSA",
+    "name": "An authentication package has been loaded by the LSA",
+    "priority": "P3",
+    "notes": ""
+  },
+  {
+    "id": "4611",
+    "source": "windows_security",
+    "category": "LSA",
+    "name": "A trusted logon process has been registered with the LSA",
+    "priority": "P3",
+    "notes": ""
+  },
+  {
+    "id": "4612",
+    "source": "windows_security",
+    "category": "System",
+    "name": "Internal audit queue resources exhausted",
+    "priority": "P3",
+    "notes": ""
+  },
+  {
+    "id": "4614",
+    "source": "windows_security",
+    "category": "LSA",
+    "name": "A notification package has been loaded by the SAM",
+    "priority": "P3",
+    "notes": ""
+  },
+  {
+    "id": "4621",
+    "source": "windows_security",
+    "category": "System",
+    "name": "Administrator recovered system from CrashOnAuditFail",
+    "priority": "P3",
+    "notes": "官方Appendix L标注Medium"
+  },
+  {
+    "id": "4649",
+    "source": "windows_security",
+    "category": "Logon",
+    "name": "A replay attack was detected",
+    "priority": "P2",
+    "notes": "官方Appendix L标注High，查询量中等但内容专业性强"
+  },
+  {
+    "id": "4675",
+    "source": "windows_security",
+    "category": "Kerberos",
+    "name": "SIDs were filtered",
+    "priority": "P3",
+    "notes": "官方Appendix L标注Medium"
+  },
+  {
+    "id": "4692",
+    "source": "windows_security",
+    "category": "DPAPI",
+    "name": "Backup of data protection master key was attempted",
+    "priority": "P3",
+    "notes": ""
+  },
+  {
+    "id": "4693",
+    "source": "windows_security",
+    "category": "DPAPI",
+    "name": "Recovery of data protection master key was attempted",
+    "priority": "P3",
+    "notes": ""
+  },
+  {
+    "id": "4706",
+    "source": "windows_security",
+    "category": "Trust",
+    "name": "A new trust was created to a domain",
+    "priority": "P2",
+    "notes": "域信任关系相关，域渗透场景高价值"
+  },
+  {
+    "id": "4713",
+    "source": "windows_security",
+    "category": "Policy",
+    "name": "Kerberos policy was changed",
+    "priority": "P3",
+    "notes": ""
+  },
+  {
+    "id": "4714",
+    "source": "windows_security",
+    "category": "Policy",
+    "name": "Encrypted data recovery policy was changed",
+    "priority": "P3",
+    "notes": ""
+  },
+  {
+    "id": "4715",
+    "source": "windows_security",
+    "category": "Policy",
+    "name": "The audit policy (SACL) on an object was changed",
+    "priority": "P2",
+    "notes": ""
+  },
+  {
+    "id": "4716",
+    "source": "windows_security",
+    "category": "Trust",
+    "name": "Trusted domain information was modified",
+    "priority": "P2",
+    "notes": ""
+  },
+  {
+    "id": "4765",
+    "source": "windows_security",
+    "category": "AccountMgmt",
+    "name": "SID History was added to an account",
+    "priority": "P1",
+    "notes": "官方标注High，域权限维持高级攻击手法"
+  },
+  {
+    "id": "4766",
+    "source": "windows_security",
+    "category": "AccountMgmt",
+    "name": "An attempt to add SID History to an account failed",
+    "priority": "P2",
+    "notes": "官方标注High"
+  },
+  {
+    "id": "4780",
+    "source": "windows_security",
+    "category": "ObjectAccess",
+    "name": "ACL was set on accounts in administrators groups",
+    "priority": "P2",
+    "notes": "官方标注Medium"
+  },
+  {
+    "id": "4794",
+    "source": "windows_security",
+    "category": "DSRM",
+    "name": "An attempt was made to set the Directory Services Restore Mode",
+    "priority": "P1",
+    "notes": "官方标注High，DSRM密码修改是知名域控后门手法"
+  },
+  {
+    "id": "4964",
+    "source": "windows_security",
+    "category": "Logon",
+    "name": "Special groups have been assigned to a new logon",
+    "priority": "P2",
+    "notes": "官方标注High"
+  },
+  {
+    "id": "5027",
+    "source": "windows_security",
+    "category": "Firewall",
+    "name": "Windows Firewall Service unable to retrieve security policy",
+    "priority": "P3",
+    "notes": ""
+  },
+  {
+    "id": "5028",
+    "source": "windows_security",
+    "category": "Firewall",
+    "name": "Windows Firewall Service unable to parse new security policy",
+    "priority": "P3",
+    "notes": ""
+  },
+  {
+    "id": "5030",
+    "source": "windows_security",
+    "category": "Firewall",
+    "name": "The Windows Firewall Service failed to start",
+    "priority": "P2",
+    "notes": "防火墙被禁用相关，攻击前兆信号"
+  },
+  {
+    "id": "5035",
+    "source": "windows_security",
+    "category": "Firewall",
+    "name": "The Windows Firewall Driver failed to start",
+    "priority": "P2",
+    "notes": ""
+  },
+  {
+    "id": "5038",
+    "source": "windows_security",
+    "category": "CodeIntegrity",
+    "name": "Code integrity determined image hash is not valid",
+    "priority": "P2",
+    "notes": "文件完整性/篡改检测"
+  },
+  {
+    "id": "5376",
+    "source": "windows_security",
+    "category": "CredentialMgr",
+    "name": "Credential Manager credentials were backed up",
+    "priority": "P2",
+    "notes": "凭据窃取相关场景"
+  },
+  {
+    "id": "5377",
+    "source": "windows_security",
+    "category": "CredentialMgr",
+    "name": "Credential Manager credentials were restored from backup",
+    "priority": "P2",
+    "notes": ""
+  },
+  {
+    "id": "5827",
+    "source": "windows_security",
+    "category": "Netlogon",
+    "name": "Netlogon denied a vulnerable secure channel connection (machine)",
+    "priority": "P2",
+    "notes": "Zerologon相关的现代高价值事件"
+  },
+  {
+    "id": "5828",
+    "source": "windows_security",
+    "category": "Netlogon",
+    "name": "Netlogon denied a vulnerable secure channel connection (trust)",
+    "priority": "P2",
+    "notes": "Zerologon相关的现代高价值事件"
+  },
+  {
+    "id": "6145",
+    "source": "windows_security",
+    "category": "GroupPolicy",
+    "name": "Errors occurred while processing security policy in GPOs",
+    "priority": "P3",
+    "notes": ""
+  }
+]
