@@ -4,7 +4,7 @@
   "category": "Process",
   "name": "Process creation",
   "priority": "P1",
-  "applicable_version": "Sysmon 1.0及以上",
+  "applicable_version": "Sysmon 1.0 and later",
   "last_reviewed": "2026-07-10",
   "definition": "Sysmon Event ID 1 records process creation and is one of the most important events for reconstructing command execution, parent-child process chains, and suspicious process launches.",
   "trigger_scenarios": "Whenever Sysmon observes a new process start, it records Event ID 1 with process image, command line, parent process, hashes, user, integrity level, and related metadata according to the active Sysmon configuration.",

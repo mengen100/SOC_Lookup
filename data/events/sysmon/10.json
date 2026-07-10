@@ -1,0 +1,20 @@
+{
+  "id": "10", "source": "sysmon", "category": "Process", "name": "ProcessAccess", "priority": "P1",
+  "applicable_version": "Sysmon 1.0 and later; ProcessAccess logging must be enabled", "last_reviewed": "2026-07-10",
+  "definition": "Sysmon Event ID 10 records one process opening another process and is a key source for detecting credential dumping, process inspection, and suspicious cross-process access.",
+  "trigger_scenarios": "The event is generated when a process opens a handle to another process under the configured Sysmon rules. Because the event can be noisy, collection should focus on sensitive target processes and meaningful access rights.",
+  "key_fields": [
+    { "field": "SourceImage", "explanation": "The executable requesting access. Its path, signer, command line, and parent process are central to determining whether the access is expected." },
+    { "field": "TargetImage", "explanation": "The process being accessed. lsass.exe is a high-priority target because access with sensitive rights can indicate credential theft." },
+    { "field": "GrantedAccess", "explanation": "The access mask granted to the source process. Interpret this alongside the target and source process because valid tools may require some overlapping rights." },
+    { "field": "CallTrace", "explanation": "The recorded call stack can help distinguish known security or management tools from unknown access paths, although symbols and modules may be incomplete." }
+  ],
+  "false_positives": ["EDR, antivirus, backup, monitoring, and accessibility products often inspect other processes.", "Task Manager, debuggers, and performance tools can request process handles during normal administration.", "Broad ProcessAccess collection without filters can create large volumes that obscure high-risk activity."],
+  "related_event_ids": ["1", "8", "7"],
+  "attck_mapping": [{ "technique_id": "T1003", "technique_name": "OS Credential Dumping" }, { "technique_id": "T1055", "technique_name": "Process Injection" }],
+  "detection_notes": "Prioritize non-security processes accessing lsass.exe, unusual GrantedAccess masks, executables from writable paths, and access that follows suspicious process creation. Tune collection around lsass.exe and other sensitive processes, and maintain an allowlist for trusted security agents based on publisher, path, and version.",
+  "kql_snippet": "Sysmon\n| where EventID == 10\n| where TargetImage endswith @\"\\lsass.exe\"\n| project TimeGenerated, Computer, SourceImage, TargetImage, GrantedAccess, CallTrace, SourceProcessGuid\n| order by TimeGenerated desc",
+  "spl_snippet": "index=sysmon EventCode=10 TargetImage=\"*\\\\lsass.exe\"\n| table _time, host, SourceImage, TargetImage, GrantedAccess, CallTrace, SourceProcessGuid",
+  "sample_log": "UtcTime: 2026-07-10 03:20:22.000\nSourceImage: C:\\Users\\jsmith\\AppData\\Local\\Temp\\diagnostic.exe\nTargetImage: C:\\Windows\\System32\\lsass.exe\nGrantedAccess: 0x1010\nCallTrace: C:\\Windows\\SYSTEM32\\ntdll.dll+9d4c|UNKNOWN(000001F4A1230000)",
+  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+}

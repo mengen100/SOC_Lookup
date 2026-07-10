@@ -1,0 +1,20 @@
+{
+  "id": "8", "source": "sysmon", "category": "Process", "name": "CreateRemoteThread", "priority": "P1",
+  "applicable_version": "Sysmon 1.0 and later; CreateRemoteThread logging must be enabled", "last_reviewed": "2026-07-10",
+  "definition": "Sysmon Event ID 8 records a process creating a thread in another process and is a high-value telemetry source for investigating process injection and cross-process execution.",
+  "trigger_scenarios": "Sysmon generates the event when it observes a remote thread creation attempt. The event can be produced by benign debuggers and security tooling as well as by injection techniques.",
+  "key_fields": [
+    { "field": "SourceImage / SourceProcessGuid", "explanation": "The process that created the remote thread. Investigate whether it is expected to interact with the target process and correlate it to Event ID 1." },
+    { "field": "TargetImage / TargetProcessGuid", "explanation": "The process receiving the new thread. Sensitive targets such as browser, authentication, security, and business application processes deserve role-aware triage." },
+    { "field": "StartAddress", "explanation": "The thread start address. Addresses in unusual memory regions can support injection analysis, but require memory and module context to interpret correctly." },
+    { "field": "StartModule / StartFunction", "explanation": "When available, these fields identify the module and exported function associated with the start address. Missing or unexpected module context can be notable." }
+  ],
+  "false_positives": ["Endpoint protection, EDR agents, debuggers, accessibility tools, and application instrumentation may create remote threads.", "Some application frameworks and automation products use cross-process techniques for legitimate integration.", "A single event without the source process, target role, or follow-on behavior is not sufficient to label as malicious."],
+  "related_event_ids": ["1", "7", "10"],
+  "attck_mapping": [{ "technique_id": "T1055", "technique_name": "Process Injection" }],
+  "detection_notes": "Focus on uncommon source-target pairs, unsigned or user-writable source binaries, injection into security-sensitive processes, and remote thread events followed by network activity or credential access. Build allowlists for known EDR and developer tooling by signed publisher and path, not only by filename.",
+  "kql_snippet": "Sysmon\n| where EventID == 8\n| where TargetImage has_any (\"\\\\lsass.exe\", \"\\\\explorer.exe\", \"\\\\chrome.exe\", \"\\\\msedge.exe\")\n| project TimeGenerated, Computer, SourceImage, TargetImage, StartAddress, StartModule, StartFunction\n| order by TimeGenerated desc",
+  "spl_snippet": "index=sysmon EventCode=8\n| search TargetImage IN (\"*\\\\lsass.exe\", \"*\\\\explorer.exe\", \"*\\\\chrome.exe\", \"*\\\\msedge.exe\")\n| table _time, host, SourceImage, TargetImage, StartAddress, StartModule, StartFunction",
+  "sample_log": "UtcTime: 2026-07-10 03:20:18.000\nSourceImage: C:\\Users\\jsmith\\AppData\\Local\\Temp\\updater.exe\nTargetImage: C:\\Windows\\explorer.exe\nStartAddress: 0x000001F4A1230000\nStartModule: \nStartFunction: ",
+  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+}

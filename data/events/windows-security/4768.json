@@ -1,0 +1,20 @@
+{
+  "id": "4768", "source": "windows_security", "category": "Kerberos", "name": "A Kerberos authentication ticket (TGT) was requested", "priority": "P1",
+  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later", "last_reviewed": "2026-07-10",
+  "definition": "Windows Security Event ID 4768 records a Kerberos ticket-granting ticket request on a domain controller and provides visibility into domain authentication activity.",
+  "trigger_scenarios": "A domain controller logs this event when it receives a request for a ticket-granting ticket, including successful requests and requests that fail pre-authentication or policy checks.",
+  "key_fields": [
+    { "field": "Account Name", "explanation": "The principal requesting the TGT. Examine privileged, disabled, dormant, and unusual account names with extra care." },
+    { "field": "Client Address", "explanation": "The requesting device address. It supports mapping authentication activity to workstations, VPN addresses, and unexpected network segments." },
+    { "field": "Ticket Encryption Type", "explanation": "The encryption type selected for the ticket. Legacy encryption or deviations from the account baseline can be relevant to Kerberos hardening and attack investigations." },
+    { "field": "Failure Code", "explanation": "A non-zero result explains failed ticket requests. Repeated failures from one source or against many accounts can indicate password spraying or configuration problems." }
+  ],
+  "false_positives": ["Normal workstation logons and service restarts generate TGT requests routinely.", "VPN reconnects, network changes, and expired cached tickets can create bursts of expected requests.", "Legacy applications may legitimately request older Kerberos encryption types in environments that have not completed hardening."],
+  "related_event_ids": ["4769", "4771", "4624"],
+  "attck_mapping": [{ "technique_id": "T1558", "technique_name": "Steal or Forge Kerberos Tickets" }, { "technique_id": "T1110.003", "technique_name": "Brute Force: Password Spraying" }],
+  "detection_notes": "Use 4768 primarily for authentication baselining and correlation. Investigate unusual client addresses for privileged accounts, unexpected encryption types, repeated failures, and TGT requests that do not align with endpoint logon evidence. Pair it with 4769 and 4771 on the same domain controller.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4768\n| project TimeGenerated, Computer, TargetAccount, IpAddress, TicketEncryptionType, Status\n| order by TimeGenerated desc",
+  "spl_snippet": "index=wineventlog EventCode=4768\n| table _time, host, Account_Name, Client_Address, Ticket_Encryption_Type, Failure_Code",
+  "sample_log": "Account Name: jsmith@CORP.EXAMPLE\nService Name: krbtgt/CORP.EXAMPLE\nClient Address: 10.x.x.x\nTicket Encryption Type: 0x12\nFailure Code: 0x0",
+  "source_url": "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4768"
+}

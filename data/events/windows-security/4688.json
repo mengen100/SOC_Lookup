@@ -1,0 +1,20 @@
+{
+  "id": "4688", "source": "windows_security", "category": "Process", "name": "A new process has been created", "priority": "P1",
+  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later", "last_reviewed": "2026-07-10",
+  "definition": "Windows Security Event ID 4688 records process creation and is a foundational telemetry source for identifying command execution, suspicious parent-child relationships, and attacker tooling.",
+  "trigger_scenarios": "The event is generated when a process starts and Process Creation auditing is enabled. Full command-line capture additionally requires the relevant audit policy setting.",
+  "key_fields": [
+    { "field": "New Process Name", "explanation": "The executable path of the started process. Paths in user-writable directories, temporary folders, or unusual network locations merit additional context." },
+    { "field": "Process Command Line", "explanation": "The launch arguments. This is often the strongest indicator for encoded PowerShell, LOLBin abuse, suspicious download commands, and tool-specific behavior." },
+    { "field": "Creator Process Name / Process ID", "explanation": "The parent context and parent process identifier. Unusual parent-child pairs, such as Office applications launching script interpreters, are valuable detection signals." },
+    { "field": "Subject User Name", "explanation": "The security principal that created the process. This supports attribution and helps differentiate administrative automation from user-driven execution." }
+  ],
+  "false_positives": ["Endpoint management and software deployment systems create large volumes of command interpreters and installers.", "Developers and administrators may legitimately run scripting engines, compilers, and diagnostics.", "Some environments omit command-line capture, reducing the usefulness of basic process-name detections."],
+  "related_event_ids": ["4624", "4104", "4697"],
+  "attck_mapping": [{ "technique_id": "T1059", "technique_name": "Command and Scripting Interpreter" }, { "technique_id": "T1105", "technique_name": "Ingress Tool Transfer" }],
+  "detection_notes": "Do not alert on process names alone. Combine image path, command line, parent process, user, host role, and rarity. Particularly useful detections include execution from writable paths, script interpreters launched by Office or browser processes, suspicious encoded arguments, and tooling that appears immediately after a remote logon.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4688\n| where NewProcessName has_any (\"\\\\powershell.exe\", \"\\\\cmd.exe\", \"\\\\mshta.exe\", \"\\\\rundll32.exe\")\n| project TimeGenerated, Computer, Account, NewProcessName, CommandLine, ParentProcessName\n| order by TimeGenerated desc",
+  "spl_snippet": "index=wineventlog EventCode=4688\n| search New_Process_Name IN (\"*\\\\powershell.exe\", \"*\\\\cmd.exe\", \"*\\\\mshta.exe\", \"*\\\\rundll32.exe\")\n| table _time, host, SubjectUserName, New_Process_Name, Process_Command_Line, Creator_Process_Name",
+  "sample_log": "New Process Name: C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\nProcess Command Line: powershell.exe -NoProfile -EncodedCommand <redacted>\nCreator Process Name: C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE\nSubject User Name: CORP\\jsmith",
+  "source_url": "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4688"
+}

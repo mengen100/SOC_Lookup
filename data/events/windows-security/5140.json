@@ -1,0 +1,20 @@
+{
+  "id": "5140", "source": "windows_security", "category": "FileShare", "name": "A network share object was accessed", "priority": "P1",
+  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later", "last_reviewed": "2026-07-10",
+  "definition": "Windows Security Event ID 5140 records access to a network share and is an important source for investigating SMB-based lateral movement, administrative share use, and staging activity.",
+  "trigger_scenarios": "The event is generated when a client accesses a shared resource on the audited host. It indicates share-level access; detailed file operations require additional object-access auditing such as Event ID 5145.",
+  "key_fields": [
+    { "field": "Subject User Name", "explanation": "The authenticated account accessing the share. Service and machine accounts are common, so identity alone should be considered with the share and source context." },
+    { "field": "Share Name", "explanation": "The accessed share path. Administrative shares such as ADMIN$, C$, and IPC$ often deserve different triage rules from business file shares." },
+    { "field": "Source Address", "explanation": "The client address that made the SMB connection. It is a key pivot for mapping remote access and potential lateral movement." },
+    { "field": "Share Local Path", "explanation": "The local path backing the share. This helps classify whether the target exposes a system drive, application directory, or user data." }
+  ],
+  "false_positives": ["Normal file-server use, software distribution, backup, and endpoint management can generate high volumes.", "Domain controllers and application servers may receive frequent IPC$ and SYSVOL access.", "Administrative shares are commonly used by authorized remote-management tools."],
+  "related_event_ids": ["4624", "5145", "4688"],
+  "attck_mapping": [{ "technique_id": "T1021.002", "technique_name": "Remote Services: SMB/Windows Admin Shares" }, { "technique_id": "T1070.004", "technique_name": "Indicator Removal: File Deletion" }],
+  "detection_notes": "Prioritize access to administrative shares from workstations, rare source-to-server relationships, use by newly created or privileged accounts, and share access that follows remote authentication or precedes service creation. Use 5145 where available to determine the specific relative file path and requested access mask.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 5140\n| where ShareName has_any (\"ADMIN$\", \"C$\", \"IPC$\")\n| project TimeGenerated, Computer, Account, IpAddress, ShareName, ShareLocalPath\n| order by TimeGenerated desc",
+  "spl_snippet": "index=wineventlog EventCode=5140 Share_Name IN (\"*ADMIN$\", \"*C$\", \"*IPC$\")\n| table _time, host, SubjectUserName, Source_Address, Share_Name, Share_Local_Path",
+  "sample_log": "Subject: Account Name: CORP\\jsmith\nShare Information: Share Name: \\\\*\\ADMIN$\nShare Local Path: C:\\Windows\nNetwork Information: Source Address: 10.x.x.x\nSource Port: 52133",
+  "source_url": "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-5140"
+}

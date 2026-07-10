@@ -29,9 +29,41 @@ test("loads all skeleton events while marking completed records as linkable", ()
 test("discovers complete event records from data/events", () => {
   const completeEvents = getCompleteEvents();
 
-  assert.equal(completeEvents.length, 2);
-  assert.equal(completeEvents.some((event) => event.id === "4625" && event.source === "windows_security"), true);
-  assert.equal(completeEvents.some((event) => event.id === "1" && event.source === "sysmon"), true);
+  const expectedEvents = [
+    "windows_security:4624",
+    "windows_security:4625",
+    "windows_security:4688",
+    "windows_security:4720",
+    "windows_security:4768",
+    "windows_security:4769",
+    "windows_security:5140",
+    "windows_security:4104",
+    "sysmon:1",
+    "sysmon:3",
+    "sysmon:8",
+    "sysmon:10",
+  ];
+
+  assert.equal(completeEvents.length, expectedEvents.length);
+  assert.deepEqual(
+    new Set(completeEvents.map((event) => `${event.source}:${event.id}`)),
+    new Set(expectedEvents),
+  );
+});
+
+test("ships reader-facing event content in English", () => {
+  const readerFacingText = getCompleteEvents().flatMap((event) => [
+    event.applicable_version,
+    event.definition,
+    event.trigger_scenarios,
+    ...event.key_fields.flatMap((field) => [field.field, field.explanation]),
+    ...event.false_positives,
+    event.detection_notes,
+  ]);
+
+  for (const value of readerFacingText) {
+    assert.equal(/[\u3400-\u9fff]/.test(value), false, `Expected English reader-facing content: ${value}`);
+  }
 });
 
 test("returns completed events by public route", () => {
