@@ -1,7 +1,7 @@
 import { CodeBlock } from "./CodeBlock";
 import { RelatedEvents } from "./RelatedEvents";
 import { buildTechArticleJsonLd } from "../lib/schema-org";
-import type { EventPageRecord } from "../lib/events";
+import { sourceToRouteSlug, type EventPageRecord } from "../lib/events";
 
 interface EventPageProps {
   event: EventPageRecord;
@@ -89,13 +89,23 @@ export function EventPage({ event }: EventPageProps) {
         </div>
 
         <Section title="Source">
-          <a className="text-accent underline underline-offset-4" href={event.source_url} rel="noreferrer" target="_blank">
-            Official documentation
-          </a>
+          <div className="flex flex-wrap gap-3">
+            <a className="text-accent underline underline-offset-4" href={event.source_url} rel="noreferrer" target="_blank">
+              Official documentation
+            </a>
+            <a className="text-accent underline underline-offset-4" href={getEventJsonUrl(event)}>
+              Machine-readable JSON
+            </a>
+          </div>
         </Section>
       </div>
     </article>
   );
+}
+
+function getEventJsonUrl(event: EventPageRecord): string {
+  const sourceFolder = sourceToRouteSlug(event.source) === "windows-events" ? "windows-security" : "sysmon";
+  return `/api/events/${sourceFolder}/${event.id}.json`;
 }
 
 function Section({ title, children }: Readonly<{ title: string; children: React.ReactNode }>) {

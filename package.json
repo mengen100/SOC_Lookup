@@ -3,8 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "npm run export:json",
     "dev": "next dev",
-    "build": "npm run validate:data && next build",
+    "build": "npm run validate:data && npm run export:json && next build",
+    "export:json": "ts-node --compiler-options \"{\\\"module\\\":\\\"commonjs\\\"}\" scripts/export-json.ts",
     "test": "ts-node --compiler-options \"{\\\"module\\\":\\\"commonjs\\\"}\" tests/all.test.ts",
     "typecheck": "tsc --noEmit",
     "validate:data": "ts-node --compiler-options \"{\\\"module\\\":\\\"commonjs\\\"}\" scripts/validate-data.ts"

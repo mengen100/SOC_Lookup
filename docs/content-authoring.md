@@ -41,6 +41,7 @@ Optional fields such as `kql_snippet`, `spl_snippet`, and `attck_mapping` should
 - Use `related_event_ids` for practical investigation pivots, not loose keyword similarity.
 - Do not create placeholder detail JSON for unfinished content. Keep unfinished entries only in `data/event_ids.json`.
 - Run `npm run validate:data` before deploying.
+- Run `npm run export:json` if you want to inspect the generated machine-readable JSON before building.
 
 ## URL Rules
 
@@ -48,3 +49,13 @@ Optional fields such as `kql_snippet`, `spl_snippet`, and `attck_mapping` should
 - `source: "sysmon"` becomes `/sysmon-events/{id}/`.
 
 The site discovers completed detail pages from files in `data/events/`, not from the skeleton list.
+
+## Machine-Readable Output
+
+Completed records are exported to `public/api/events/` as static JSON. Each event JSON includes the original schema fields plus:
+
+- `route`
+- `canonical_url`
+- `json_url`
+
+The JSON output is generated from `data/events/`; do not edit files under `public/api/events/` by hand.
