@@ -1,0 +1,45 @@
+{
+    "id":  "4723",
+    "source":  "windows_security",
+    "category":  "AccountMgmt",
+    "name":  "An attempt was made to change an account\u0027s password",
+    "priority":  "P2",
+    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
+    "last_reviewed":  "2026-07-11",
+    "definition":  "Event ID 4723 records an attempt by an account to change its own password.",
+    "trigger_scenarios":  "It is generated for self-service password changes, including unsuccessful attempts.",
+    "key_fields":  [
+                       {
+                           "field":  "Subject",
+                           "explanation":  "The account attempting the change."
+                       },
+                       {
+                           "field":  "Target Account",
+                           "explanation":  "Usually the same account; a mismatch needs investigation."
+                       },
+                       {
+                           "field":  "Status",
+                           "explanation":  "0x0 indicates success; failures help diagnose stale or policy-rejected attempts."
+                       }
+                   ],
+    "false_positives":  [
+                            "Normal password rotation and self-service changes are expected.",
+                            "Password-expiry reminders can cause repeated attempts."
+                        ],
+    "related_event_ids":  [
+                              "4724",
+                              "4738",
+                              "4624"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1098",
+                              "technique_name":  "Account Manipulation"
+                          }
+                      ],
+    "detection_notes":  "T1098 is more strongly indicated by 4724 than 4723, but investigate a successful 4723 when Subject and Target Account differ or it follows an unusual 4624 session. Preserve Status and the session Logon ID before treating a rapid password change and remote access sequence as benign.",
+    "kql_snippet":  "SecurityEvent\n| where EventID == 4723\n| project TimeGenerated, Computer, Account, TargetAccount, Status",
+    "spl_snippet":  "index=wineventlog EventCode=4723 | table _time, host, SubjectUserName, TargetUserName, Status",
+    "sample_log":  "Subject: CORP\\jsmith\nTarget Account: CORP\\jsmith\nStatus: 0x0",
+    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4723"
+}

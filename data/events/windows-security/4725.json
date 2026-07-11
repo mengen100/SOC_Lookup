@@ -1,0 +1,45 @@
+{
+    "id":  "4725",
+    "source":  "windows_security",
+    "category":  "AccountMgmt",
+    "name":  "A user account was disabled",
+    "priority":  "P2",
+    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
+    "last_reviewed":  "2026-07-11",
+    "definition":  "Event ID 4725 records disabling of a user account.",
+    "trigger_scenarios":  "It is written when an administrator or identity workflow disables a local or domain user account.",
+    "key_fields":  [
+                       {
+                           "field":  "Target Account",
+                           "explanation":  "The disabled identity; privileged and service accounts have elevated operational impact."
+                       },
+                       {
+                           "field":  "Subject",
+                           "explanation":  "The actor performing the change."
+                       },
+                       {
+                           "field":  "Target SID",
+                           "explanation":  "The stable account identifier for correlating rename or deletion events."
+                       }
+                   ],
+    "false_positives":  [
+                            "Offboarding and automated lifecycle workflows legitimately disable accounts.",
+                            "Incident responders may disable compromised accounts as containment."
+                        ],
+    "related_event_ids":  [
+                              "4722",
+                              "4726",
+                              "4738"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1531",
+                              "technique_name":  "Account Access Removal"
+                          }
+                      ],
+    "detection_notes":  "T1531 Account Access Removal is a destructive technique when an attacker disables many accounts or disables administrators and recovery accounts. Alert on high fan-out from one Subject, especially when Target Account is privileged or the disablement follows suspicious logons or audit-policy changes.",
+    "kql_snippet":  "SecurityEvent\n| where EventID == 4725\n| summarize Disabled=count() by Account, bin(TimeGenerated, 15m)\n| where Disabled \u003e 5",
+    "spl_snippet":  "index=wineventlog EventCode=4725 | stats count by SubjectUserName, TargetUserName",
+    "sample_log":  "Subject: CORP\\admin.ops\nTarget Account: CORP\\backup.admin\nTarget SID: S-1-5-21-REDACTED",
+    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4725"
+}

@@ -1,0 +1,43 @@
+{
+    "id":  "4689",
+    "source":  "windows_security",
+    "category":  "Process",
+    "name":  "A process has exited",
+    "priority":  "P2",
+    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
+    "last_reviewed":  "2026-07-11",
+    "definition":  "Event ID 4689 records process termination and completes host process-lifetime timelines.",
+    "trigger_scenarios":  "Windows logs it when an audited process exits.",
+    "key_fields":  [
+                       {
+                           "field":  "Process Name",
+                           "explanation":  "The terminated executable path."
+                       },
+                       {
+                           "field":  "Process ID",
+                           "explanation":  "Join to 4688, accounting for PID reuse."
+                       },
+                       {
+                           "field":  "Subject",
+                           "explanation":  "The security context of the ending process."
+                       }
+                   ],
+    "false_positives":  [
+                            "Routine process termination is high volume.",
+                            "Short-lived installers and scripts can create bursts."
+                        ],
+    "related_event_ids":  [
+                              "4688"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1070.004",
+                              "technique_name":  "Indicator Removal: File Deletion"
+                          }
+                      ],
+    "detection_notes":  "Use 4689 to investigate T1070.004 cleanup only when a suspicious 4688 process exits immediately after deletion, log clearing, or artifact creation. The value is its duration and sequence, not the termination alone.",
+    "kql_snippet":  "SecurityEvent\n| where EventID == 4689\n| project TimeGenerated, Computer, Account, Process, ProcessId",
+    "spl_snippet":  "index=wineventlog EventCode=4689 | table _time, host, Process_Name, Process_ID",
+    "sample_log":  "Process Name: C:\\Users\\Public\\tool.exe\nProcess ID: 4242",
+    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4689"
+}

@@ -1,0 +1,45 @@
+{
+    "id":  "4702",
+    "source":  "windows_security",
+    "category":  "ScheduledTask",
+    "name":  "A scheduled task was updated",
+    "priority":  "P2",
+    "applicable_version":  "Windows Server 2016 and later; Windows 10 and later",
+    "last_reviewed":  "2026-07-11",
+    "definition":  "Event ID 4702 records modification of a scheduled task definition.",
+    "trigger_scenarios":  "Task Scheduler auditing logs the event when a registered task is changed.",
+    "key_fields":  [
+                       {
+                           "field":  "Task Name",
+                           "explanation":  "The changed task identifier."
+                       },
+                       {
+                           "field":  "Task Content",
+                           "explanation":  "Compare the XML before and after; Command, Arguments, Principal, and Trigger are decisive."
+                       },
+                       {
+                           "field":  "Subject",
+                           "explanation":  "The identity applying the change."
+                       }
+                   ],
+    "false_positives":  [
+                            "Management products update their scheduled tasks.",
+                            "Administrators revise approved maintenance tasks."
+                        ],
+    "related_event_ids":  [
+                              "4698",
+                              "4699",
+                              "4688"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1053.005",
+                              "technique_name":  "Scheduled Task/Job: Scheduled Task"
+                          }
+                      ],
+    "detection_notes":  "T1053.005 persistence often modifies an existing trusted-looking task rather than creating a new one. Alert when Task Content changes Command or Arguments to powershell.exe, cmd.exe, mshta.exe, or a writable-path executable, or changes Principal to SYSTEM.",
+    "kql_snippet":  "SecurityEvent\n| where EventID == 4702\n| project TimeGenerated, Computer, Account, TaskName, TaskContent",
+    "spl_snippet":  "index=wineventlog EventCode=4702 | table _time, host, SubjectUserName, TaskName, TaskContent",
+    "sample_log":  "Task Name: \\Microsoft\\Windows\\Update\\CacheRefresh\nTask Content: \u003cCommand\u003epowershell.exe\u003c/Command\u003e\nSubject: CORP\\admin.ops",
+    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4702"
+}

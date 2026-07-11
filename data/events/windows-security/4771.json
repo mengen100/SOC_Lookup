@@ -1,0 +1,45 @@
+{
+    "id":  "4771",
+    "source":  "windows_security",
+    "category":  "Kerberos",
+    "name":  "Kerberos pre-authentication failed",
+    "priority":  "P2",
+    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
+    "last_reviewed":  "2026-07-11",
+    "definition":  "Event ID 4771 records a Kerberos pre-authentication failure on a domain controller.",
+    "trigger_scenarios":  "The KDC generates the event when a client cannot satisfy Kerberos pre-authentication.",
+    "key_fields":  [
+                       {
+                           "field":  "Failure Code",
+                           "explanation":  "0x18 is KDC_ERR_PREAUTH_FAILED, normally a bad password; 0x12 is KDC_ERR_CLIENT_REVOKED for disabled or locked accounts."
+                       },
+                       {
+                           "field":  "Pre-Authentication Type",
+                           "explanation":  "2 commonly represents encrypted timestamp pre-authentication; compare deviations with client configuration."
+                       },
+                       {
+                           "field":  "Client Address",
+                           "explanation":  "The source IP used to group attempts and identify the originating device."
+                       }
+                   ],
+    "false_positives":  [
+                            "Stale credentials in services and mobile devices are common.",
+                            "Users entering old passwords after rotation create 0x18 failures."
+                        ],
+    "related_event_ids":  [
+                              "4768",
+                              "4625",
+                              "4740"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1110.003",
+                              "technique_name":  "Brute Force: Password Spraying"
+                          }
+                      ],
+    "detection_notes":  "T1110.003 password spraying appears as Failure Code 0x18 against many accounts from one Client Address while avoiding lockout thresholds. One account receiving 0x18 from many sources instead suggests guessing or stale credentials. Alert on breadth, then correlate 4768 success and 4624 after the failure burst.",
+    "kql_snippet":  "SecurityEvent\n| where EventID == 4771 and Status == \"0x18\"\n| summarize Accounts=dcount(TargetAccount), Attempts=count() by IpAddress, bin(TimeGenerated, 15m)\n| where Accounts \u003e 10",
+    "spl_snippet":  "index=wineventlog EventCode=4771 Failure_Code=0x18 | stats dc(Account_Name) as accounts count by Client_Address",
+    "sample_log":  "Account Name: jsmith@CORP.EXAMPLE\nClient Address: 10.x.x.x\nFailure Code: 0x18\nPre-Authentication Type: 2",
+    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4771"
+}

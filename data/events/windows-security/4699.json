@@ -1,0 +1,45 @@
+{
+    "id":  "4699",
+    "source":  "windows_security",
+    "category":  "ScheduledTask",
+    "name":  "A scheduled task was deleted",
+    "priority":  "P2",
+    "applicable_version":  "Windows Server 2016 and later; Windows 10 and later",
+    "last_reviewed":  "2026-07-11",
+    "definition":  "Event ID 4699 records deletion of a scheduled task.",
+    "trigger_scenarios":  "It is generated when Task Scheduler auditing records task removal.",
+    "key_fields":  [
+                       {
+                           "field":  "Task Name",
+                           "explanation":  "The deleted task path; preserve it for comparison with known baselines."
+                       },
+                       {
+                           "field":  "Subject",
+                           "explanation":  "The account deleting the task."
+                       },
+                       {
+                           "field":  "Task Content",
+                           "explanation":  "Where retained, identifies the removed command and trigger."
+                       }
+                   ],
+    "false_positives":  [
+                            "Software updaters remove obsolete tasks.",
+                            "Administrators clean up maintenance tasks."
+                        ],
+    "related_event_ids":  [
+                              "4698",
+                              "4702",
+                              "4688"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1070.004",
+                              "technique_name":  "Indicator Removal: File Deletion"
+                          }
+                      ],
+    "detection_notes":  "An attacker may use T1070.004 to remove a task created for T1053.005 persistence after execution. Escalate a 4699 deletion when the same Task Name was created or updated recently, particularly if Task Content launched PowerShell or a user-writable binary.",
+    "kql_snippet":  "SecurityEvent\n| where EventID == 4699\n| project TimeGenerated, Computer, Account, TaskName",
+    "spl_snippet":  "index=wineventlog EventCode=4699 | table _time, host, SubjectUserName, TaskName",
+    "sample_log":  "Task Name: \\Microsoft\\Windows\\Update\\CacheRefresh\nSubject: CORP\\admin.ops",
+    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4699"
+}

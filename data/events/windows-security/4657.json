@@ -1,0 +1,45 @@
+{
+    "id":  "4657",
+    "source":  "windows_security",
+    "category":  "Registry",
+    "name":  "A registry value was modified",
+    "priority":  "P2",
+    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
+    "last_reviewed":  "2026-07-11",
+    "definition":  "Event ID 4657 records modification of an audited registry value.",
+    "trigger_scenarios":  "It requires a SACL on the affected registry key and Object Access auditing.",
+    "key_fields":  [
+                       {
+                           "field":  "Object Name",
+                           "explanation":  "The modified registry path."
+                       },
+                       {
+                           "field":  "Object Value Name",
+                           "explanation":  "The changed value; focus on autorun and security-policy values."
+                       },
+                       {
+                           "field":  "Old Value / New Value",
+                           "explanation":  "The before-and-after data identifies the actual persistence or defense change."
+                       }
+                   ],
+    "false_positives":  [
+                            "Installers and policy management modify registry values.",
+                            "Legitimate software updates can alter autorun configuration."
+                        ],
+    "related_event_ids":  [
+                              "4663",
+                              "4688",
+                              "4719"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1547.001",
+                              "technique_name":  "Boot or Logon Autostart Execution: Registry Run Keys / Startup Folder"
+                          }
+                      ],
+    "detection_notes":  "T1547.001 persistence is indicated when Object Name is HKLM or HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run or RunOnce and New Value points to a script, LOLBin, or user-writable executable. Capture Old Value and New Value and pivot to the process that made the change.",
+    "kql_snippet":  "SecurityEvent\n| where EventID == 4657\n| where ObjectName has @\"\\CurrentVersion\\Run\"\n| project TimeGenerated, Computer, Account, ObjectName, ObjectValueName, NewValue",
+    "spl_snippet":  "index=wineventlog EventCode=4657 Object_Name=\"*\\CurrentVersion\\Run*\" | table _time, host, Object_Name, Object_Value_Name, New_Value",
+    "sample_log":  "Object Name: HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\nObject Value Name: Updater\nNew Value: C:\\Users\\Public\\updater.exe",
+    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4657"
+}

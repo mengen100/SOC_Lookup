@@ -1,0 +1,45 @@
+{
+    "id":  "4663",
+    "source":  "windows_security",
+    "category":  "ObjectAccess",
+    "name":  "An attempt was made to access an object",
+    "priority":  "P2",
+    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
+    "last_reviewed":  "2026-07-11",
+    "definition":  "Event ID 4663 records access to an audited file, registry key, or other securable object.",
+    "trigger_scenarios":  "It fires only when the target has an SACL and the requested access matches the audit policy.",
+    "key_fields":  [
+                       {
+                           "field":  "Object Name",
+                           "explanation":  "The audited file or registry path."
+                       },
+                       {
+                           "field":  "Access Mask",
+                           "explanation":  "0x2 is write data, 0x10000 is DELETE, and 0x40000 is WRITE_DAC; interpret it with Object Type."
+                       },
+                       {
+                           "field":  "Process Name",
+                           "explanation":  "The process requesting access, essential for distinguishing users from tools."
+                       }
+                   ],
+    "false_positives":  [
+                            "File servers and applications create substantial expected access noise.",
+                            "Backup and antivirus products request broad rights."
+                        ],
+    "related_event_ids":  [
+                              "4657",
+                              "5145",
+                              "4688"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1005",
+                              "technique_name":  "Data from Local System"
+                          }
+                      ],
+    "detection_notes":  "Use 4663 for T1005 collection when Object Name matches sensitive shares or local data and Access Mask includes 0x1 read data or 0x2 write data from an unusual Process Name. Access Mask 0x10000 on a large set of files can support ransomware or cleanup investigation.",
+    "kql_snippet":  "SecurityEvent\n| where EventID == 4663\n| project TimeGenerated, Computer, Account, ObjectName, AccessMask, ProcessName",
+    "spl_snippet":  "index=wineventlog EventCode=4663 | table _time, host, SubjectUserName, Object_Name, Access_Mask, Process_Name",
+    "sample_log":  "Object Name: C:\\Finance\\payroll.xlsx\nAccess Mask: 0x1\nProcess Name: C:\\Windows\\System32\\cmd.exe",
+    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4663"
+}

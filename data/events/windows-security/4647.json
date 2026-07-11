@@ -1,0 +1,44 @@
+{
+    "id":  "4647",
+    "source":  "windows_security",
+    "category":  "Logon",
+    "name":  "User initiated logoff",
+    "priority":  "P2",
+    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
+    "last_reviewed":  "2026-07-11",
+    "definition":  "Event ID 4647 records a user-initiated logoff and distinguishes an explicit sign-out from a session ending for another reason.",
+    "trigger_scenarios":  "Windows logs this event when an interactive user chooses to sign out.",
+    "key_fields":  [
+                       {
+                           "field":  "Subject",
+                           "explanation":  "The account initiating the logoff."
+                       },
+                       {
+                           "field":  "Logon ID",
+                           "explanation":  "Correlate with 4624, 4634, and process activity in the same session."
+                       },
+                       {
+                           "field":  "Computer",
+                           "explanation":  "The host where the session ended."
+                       }
+                   ],
+    "false_positives":  [
+                            "Normal user sign-outs are expected.",
+                            "Kiosk and shared-host workflows can produce frequent logoffs."
+                        ],
+    "related_event_ids":  [
+                              "4624",
+                              "4634"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1078",
+                              "technique_name":  "Valid Accounts"
+                          }
+                      ],
+    "detection_notes":  "Use 4647 to bound a T1078 Valid Accounts session after suspicious remote access. A privileged 4624 Type 10 session that lacks 4647 but ends with 4634 may indicate disconnect or forced termination; compare its Logon ID with 4688 before closing the timeline.",
+    "kql_snippet":  "SecurityEvent\n| where EventID == 4647\n| project TimeGenerated, Computer, Account, TargetLogonId",
+    "spl_snippet":  "index=wineventlog EventCode=4647 | table _time, host, SubjectUserName, TargetLogonId",
+    "sample_log":  "Subject: CORP\\jsmith\nLogon ID: 0x1a2b3c",
+    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4647"
+}
