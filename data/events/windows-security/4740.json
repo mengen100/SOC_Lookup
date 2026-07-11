@@ -37,7 +37,7 @@
                               "technique_name":  "Brute Force"
                           }
                       ],
-    "detection_notes":  "Correlate 4740 with preceding 4625 and 4776 activity by account and caller computer. Escalate lockouts affecting privileged accounts, multiple accounts from one source, or lockouts followed by successful access. Mapped ATT\u0026CK techniques: T1110.",
+    "detection_notes":  "T1110 brute force is distinguished through Caller Computer Name and policy values: repeated lockouts from one caller across many Target Accounts inside one Account Lockout Observation Window are spray-like, while one account locked from many callers often reflects stale credentials. Correlate preceding 4625 Sub Status 0xC000006A (bad password) versus 0xC0000072 (disabled account); only the former normally drives password-lockout behavior. Compare counts with the configured Account Lockout Threshold before alerting.",
     "kql_snippet":  "SecurityEvent\n| where EventID == 4740\n| project TimeGenerated, Computer, TargetAccount, CallerComputerName\n| order by TimeGenerated desc",
     "spl_snippet":  "index=wineventlog EventCode=4740\n| table _time, host, TargetUserName, CallerComputerName",
     "sample_log":  "Account That Was Locked Out: CORP\\jsmith\nCaller Computer Name: WS-014\nComputer: DC01",

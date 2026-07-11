@@ -37,7 +37,7 @@
                               "technique_name":  "Valid Accounts"
                           }
                       ],
-    "detection_notes":  "Use 4634 for timeline reconstruction, not as a standalone alert. Pair it with 4624 by Logon ID to establish session duration, then inspect privileged or remote sessions that end unexpectedly after sensitive activity. Mapped ATT\u0026CK techniques: T1078.",
+    "detection_notes":  "For T1078 Valid Accounts timeline reconstruction, pair 4634 with its 4624 by Logon ID. A Type 10 session that has no 4647 user-initiated logoff but ends after suspicious 4688 activity can indicate disconnect or forced session cleanup; the exact Logon Type distinguishes RDP from SMB Type 3 activity.",
     "kql_snippet":  "SecurityEvent\n| where EventID in (4624, 4634)\n| project TimeGenerated, EventID, Computer, Account, LogonType, TargetLogonId\n| order by TimeGenerated asc",
     "spl_snippet":  "index=wineventlog EventCode=4634\n| table _time, host, TargetUserName, LogonType, TargetLogonId",
     "sample_log":  "Target Account: CORP\\jsmith\nLogon Type: 10\nLogon ID: 0x1a2b3c",

@@ -1,0 +1,115 @@
+# Event Production Progress
+
+Status values: `done`, `needs-rework`, `pending`.
+
+## windows_security
+- [done] windows_security:4624 - An account was successfully logged on
+- [done] windows_security:4625 - An account failed to log on
+- [done] windows_security:4634 - An account was logged off
+- [done] windows_security:4647 - User initiated logoff
+- [done] windows_security:4648 - A logon was attempted using explicit credentials
+- [done] windows_security:4672 - Special privileges assigned to new logon
+- [done] windows_security:4768 - A Kerberos authentication ticket (TGT) was requested
+- [done] windows_security:4769 - A Kerberos service ticket was requested
+- [pending] windows_security:4770 - A Kerberos service ticket was renewed
+- [done] windows_security:4771 - Kerberos pre-authentication failed
+- [done] windows_security:4776 - The domain controller attempted to validate credentials (NTLM)
+- [pending] windows_security:4778 - A session was reconnected to a Window Station
+- [pending] windows_security:4779 - A session was disconnected from a Window Station
+- [done] windows_security:4688 - A new process has been created
+- [done] windows_security:4689 - A process has exited
+- [done] windows_security:4697 - A service was installed in the system
+- [done] windows_security:4698 - A scheduled task was created
+- [done] windows_security:4699 - A scheduled task was deleted
+- [pending] windows_security:4700 - A scheduled task was enabled
+- [pending] windows_security:4701 - A scheduled task was disabled
+- [done] windows_security:4702 - A scheduled task was updated
+- [done] windows_security:4657 - A registry value was modified
+- [done] windows_security:4663 - An attempt was made to access an object
+- [pending] windows_security:4670 - Permissions on an object were changed
+- [done] windows_security:4720 - A user account was created
+- [done] windows_security:4722 - A user account was enabled
+- [done] windows_security:4723 - An attempt was made to change an account's password
+- [done] windows_security:4724 - An attempt was made to reset an account's password
+- [done] windows_security:4725 - A user account was disabled
+- [pending] windows_security:4726 - A user account was deleted
+- [pending] windows_security:4728 - A member was added to a security-enabled global group
+- [pending] windows_security:4729 - A member was removed from a security-enabled global group
+- [done] windows_security:4732 - A member was added to a security-enabled local group
+- [pending] windows_security:4733 - A member was removed from a security-enabled local group
+- [pending] windows_security:4735 - A security-enabled local group was changed
+- [done] windows_security:4738 - A user account was changed
+- [done] windows_security:4740 - A user account was locked out
+- [pending] windows_security:4756 - A member was added to a security-enabled universal group
+- [pending] windows_security:4767 - A user account was unlocked
+- [done] windows_security:1102 - The audit log was cleared
+- [done] windows_security:4719 - System audit policy was changed
+- [pending] windows_security:4907 - Auditing settings on object were changed
+- [pending] windows_security:4616 - The system time was changed
+- [done] windows_security:5140 - A network share object was accessed
+- [pending] windows_security:5145 - A network share object was checked for access
+- [done] windows_security:4103 - PowerShell Module Logging
+- [done] windows_security:4104 - PowerShell Script Block Logging
+- [pending] windows_security:4608 - Windows is starting up
+- [pending] windows_security:4609 - Windows is shutting down
+- [pending] windows_security:4610 - An authentication package has been loaded by the LSA
+- [pending] windows_security:4611 - A trusted logon process has been registered with the LSA
+- [pending] windows_security:4612 - Internal audit queue resources exhausted
+- [pending] windows_security:4614 - A notification package has been loaded by the SAM
+- [pending] windows_security:4621 - Administrator recovered system from CrashOnAuditFail
+- [pending] windows_security:4649 - A replay attack was detected
+- [pending] windows_security:4675 - SIDs were filtered
+- [pending] windows_security:4692 - Backup of data protection master key was attempted
+- [pending] windows_security:4693 - Recovery of data protection master key was attempted
+- [pending] windows_security:4706 - A new trust was created to a domain
+- [pending] windows_security:4713 - Kerberos policy was changed
+- [pending] windows_security:4714 - Encrypted data recovery policy was changed
+- [pending] windows_security:4715 - The audit policy (SACL) on an object was changed
+- [pending] windows_security:4716 - Trusted domain information was modified
+- [done] windows_security:4765 - SID History was added to an account
+- [pending] windows_security:4766 - An attempt to add SID History to an account failed
+- [pending] windows_security:4780 - ACL was set on accounts in administrators groups
+- [done] windows_security:4794 - An attempt was made to set the Directory Services Restore Mode
+- [pending] windows_security:4964 - Special groups have been assigned to a new logon
+- [pending] windows_security:5027 - Windows Firewall Service unable to retrieve security policy
+- [pending] windows_security:5028 - Windows Firewall Service unable to parse new security policy
+- [pending] windows_security:5030 - The Windows Firewall Service failed to start
+- [pending] windows_security:5035 - The Windows Firewall Driver failed to start
+- [pending] windows_security:5038 - Code integrity determined image hash is not valid
+- [pending] windows_security:5376 - Credential Manager credentials were backed up
+- [pending] windows_security:5377 - Credential Manager credentials were restored from backup
+- [pending] windows_security:5827 - Netlogon denied a vulnerable secure channel connection (machine)
+- [pending] windows_security:5828 - Netlogon denied a vulnerable secure channel connection (trust)
+- [pending] windows_security:6145 - Errors occurred while processing security policy in GPOs
+
+## sysmon
+- [done] sysmon:1 - Process creation
+- [pending] sysmon:2 - A process changed a file creation time
+- [done] sysmon:3 - Network connection detected
+- [pending] sysmon:4 - Sysmon service state changed
+- [pending] sysmon:5 - Process terminated
+- [pending] sysmon:6 - Driver loaded
+- [pending] sysmon:7 - Image loaded (DLL/EXE)
+- [done] sysmon:8 - CreateRemoteThread
+- [pending] sysmon:9 - RawAccessRead
+- [done] sysmon:10 - ProcessAccess
+- [done] sysmon:11 - FileCreate
+- [pending] sysmon:12 - RegistryEvent (Object create/delete)
+- [pending] sysmon:13 - RegistryEvent (Value Set)
+- [pending] sysmon:14 - RegistryEvent (Key/Value Rename)
+- [pending] sysmon:15 - FileCreateStreamHash
+- [pending] sysmon:16 - ServiceConfigurationChange (Sysmon config change)
+- [pending] sysmon:17 - PipeEvent - Pipe Created
+- [pending] sysmon:18 - PipeEvent - Pipe Connected
+- [pending] sysmon:19 - WmiEvent - WmiEventFilter activity detected
+- [pending] sysmon:20 - WmiEvent - WmiEventConsumer activity detected
+- [pending] sysmon:21 - WmiEvent - WmiEventConsumerToFilter activity detected
+- [done] sysmon:22 - DNSEvent (DNS query)
+- [pending] sysmon:23 - FileDelete (archived)
+- [pending] sysmon:24 - ClipboardChange
+- [pending] sysmon:25 - ProcessTampering
+- [pending] sysmon:26 - FileDeleteDetected
+- [pending] sysmon:27 - FileBlockExecutable
+- [pending] sysmon:28 - FileBlockShredding
+- [pending] sysmon:29 - FileExecutableDetected
+- [pending] sysmon:255 - Sysmon service error report

@@ -37,7 +37,7 @@
                               "technique_name":  "Command and Scripting Interpreter: PowerShell"
                           }
                       ],
-    "detection_notes":  "Use 4103 alongside 4104: Module Logging gives pipeline context, while Script Block Logging captures code. Prioritize web download, remoting, credential, and encoded-command activity from unusual users or hosts. Mapped ATT\u0026CK techniques: T1059.001.",
+    "detection_notes":  "T1059.001 PowerShell abuse is most actionable when HostApplication contains -EncodedCommand, -ExecutionPolicy Bypass, or -NoProfile and Payload shows Invoke-Expression, DownloadString, or Add-Type. Those literal switches suppress common controls or conceal script intent; correlate the same UserId and HostApplication with 4104 ScriptBlockText and 4688.",
     "kql_snippet":  "Event\n| where Source == \"Microsoft-Windows-PowerShell\" and EventID == 4103\n| project TimeGenerated, Computer, UserName, RenderedDescription\n| order by TimeGenerated desc",
     "spl_snippet":  "index=wineventlog source=\"WinEventLog:Microsoft-Windows-PowerShell/Operational\" EventCode=4103\n| table _time, host, UserId, HostApplication, Payload",
     "sample_log":  "EventCode: 4103\nUserId: CORP\\jsmith\nHostApplication: powershell.exe -NoProfile\nPayload: CommandInvocation(Invoke-WebRequest): \"Invoke-WebRequest\"",

@@ -47,7 +47,7 @@
                               "technique_name":  "Remote Services"
                           }
                       ],
-    "detection_notes":  "Prioritize unusual account-to-host relationships, remote logons from new source systems, privileged sessions, and successful logons that follow authentication failures. Correlate the Logon ID with 4672, 4688, 4634, and network telemetry to turn a session record into an investigation timeline. Mapped ATT\u0026CK techniques: T1078, T1021.",
+    "detection_notes":  "T1021 remote-service activity is indicated by Logon Type 10 for RDP or Logon Type 3 for SMB from a source that is not an approved jump host. A Type 10 4624 immediately after 4625 failures or a Type 3 logon to ADMIN$ should be correlated to 5140 and 4688; the Logon ID binds the session to follow-on execution.",
     "kql_snippet":  "SecurityEvent\n| where EventID == 4624 and LogonType in (3, 10)\n| project TimeGenerated, Computer, Account, LogonType, IpAddress, WorkstationName, AuthenticationPackageName\n| order by TimeGenerated desc",
     "spl_snippet":  "index=wineventlog EventCode=4624 Logon_Type IN (3, 10)\n| table _time, host, Account_Name, Logon_Type, Source_Network_Address, Workstation_Name",
     "sample_log":  "Subject: Security ID: S-1-0-0\nNew Logon: Security ID: CORP\\jsmith\nLogon Type: 10\nWorkstation Name: WS-014\nSource Network Address: 10.x.x.x\nAuthentication Package: Kerberos",

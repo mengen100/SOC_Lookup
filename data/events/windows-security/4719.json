@@ -37,7 +37,7 @@
                               "technique_name":  "Impair Defenses: Disable Windows Event Logging"
                           }
                       ],
-    "detection_notes":  "Alert on disabling or reducing high-value auditing, especially outside approved change windows. Compare local changes with intended Group Policy, identify the actor and process, and verify whether other defensive controls were modified in the same session. Mapped ATT\u0026CK techniques: T1562.002.",
+    "detection_notes":  "T1562.002 defense impairment is indicated when Audit Policy Changes removes Success or Failure auditing for Process Creation, Logon, or Audit Policy Change. A change that disables both Success and Failure is more severe than a baseline update; correlate it with 1102 and the Subject Logon ID.",
     "kql_snippet":  "SecurityEvent\n| where EventID == 4719\n| project TimeGenerated, Computer, Account, AuditPolicyChanges\n| order by TimeGenerated desc",
     "spl_snippet":  "index=wineventlog EventCode=4719\n| table _time, host, SubjectUserName, AuditPolicyChanges",
     "sample_log":  "Subject: Account Name: CORP\\admin.ops\nAudit Policy Changes: Audit Process Creation: Success removed\nComputer: DC01",

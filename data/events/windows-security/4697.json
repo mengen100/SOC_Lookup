@@ -41,7 +41,7 @@
                               "technique_name":  "Remote Services: SMB/Windows Admin Shares"
                           }
                       ],
-    "detection_notes":  "Prioritize unsigned binaries, service paths outside Program Files or Windows directories, services installed from remote logons, and short-lived services. Correlate with 7045 and process creation to distinguish installers from remote execution tools. Mapped ATT\u0026CK techniques: T1543.003, T1021.002.",
+    "detection_notes":  "T1543.003 Windows Service persistence is indicated when Service File Name points to a user-writable path, UNC path, or contains powershell.exe/cmd.exe, and Service Start Type is Auto start or Boot start. A service created after Type 3 SMB access is consistent with remote service execution.",
     "kql_snippet":  "SecurityEvent\n| where EventID == 4697\n| project TimeGenerated, Computer, Account, ServiceName, ServiceFileName, ServiceType, StartType\n| order by TimeGenerated desc",
     "spl_snippet":  "index=wineventlog EventCode=4697\n| table _time, host, SubjectUserName, ServiceName, ServiceFileName, ServiceStartType",
     "sample_log":  "Service Name: UpdaterSvc\nService File Name: C:\\Users\\Public\\updater.exe\nService Start Type: Auto start\nSubject: CORP\\admin.ops",

@@ -41,7 +41,7 @@
                               "technique_name":  "Valid Accounts"
                           }
                       ],
-    "detection_notes":  "Alert on additions to Administrators or Remote Desktop Users, especially from unusual actors or outside change windows. Check whether the member is a newly created account, a foreign domain identity, or a service account, then look for subsequent privileged logons. Mapped ATT\u0026CK techniques: T1098, T1078.",
+    "detection_notes":  "T1098 privilege escalation is indicated when Group is Administrators or Remote Desktop Users and Member is a new, dormant, or foreign-domain account. Addition to Administrators followed by 4672 and Type 10 4624 is a concrete local-admin persistence chain.",
     "kql_snippet":  "SecurityEvent\n| where EventID == 4732\n| where TargetAccount has_any (\"Administrators\", \"Remote Desktop Users\")\n| project TimeGenerated, Computer, Account, MemberName, TargetAccount",
     "spl_snippet":  "index=wineventlog EventCode=4732\n| search TargetUserName IN (\"Administrators\", \"Remote Desktop Users\")\n| table _time, host, SubjectUserName, MemberName, TargetUserName",
     "sample_log":  "Member: CORP\\jsmith\nGroup: Administrators\nSubject: CORP\\admin.ops\nComputer: WS-014",

@@ -47,7 +47,7 @@
                               "technique_name":  "Account Manipulation"
                           }
                       ],
-    "detection_notes":  "Alert on account creation by unusual administrators, outside approved provisioning windows, on servers where local account creation is rare, or followed rapidly by group membership changes and interactive logons. Maintain allowlists for identity-management systems but preserve the actor and target context for auditability. Mapped ATT\u0026CK techniques: T1136, T1098.",
+    "detection_notes":  "T1136 Create Account becomes high-confidence when a new Target Account is followed by 4722 enablement, 4732/4728 group addition, or a 4624 Type 10 logon within a short window. Account names mimicking built-ins and a password set with Password Never Expires are concrete persistence indicators.",
     "kql_snippet":  "SecurityEvent\n| where EventID == 4720\n| project TimeGenerated, Computer, SubjectAccount = Account, TargetAccount, TargetDomainName, TargetSid\n| order by TimeGenerated desc",
     "spl_snippet":  "index=wineventlog EventCode=4720\n| table _time, host, SubjectUserName, TargetUserName, TargetDomainName, TargetSid",
     "sample_log":  "Subject: Account Name: CORP\\admin.ops\nTarget Account: Account Name: svc_backup2\nTarget Domain: CORP\nTarget SID: S-1-5-21-REDACTED\nUser Principal Name: svc_backup2@corp.example",

@@ -41,7 +41,7 @@
                               "technique_name":  "Valid Accounts"
                           }
                       ],
-    "detection_notes":  "Aggregate by source workstation and account. Escalate one source attempting many accounts, failures that become success, and NTLM authentication from hosts expected to use Kerberos. Mapped ATT\u0026CK techniques: T1110, T1078.",
+    "detection_notes":  "T1110.003 spraying through NTLM appears as Error Code 0xC000006A (bad password) across many Logon Account values from one Source Workstation. Error 0xC0000064 instead shows nonexistent-account enumeration. A successful 0x0 validation after either burst should be correlated with 4624 and 4648.",
     "kql_snippet":  "SecurityEvent\n| where EventID == 4776\n| summarize Attempts=count() by Computer, Account, Workstation, Status, bin(TimeGenerated, 5m)\n| where Attempts \u003e 10",
     "spl_snippet":  "index=wineventlog EventCode=4776\n| bucket _time span=5m\n| stats count by _time, Workstation, Logon_Account, Error_Code",
     "sample_log":  "Logon Account: jsmith\nSource Workstation: WS-014\nError Code: 0xC000006A",
