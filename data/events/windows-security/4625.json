@@ -1,33 +1,58 @@
 {
-  "id": "4625",
-  "source": "windows_security",
-  "category": "Logon",
-  "name": "An account failed to log on",
-  "priority": "P1",
-  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
-  "last_reviewed": "2026-07-10",
-  "definition": "Windows Security Event ID 4625 records an unsuccessful logon attempt and is a core source for investigating brute-force activity, password spraying, and account lockout reports.",
-  "trigger_scenarios": "The event is generated when Windows authentication fails for an interactive, network, remote desktop, service, or other logon attempt. The Logon Type field identifies the authentication context.",
-  "key_fields": [
-    { "field": "Account For Which Logon Failed", "explanation": "The account name supplied to the authentication attempt. When the account does not exist, this may be attacker-controlled input rather than a valid directory account." },
-    { "field": "Failure Reason / Status / Sub Status", "explanation": "These fields explain why authentication failed. Common sub-status values include 0xC000006A for a bad password, 0xC0000064 for an unknown user, 0xC0000234 for a locked account, and 0xC0000072 for a disabled account." },
-    { "field": "Logon Type", "explanation": "The logon method. Type 2 is console, Type 3 is network access such as SMB, and Type 10 is RemoteInteractive (RDP). Type 10 deserves focused review during remote-access investigations." },
-    { "field": "Source Network Address / Source Port", "explanation": "The client address and port observed by the target host. These fields are essential for grouping attempts, identifying attack infrastructure, and distinguishing local from remote failures." }
-  ],
-  "false_positives": [
-    "Users can generate a small number of failures while entering an old or mistyped password.",
-    "A service account with an outdated stored credential can create periodic, highly regular failures after a password rotation.",
-    "Mapped drives, scheduled tasks, and applications may retry cached credentials automatically after a password change."
-  ],
-  "related_event_ids": ["4624", "4648", "4740"],
-  "attck_mapping": [
-    { "technique_id": "T1110.001", "technique_name": "Brute Force: Password Guessing" },
-    { "technique_id": "T1110.003", "technique_name": "Brute Force: Password Spraying" },
-    { "technique_id": "T1078", "technique_name": "Valid Accounts" }
-  ],
-  "detection_notes": "A single failure is rarely actionable; analyze aggregation and sequence. High-value patterns include one account failing from many source addresses, one source trying many accounts, bursts against RDP or SMB, and a successful 4624 shortly after repeated failures. Establish baselines for service accounts and noisy applications before applying fixed thresholds.",
-  "kql_snippet": "SecurityEvent\n| where EventID == 4625\n| summarize FailedCount = count() by TargetAccount = Account, IpAddress, bin(TimeGenerated, 5m)\n| where FailedCount > 10\n| order by FailedCount desc",
-  "spl_snippet": "index=wineventlog EventCode=4625\n| bucket _time span=5m\n| stats count as FailedCount by _time, Account_Name, Source_Network_Address\n| where FailedCount > 10",
-  "sample_log": "Account For Which Logon Failed: CORP\\jsmith\nFailure Reason: Unknown user name or bad password\nStatus: 0xC000006D\nSub Status: 0xC000006A\nLogon Type: 3\nSource Network Address: 10.x.x.x\nSource Port: 51422",
-  "source_url": "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4625"
+    "id":  "4625",
+    "source":  "windows_security",
+    "category":  "Logon",
+    "name":  "An account failed to log on",
+    "priority":  "P1",
+    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
+    "last_reviewed":  "2026-07-10",
+    "definition":  "Windows Security Event ID 4625 records an unsuccessful logon attempt and is a core source for investigating brute-force activity, password spraying, and account lockout reports.",
+    "trigger_scenarios":  "The event is generated when Windows authentication fails for an interactive, network, remote desktop, service, or other logon attempt. The Logon Type field identifies the authentication context.",
+    "key_fields":  [
+                       {
+                           "field":  "Account For Which Logon Failed",
+                           "explanation":  "The account name supplied to the authentication attempt. When the account does not exist, this may be attacker-controlled input rather than a valid directory account."
+                       },
+                       {
+                           "field":  "Failure Reason / Status / Sub Status",
+                           "explanation":  "These fields explain why authentication failed. Common sub-status values include 0xC000006A for a bad password, 0xC0000064 for an unknown user, 0xC0000234 for a locked account, and 0xC0000072 for a disabled account."
+                       },
+                       {
+                           "field":  "Logon Type",
+                           "explanation":  "The logon method. Type 2 is console, Type 3 is network access such as SMB, and Type 10 is RemoteInteractive (RDP). Type 10 deserves focused review during remote-access investigations."
+                       },
+                       {
+                           "field":  "Source Network Address / Source Port",
+                           "explanation":  "The client address and port observed by the target host. These fields are essential for grouping attempts, identifying attack infrastructure, and distinguishing local from remote failures."
+                       }
+                   ],
+    "false_positives":  [
+                            "Users can generate a small number of failures while entering an old or mistyped password.",
+                            "A service account with an outdated stored credential can create periodic, highly regular failures after a password rotation.",
+                            "Mapped drives, scheduled tasks, and applications may retry cached credentials automatically after a password change."
+                        ],
+    "related_event_ids":  [
+                              "4624",
+                              "4648",
+                              "4740"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1110.001",
+                              "technique_name":  "Brute Force: Password Guessing"
+                          },
+                          {
+                              "technique_id":  "T1110.003",
+                              "technique_name":  "Brute Force: Password Spraying"
+                          },
+                          {
+                              "technique_id":  "T1078",
+                              "technique_name":  "Valid Accounts"
+                          }
+                      ],
+    "detection_notes":  "A single failure is rarely actionable; analyze aggregation and sequence. High-value patterns include one account failing from many source addresses, one source trying many accounts, bursts against RDP or SMB, and a successful 4624 shortly after repeated failures. Establish baselines for service accounts and noisy applications before applying fixed thresholds. Mapped ATT\u0026CK techniques: T1110.001, T1110.003, T1078.",
+    "kql_snippet":  "SecurityEvent\n| where EventID == 4625\n| summarize FailedCount = count() by TargetAccount = Account, IpAddress, bin(TimeGenerated, 5m)\n| where FailedCount \u003e 10\n| order by FailedCount desc",
+    "spl_snippet":  "index=wineventlog EventCode=4625\n| bucket _time span=5m\n| stats count as FailedCount by _time, Account_Name, Source_Network_Address\n| where FailedCount \u003e 10",
+    "sample_log":  "Account For Which Logon Failed: CORP\\jsmith\nFailure Reason: Unknown user name or bad password\nStatus: 0xC000006D\nSub Status: 0xC000006A\nLogon Type: 3\nSource Network Address: 10.x.x.x\nSource Port: 51422",
+    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4625"
 }

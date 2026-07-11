@@ -1,1 +1,45 @@
-{"id":"4765","source":"windows_security","category":"AccountMgmt","name":"SID History was added to an account","priority":"P1","applicable_version":"Windows Server 2008 R2 and later; Windows 7 and later","last_reviewed":"2026-07-10","definition":"Windows Security Event ID 4765 records addition of SID History to an account, a rare operation with significant privilege implications.","trigger_scenarios":"A domain controller logs the event when an SID is added to the sIDHistory attribute of an account, typically during approved domain migration.","key_fields":[{"field":"Target Account","explanation":"The account receiving SID History. Resolve its current domain role and group memberships."},{"field":"SID History","explanation":"The historical SID added to the account. A privileged SID can grant inherited access across resources."},{"field":"Subject","explanation":"The account performing the modification. This should normally be a controlled migration process."}],"false_positives":["Approved Active Directory migration projects legitimately add SID History.","Test migrations can generate the event in lab or staging domains."],"related_event_ids":["4766","4738","4720"],"attck_mapping":[{"technique_id":"T1098","technique_name":"Account Manipulation"}],"detection_notes":"Treat production 4765 events as high priority unless tied to a documented migration. Verify the added SID, target account privileges, actor, and whether the account subsequently accesses resources normally reserved for the old identity.","kql_snippet":"SecurityEvent\n| where EventID == 4765\n| project TimeGenerated, Computer, Account, TargetAccount, SidHistory\n| order by TimeGenerated desc","spl_snippet":"index=wineventlog EventCode=4765\n| table _time, host, SubjectUserName, TargetUserName, SidHistory","sample_log":"Subject: CORP\\migration.service\nTarget Account: CORP\\jsmith\nSID History: S-1-5-21-REDACTED-512","source_url":"https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4765"}
+{
+    "id":  "4765",
+    "source":  "windows_security",
+    "category":  "AccountMgmt",
+    "name":  "SID History was added to an account",
+    "priority":  "P1",
+    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
+    "last_reviewed":  "2026-07-10",
+    "definition":  "Windows Security Event ID 4765 records addition of SID History to an account, a rare operation with significant privilege implications.",
+    "trigger_scenarios":  "A domain controller logs the event when an SID is added to the sIDHistory attribute of an account, typically during approved domain migration.",
+    "key_fields":  [
+                       {
+                           "field":  "Target Account",
+                           "explanation":  "The account receiving SID History. Resolve its current domain role and group memberships."
+                       },
+                       {
+                           "field":  "SID History",
+                           "explanation":  "The historical SID added to the account. A privileged SID can grant inherited access across resources."
+                       },
+                       {
+                           "field":  "Subject",
+                           "explanation":  "The account performing the modification. This should normally be a controlled migration process."
+                       }
+                   ],
+    "false_positives":  [
+                            "Approved Active Directory migration projects legitimately add SID History.",
+                            "Test migrations can generate the event in lab or staging domains."
+                        ],
+    "related_event_ids":  [
+                              "4766",
+                              "4738",
+                              "4720"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1098",
+                              "technique_name":  "Account Manipulation"
+                          }
+                      ],
+    "detection_notes":  "Treat production 4765 events as high priority unless tied to a documented migration. Verify the added SID, target account privileges, actor, and whether the account subsequently accesses resources normally reserved for the old identity. Mapped ATT\u0026CK techniques: T1098.",
+    "kql_snippet":  "SecurityEvent\n| where EventID == 4765\n| project TimeGenerated, Computer, Account, TargetAccount, SidHistory\n| order by TimeGenerated desc",
+    "spl_snippet":  "index=wineventlog EventCode=4765\n| table _time, host, SubjectUserName, TargetUserName, SidHistory",
+    "sample_log":  "Subject: CORP\\migration.service\nTarget Account: CORP\\jsmith\nSID History: S-1-5-21-REDACTED-512",
+    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4765"
+}

@@ -1,20 +1,54 @@
 {
-  "id": "4768", "source": "windows_security", "category": "Kerberos", "name": "A Kerberos authentication ticket (TGT) was requested", "priority": "P1",
-  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later", "last_reviewed": "2026-07-10",
-  "definition": "Windows Security Event ID 4768 records a Kerberos ticket-granting ticket request on a domain controller and provides visibility into domain authentication activity.",
-  "trigger_scenarios": "A domain controller logs this event when it receives a request for a ticket-granting ticket, including successful requests and requests that fail pre-authentication or policy checks.",
-  "key_fields": [
-    { "field": "Account Name", "explanation": "The principal requesting the TGT. Examine privileged, disabled, dormant, and unusual account names with extra care." },
-    { "field": "Client Address", "explanation": "The requesting device address. It supports mapping authentication activity to workstations, VPN addresses, and unexpected network segments." },
-    { "field": "Ticket Encryption Type", "explanation": "The encryption type selected for the ticket. Legacy encryption or deviations from the account baseline can be relevant to Kerberos hardening and attack investigations." },
-    { "field": "Failure Code", "explanation": "A non-zero result explains failed ticket requests. Repeated failures from one source or against many accounts can indicate password spraying or configuration problems." }
-  ],
-  "false_positives": ["Normal workstation logons and service restarts generate TGT requests routinely.", "VPN reconnects, network changes, and expired cached tickets can create bursts of expected requests.", "Legacy applications may legitimately request older Kerberos encryption types in environments that have not completed hardening."],
-  "related_event_ids": ["4769", "4771", "4624"],
-  "attck_mapping": [{ "technique_id": "T1558", "technique_name": "Steal or Forge Kerberos Tickets" }, { "technique_id": "T1110.003", "technique_name": "Brute Force: Password Spraying" }],
-  "detection_notes": "Use 4768 primarily for authentication baselining and correlation. Investigate unusual client addresses for privileged accounts, unexpected encryption types, repeated failures, and TGT requests that do not align with endpoint logon evidence. Pair it with 4769 and 4771 on the same domain controller.",
-  "kql_snippet": "SecurityEvent\n| where EventID == 4768\n| project TimeGenerated, Computer, TargetAccount, IpAddress, TicketEncryptionType, Status\n| order by TimeGenerated desc",
-  "spl_snippet": "index=wineventlog EventCode=4768\n| table _time, host, Account_Name, Client_Address, Ticket_Encryption_Type, Failure_Code",
-  "sample_log": "Account Name: jsmith@CORP.EXAMPLE\nService Name: krbtgt/CORP.EXAMPLE\nClient Address: 10.x.x.x\nTicket Encryption Type: 0x12\nFailure Code: 0x0",
-  "source_url": "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4768"
+    "id":  "4768",
+    "source":  "windows_security",
+    "category":  "Kerberos",
+    "name":  "A Kerberos authentication ticket (TGT) was requested",
+    "priority":  "P1",
+    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
+    "last_reviewed":  "2026-07-11",
+    "definition":  "Event ID 4768 records a Kerberos ticket-granting ticket (TGT) request handled by a domain controller. Its Pre-Authentication Type is the primary log-based signal for AS-REP Roasting.",
+    "trigger_scenarios":  "A domain controller logs the event on every TGT request, whether it succeeds, fails pre-authentication, or is rejected for policy reasons such as an unknown principal or disabled account.",
+    "key_fields":  [
+                       {
+                           "field":  "Pre-Authentication Type",
+                           "explanation":  "A value of 0 means the KDC issued a TGT without encrypted-timestamp pre-authentication. This occurs only when the account has the \u0027Do not require Kerberos preauthentication\u0027 flag and is the exact condition AS-REP Roasting uses."
+                       },
+                       {
+                           "field":  "Ticket Encryption Type",
+                           "explanation":  "0x11 and 0x12 are AES128 and AES256; 0x17 is RC4-HMAC; 0x1 and 0x3 are legacy DES. RC4 is cheaper to crack offline, while DES should not appear in a hardened domain."
+                       },
+                       {
+                           "field":  "Account Name",
+                           "explanation":  "The principal requesting the TGT. Compare privileged, service, and dormant accounts with the reviewed preauthentication-exception list."
+                       },
+                       {
+                           "field":  "Failure Code",
+                           "explanation":  "0x6 (KDC_ERR_C_PRINCIPAL_UNKNOWN) against many accounts from one source indicates username enumeration or a password-spray precursor."
+                       }
+                   ],
+    "false_positives":  [
+                            "A small, documented set of legacy service accounts can have preauthentication disabled for compatibility.",
+                            "Normal workstation logons and service restarts generate high volumes of fully pre-authenticated 4768 events.",
+                            "VPN reconnects and expired cached tickets can create expected bursts."
+                        ],
+    "related_event_ids":  [
+                              "4769",
+                              "4771",
+                              "4624"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1558.004",
+                              "technique_name":  "Steal or Forge Kerberos Tickets: AS-REP Roasting"
+                          },
+                          {
+                              "technique_id":  "T1110.003",
+                              "technique_name":  "Brute Force: Password Spraying"
+                          }
+                      ],
+    "detection_notes":  "Pre-Authentication Type = 0 for an account outside the reviewed exception list makes T1558.004 AS-REP Roasting possible: an attacker can request a TGT without a password and crack its encrypted portion offline. Alert on every non-exempt occurrence. In an AES-only domain, 0x17 (RC4) or DES is independently suspicious because it weakens offline cracking resistance. A burst of Failure Code 0x6 against distinct account names from one source is a T1110.003 password-spraying or enumeration precursor; correlate it with 4625 and 4771.",
+    "kql_snippet":  "SecurityEvent\n| where EventID == 4768\n| where PreAuthType == \"0\"\n| project TimeGenerated, Computer, TargetAccount, IpAddress, TicketEncryptionType, PreAuthType",
+    "spl_snippet":  "index=wineventlog EventCode=4768 Pre_Authentication_Type=0\n| table _time, host, Account_Name, Client_Address, Ticket_Encryption_Type",
+    "sample_log":  "Account Name: svc-legacy@CORP.EXAMPLE\nClient Address: 10.x.x.x\nTicket Encryption Type: 0x17\nPre-Authentication Type: 0\nFailure Code: 0x0",
+    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4768"
 }

@@ -1,20 +1,55 @@
 {
-  "id": "4720", "source": "windows_security", "category": "AccountMgmt", "name": "A user account was created", "priority": "P1",
-  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later", "last_reviewed": "2026-07-10",
-  "definition": "Windows Security Event ID 4720 records creation of a local or domain user account and is a high-value signal for unauthorized persistence and account abuse.",
-  "trigger_scenarios": "The event is generated when a security principal creates a user account on the audited computer or in Active Directory, depending on where the account is created.",
-  "key_fields": [
-    { "field": "Subject", "explanation": "The account that performed the creation. Validate whether it is an approved administrator, automation identity, or a potentially compromised privileged account." },
-    { "field": "Target Account", "explanation": "The new account name, domain, and security identifier. Look for names that imitate built-in accounts or established administrators." },
-    { "field": "Account Expires / Password Last Set", "explanation": "Account properties provide initial context. Long-lived accounts with passwords set at creation can be more useful to investigate than short-lived provisioning accounts." },
-    { "field": "User Principal Name", "explanation": "For domain accounts, this identifies the UPN assigned to the new identity and helps correlate the account across directory and cloud telemetry." }
-  ],
-  "false_positives": ["HR-driven onboarding and automated identity provisioning regularly create valid accounts.", "Application installers and lab environments may create local service identities.", "Migration projects can create accounts in bursts that are unusual but authorized."],
-  "related_event_ids": ["4722", "4724", "4728", "4732"],
-  "attck_mapping": [{ "technique_id": "T1136", "technique_name": "Create Account" }, { "technique_id": "T1098", "technique_name": "Account Manipulation" }],
-  "detection_notes": "Alert on account creation by unusual administrators, outside approved provisioning windows, on servers where local account creation is rare, or followed rapidly by group membership changes and interactive logons. Maintain allowlists for identity-management systems but preserve the actor and target context for auditability.",
-  "kql_snippet": "SecurityEvent\n| where EventID == 4720\n| project TimeGenerated, Computer, SubjectAccount = Account, TargetAccount, TargetDomainName, TargetSid\n| order by TimeGenerated desc",
-  "spl_snippet": "index=wineventlog EventCode=4720\n| table _time, host, SubjectUserName, TargetUserName, TargetDomainName, TargetSid",
-  "sample_log": "Subject: Account Name: CORP\\admin.ops\nTarget Account: Account Name: svc_backup2\nTarget Domain: CORP\nTarget SID: S-1-5-21-REDACTED\nUser Principal Name: svc_backup2@corp.example",
-  "source_url": "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4720"
+    "id":  "4720",
+    "source":  "windows_security",
+    "category":  "AccountMgmt",
+    "name":  "A user account was created",
+    "priority":  "P1",
+    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
+    "last_reviewed":  "2026-07-10",
+    "definition":  "Windows Security Event ID 4720 records creation of a local or domain user account and is a high-value signal for unauthorized persistence and account abuse.",
+    "trigger_scenarios":  "The event is generated when a security principal creates a user account on the audited computer or in Active Directory, depending on where the account is created.",
+    "key_fields":  [
+                       {
+                           "field":  "Subject",
+                           "explanation":  "The account that performed the creation. Validate whether it is an approved administrator, automation identity, or a potentially compromised privileged account."
+                       },
+                       {
+                           "field":  "Target Account",
+                           "explanation":  "The new account name, domain, and security identifier. Look for names that imitate built-in accounts or established administrators."
+                       },
+                       {
+                           "field":  "Account Expires / Password Last Set",
+                           "explanation":  "Account properties provide initial context. Long-lived accounts with passwords set at creation can be more useful to investigate than short-lived provisioning accounts."
+                       },
+                       {
+                           "field":  "User Principal Name",
+                           "explanation":  "For domain accounts, this identifies the UPN assigned to the new identity and helps correlate the account across directory and cloud telemetry."
+                       }
+                   ],
+    "false_positives":  [
+                            "HR-driven onboarding and automated identity provisioning regularly create valid accounts.",
+                            "Application installers and lab environments may create local service identities.",
+                            "Migration projects can create accounts in bursts that are unusual but authorized."
+                        ],
+    "related_event_ids":  [
+                              "4722",
+                              "4724",
+                              "4728",
+                              "4732"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1136",
+                              "technique_name":  "Create Account"
+                          },
+                          {
+                              "technique_id":  "T1098",
+                              "technique_name":  "Account Manipulation"
+                          }
+                      ],
+    "detection_notes":  "Alert on account creation by unusual administrators, outside approved provisioning windows, on servers where local account creation is rare, or followed rapidly by group membership changes and interactive logons. Maintain allowlists for identity-management systems but preserve the actor and target context for auditability. Mapped ATT\u0026CK techniques: T1136, T1098.",
+    "kql_snippet":  "SecurityEvent\n| where EventID == 4720\n| project TimeGenerated, Computer, SubjectAccount = Account, TargetAccount, TargetDomainName, TargetSid\n| order by TimeGenerated desc",
+    "spl_snippet":  "index=wineventlog EventCode=4720\n| table _time, host, SubjectUserName, TargetUserName, TargetDomainName, TargetSid",
+    "sample_log":  "Subject: Account Name: CORP\\admin.ops\nTarget Account: Account Name: svc_backup2\nTarget Domain: CORP\nTarget SID: S-1-5-21-REDACTED\nUser Principal Name: svc_backup2@corp.example",
+    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4720"
 }

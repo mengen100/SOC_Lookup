@@ -1,1 +1,45 @@
-{"id":"4740","source":"windows_security","category":"AccountMgmt","name":"A user account was locked out","priority":"P1","applicable_version":"Windows Server 2008 R2 and later; Windows 7 and later","last_reviewed":"2026-07-10","definition":"Windows Security Event ID 4740 records a domain account lockout and is a key correlation point for brute-force activity and stale credential troubleshooting.","trigger_scenarios":"A domain controller generates the event when failed authentication reaches the configured account-lockout threshold.","key_fields":[{"field":"Account That Was Locked Out","explanation":"The affected account. Determine whether it is a user, privileged, service, or shared identity."},{"field":"Caller Computer Name","explanation":"The computer that submitted the failed credentials. This is often the fastest path to the underlying source."},{"field":"Subject","explanation":"The domain controller context that recorded the lockout; it is not necessarily the user who caused it."}],"false_positives":["Stale credentials in services, mobile devices, and mapped drives commonly cause lockouts.","Users can lock themselves out by repeatedly entering an old password."],"related_event_ids":["4625","4776","4768"],"attck_mapping":[{"technique_id":"T1110","technique_name":"Brute Force"}],"detection_notes":"Correlate 4740 with preceding 4625 and 4776 activity by account and caller computer. Escalate lockouts affecting privileged accounts, multiple accounts from one source, or lockouts followed by successful access.","kql_snippet":"SecurityEvent\n| where EventID == 4740\n| project TimeGenerated, Computer, TargetAccount, CallerComputerName\n| order by TimeGenerated desc","spl_snippet":"index=wineventlog EventCode=4740\n| table _time, host, TargetUserName, CallerComputerName","sample_log":"Account That Was Locked Out: CORP\\jsmith\nCaller Computer Name: WS-014\nComputer: DC01","source_url":"https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4740"}
+{
+    "id":  "4740",
+    "source":  "windows_security",
+    "category":  "AccountMgmt",
+    "name":  "A user account was locked out",
+    "priority":  "P1",
+    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
+    "last_reviewed":  "2026-07-10",
+    "definition":  "Windows Security Event ID 4740 records a domain account lockout and is a key correlation point for brute-force activity and stale credential troubleshooting.",
+    "trigger_scenarios":  "A domain controller generates the event when failed authentication reaches the configured account-lockout threshold.",
+    "key_fields":  [
+                       {
+                           "field":  "Account That Was Locked Out",
+                           "explanation":  "The affected account. Determine whether it is a user, privileged, service, or shared identity."
+                       },
+                       {
+                           "field":  "Caller Computer Name",
+                           "explanation":  "The computer that submitted the failed credentials. This is often the fastest path to the underlying source."
+                       },
+                       {
+                           "field":  "Subject",
+                           "explanation":  "The domain controller context that recorded the lockout; it is not necessarily the user who caused it."
+                       }
+                   ],
+    "false_positives":  [
+                            "Stale credentials in services, mobile devices, and mapped drives commonly cause lockouts.",
+                            "Users can lock themselves out by repeatedly entering an old password."
+                        ],
+    "related_event_ids":  [
+                              "4625",
+                              "4776",
+                              "4768"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1110",
+                              "technique_name":  "Brute Force"
+                          }
+                      ],
+    "detection_notes":  "Correlate 4740 with preceding 4625 and 4776 activity by account and caller computer. Escalate lockouts affecting privileged accounts, multiple accounts from one source, or lockouts followed by successful access. Mapped ATT\u0026CK techniques: T1110.",
+    "kql_snippet":  "SecurityEvent\n| where EventID == 4740\n| project TimeGenerated, Computer, TargetAccount, CallerComputerName\n| order by TimeGenerated desc",
+    "spl_snippet":  "index=wineventlog EventCode=4740\n| table _time, host, TargetUserName, CallerComputerName",
+    "sample_log":  "Account That Was Locked Out: CORP\\jsmith\nCaller Computer Name: WS-014\nComputer: DC01",
+    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4740"
+}

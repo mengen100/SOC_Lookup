@@ -1,1 +1,45 @@
-{"id":"4698","source":"windows_security","category":"ScheduledTask","name":"A scheduled task was created","priority":"P1","applicable_version":"Windows Server 2016 and later; Windows 10 and later","last_reviewed":"2026-07-10","definition":"Windows Security Event ID 4698 records creation of a scheduled task and supports detection of task-based persistence and execution.","trigger_scenarios":"The event is written when a scheduled task is registered and Task Scheduler auditing is enabled.","key_fields":[{"field":"Task Name","explanation":"The task path and name. Hidden-looking names, names that imitate Microsoft tasks, and new tasks on servers are useful pivots."},{"field":"Task Content","explanation":"The XML task definition includes command, arguments, trigger, principal, and run level."},{"field":"Subject","explanation":"The creating account. Review whether its role and logon context authorize task creation."}],"false_positives":["Enterprise management agents and software updaters create scheduled tasks.","Administrators and developers may create one-time maintenance tasks."],"related_event_ids":["4702","4699","4688"],"attck_mapping":[{"technique_id":"T1053.005","technique_name":"Scheduled Task/Job: Scheduled Task"}],"detection_notes":"Investigate tasks that run from user-writable paths, use script interpreters, run as SYSTEM, execute at logon, or are created immediately after remote authentication. Parse Task Content rather than relying only on the task name.","kql_snippet":"SecurityEvent\n| where EventID == 4698\n| project TimeGenerated, Computer, Account, TaskName, TaskContent\n| order by TimeGenerated desc","spl_snippet":"index=wineventlog EventCode=4698\n| table _time, host, SubjectUserName, TaskName, TaskContent","sample_log":"Task Name: \\Microsoft\\Windows\\Update\\CacheRefresh\nTask Content: <Exec><Command>powershell.exe</Command><Arguments>-File C:\\Users\\Public\\refresh.ps1</Arguments></Exec>\nSubject: CORP\\admin.ops","source_url":"https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4698"}
+{
+    "id":  "4698",
+    "source":  "windows_security",
+    "category":  "ScheduledTask",
+    "name":  "A scheduled task was created",
+    "priority":  "P1",
+    "applicable_version":  "Windows Server 2016 and later; Windows 10 and later",
+    "last_reviewed":  "2026-07-10",
+    "definition":  "Windows Security Event ID 4698 records creation of a scheduled task and supports detection of task-based persistence and execution.",
+    "trigger_scenarios":  "The event is written when a scheduled task is registered and Task Scheduler auditing is enabled.",
+    "key_fields":  [
+                       {
+                           "field":  "Task Name",
+                           "explanation":  "The task path and name. Hidden-looking names, names that imitate Microsoft tasks, and new tasks on servers are useful pivots."
+                       },
+                       {
+                           "field":  "Task Content",
+                           "explanation":  "The XML task definition includes command, arguments, trigger, principal, and run level."
+                       },
+                       {
+                           "field":  "Subject",
+                           "explanation":  "The creating account. Review whether its role and logon context authorize task creation."
+                       }
+                   ],
+    "false_positives":  [
+                            "Enterprise management agents and software updaters create scheduled tasks.",
+                            "Administrators and developers may create one-time maintenance tasks."
+                        ],
+    "related_event_ids":  [
+                              "4702",
+                              "4699",
+                              "4688"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1053.005",
+                              "technique_name":  "Scheduled Task/Job: Scheduled Task"
+                          }
+                      ],
+    "detection_notes":  "Investigate tasks that run from user-writable paths, use script interpreters, run as SYSTEM, execute at logon, or are created immediately after remote authentication. Parse Task Content rather than relying only on the task name. Mapped ATT\u0026CK techniques: T1053.005.",
+    "kql_snippet":  "SecurityEvent\n| where EventID == 4698\n| project TimeGenerated, Computer, Account, TaskName, TaskContent\n| order by TimeGenerated desc",
+    "spl_snippet":  "index=wineventlog EventCode=4698\n| table _time, host, SubjectUserName, TaskName, TaskContent",
+    "sample_log":  "Task Name: \\Microsoft\\Windows\\Update\\CacheRefresh\nTask Content: \u003cExec\u003e\u003cCommand\u003epowershell.exe\u003c/Command\u003e\u003cArguments\u003e-File C:\\Users\\Public\\refresh.ps1\u003c/Arguments\u003e\u003c/Exec\u003e\nSubject: CORP\\admin.ops",
+    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4698"
+}

@@ -1,1 +1,45 @@
-{"id":"4738","source":"windows_security","category":"AccountMgmt","name":"A user account was changed","priority":"P1","applicable_version":"Windows Server 2008 R2 and later; Windows 7 and later","last_reviewed":"2026-07-10","definition":"Windows Security Event ID 4738 records a change to a user account and provides visibility into security-relevant attribute modification.","trigger_scenarios":"A domain controller logs the event when account properties such as UAC flags, delegation settings, password attributes, or profile fields are changed.","key_fields":[{"field":"Subject","explanation":"The account that performed the modification."},{"field":"Target Account","explanation":"The modified account. Compare old and new values with the expected identity state."},{"field":"Changed Attributes","explanation":"Fields such as User Account Control, AllowedToDelegateTo, and AccountExpires reveal the security impact of the change."}],"false_positives":["HR systems and directory synchronization update account attributes routinely.","Administrators may modify account properties during access provisioning."],"related_event_ids":["4720","4722","4724"],"attck_mapping":[{"technique_id":"T1098","technique_name":"Account Manipulation"}],"detection_notes":"Prioritize changes that enable accounts, alter delegation, modify password-related settings, or affect privileged identities. Preserve before-and-after values and correlate the actor with a change request or automation source.","kql_snippet":"SecurityEvent\n| where EventID == 4738\n| project TimeGenerated, Computer, Account, TargetAccount, UserAccountControl, AllowedToDelegateTo\n| order by TimeGenerated desc","spl_snippet":"index=wineventlog EventCode=4738\n| table _time, host, SubjectUserName, TargetUserName, UserAccountControl, AllowedToDelegateTo","sample_log":"Subject: CORP\\admin.ops\nTarget Account: CORP\\jsmith\nUser Account Control: Account enabled\nAllowedToDelegateTo: cifs/file01.corp.example","source_url":"https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4738"}
+{
+    "id":  "4738",
+    "source":  "windows_security",
+    "category":  "AccountMgmt",
+    "name":  "A user account was changed",
+    "priority":  "P1",
+    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
+    "last_reviewed":  "2026-07-10",
+    "definition":  "Windows Security Event ID 4738 records a change to a user account and provides visibility into security-relevant attribute modification.",
+    "trigger_scenarios":  "A domain controller logs the event when account properties such as UAC flags, delegation settings, password attributes, or profile fields are changed.",
+    "key_fields":  [
+                       {
+                           "field":  "Subject",
+                           "explanation":  "The account that performed the modification."
+                       },
+                       {
+                           "field":  "Target Account",
+                           "explanation":  "The modified account. Compare old and new values with the expected identity state."
+                       },
+                       {
+                           "field":  "Changed Attributes",
+                           "explanation":  "Fields such as User Account Control, AllowedToDelegateTo, and AccountExpires reveal the security impact of the change."
+                       }
+                   ],
+    "false_positives":  [
+                            "HR systems and directory synchronization update account attributes routinely.",
+                            "Administrators may modify account properties during access provisioning."
+                        ],
+    "related_event_ids":  [
+                              "4720",
+                              "4722",
+                              "4724"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1098",
+                              "technique_name":  "Account Manipulation"
+                          }
+                      ],
+    "detection_notes":  "Prioritize changes that enable accounts, alter delegation, modify password-related settings, or affect privileged identities. Preserve before-and-after values and correlate the actor with a change request or automation source. Mapped ATT\u0026CK techniques: T1098.",
+    "kql_snippet":  "SecurityEvent\n| where EventID == 4738\n| project TimeGenerated, Computer, Account, TargetAccount, UserAccountControl, AllowedToDelegateTo\n| order by TimeGenerated desc",
+    "spl_snippet":  "index=wineventlog EventCode=4738\n| table _time, host, SubjectUserName, TargetUserName, UserAccountControl, AllowedToDelegateTo",
+    "sample_log":  "Subject: CORP\\admin.ops\nTarget Account: CORP\\jsmith\nUser Account Control: Account enabled\nAllowedToDelegateTo: cifs/file01.corp.example",
+    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4738"
+}

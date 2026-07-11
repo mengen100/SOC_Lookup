@@ -1,1 +1,45 @@
-{"id":"4634","source":"windows_security","category":"Logon","name":"An account was logged off","priority":"P1","applicable_version":"Windows Server 2008 R2 and later; Windows 7 and later","last_reviewed":"2026-07-10","definition":"Windows Security Event ID 4634 records termination of a logon session and helps bound the duration of user and service activity.","trigger_scenarios":"Windows writes the event when a logon session ends because of user sign-out, shutdown, disconnect, or service termination.","key_fields":[{"field":"Subject","explanation":"The account associated with the ending session."},{"field":"Logon Type","explanation":"The session type, such as network or RemoteInteractive."},{"field":"Logon ID","explanation":"Use this identifier to correlate the event with 4624 and related activity."}],"false_positives":["Normal session completion generates frequent events.","Service and network sessions can end rapidly under normal application behavior."],"related_event_ids":["4624","4647","4778"],"attck_mapping":[{"technique_id":"T1078","technique_name":"Valid Accounts"}],"detection_notes":"Use 4634 for timeline reconstruction, not as a standalone alert. Pair it with 4624 by Logon ID to establish session duration, then inspect privileged or remote sessions that end unexpectedly after sensitive activity.","kql_snippet":"SecurityEvent\n| where EventID in (4624, 4634)\n| project TimeGenerated, EventID, Computer, Account, LogonType, TargetLogonId\n| order by TimeGenerated asc","spl_snippet":"index=wineventlog EventCode=4634\n| table _time, host, TargetUserName, LogonType, TargetLogonId","sample_log":"Target Account: CORP\\jsmith\nLogon Type: 10\nLogon ID: 0x1a2b3c","source_url":"https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4634"}
+{
+    "id":  "4634",
+    "source":  "windows_security",
+    "category":  "Logon",
+    "name":  "An account was logged off",
+    "priority":  "P1",
+    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
+    "last_reviewed":  "2026-07-10",
+    "definition":  "Windows Security Event ID 4634 records termination of a logon session and helps bound the duration of user and service activity.",
+    "trigger_scenarios":  "Windows writes the event when a logon session ends because of user sign-out, shutdown, disconnect, or service termination.",
+    "key_fields":  [
+                       {
+                           "field":  "Subject",
+                           "explanation":  "The account associated with the ending session."
+                       },
+                       {
+                           "field":  "Logon Type",
+                           "explanation":  "The session type, such as network or RemoteInteractive."
+                       },
+                       {
+                           "field":  "Logon ID",
+                           "explanation":  "Use this identifier to correlate the event with 4624 and related activity."
+                       }
+                   ],
+    "false_positives":  [
+                            "Normal session completion generates frequent events.",
+                            "Service and network sessions can end rapidly under normal application behavior."
+                        ],
+    "related_event_ids":  [
+                              "4624",
+                              "4647",
+                              "4778"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1078",
+                              "technique_name":  "Valid Accounts"
+                          }
+                      ],
+    "detection_notes":  "Use 4634 for timeline reconstruction, not as a standalone alert. Pair it with 4624 by Logon ID to establish session duration, then inspect privileged or remote sessions that end unexpectedly after sensitive activity. Mapped ATT\u0026CK techniques: T1078.",
+    "kql_snippet":  "SecurityEvent\n| where EventID in (4624, 4634)\n| project TimeGenerated, EventID, Computer, Account, LogonType, TargetLogonId\n| order by TimeGenerated asc",
+    "spl_snippet":  "index=wineventlog EventCode=4634\n| table _time, host, TargetUserName, LogonType, TargetLogonId",
+    "sample_log":  "Target Account: CORP\\jsmith\nLogon Type: 10\nLogon ID: 0x1a2b3c",
+    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4634"
+}

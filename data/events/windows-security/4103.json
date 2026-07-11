@@ -1,1 +1,45 @@
-{"id":"4103","source":"windows_security","category":"PowerShell","name":"PowerShell Module Logging","priority":"P1","applicable_version":"Windows PowerShell 3.0 and later with Module Logging enabled","last_reviewed":"2026-07-10","definition":"PowerShell Event ID 4103 records pipeline execution details for configured modules and provides command-level context for PowerShell activity.","trigger_scenarios":"The PowerShell operational log writes this event when Module Logging is enabled and a configured module processes commands.","key_fields":[{"field":"Payload","explanation":"The logged command and parameter data. Review it with the associated host and user context."},{"field":"HostApplication","explanation":"The PowerShell host command line, which can expose encoded commands and noninteractive execution."},{"field":"UserId","explanation":"The security principal running the pipeline."}],"false_positives":["Administrative automation and configuration management often generate extensive module logging.","Developer and operations systems can have diverse PowerShell command activity."],"related_event_ids":["4104","4688","4624"],"attck_mapping":[{"technique_id":"T1059.001","technique_name":"Command and Scripting Interpreter: PowerShell"}],"detection_notes":"Use 4103 alongside 4104: Module Logging gives pipeline context, while Script Block Logging captures code. Prioritize web download, remoting, credential, and encoded-command activity from unusual users or hosts.","kql_snippet":"Event\n| where Source == \"Microsoft-Windows-PowerShell\" and EventID == 4103\n| project TimeGenerated, Computer, UserName, RenderedDescription\n| order by TimeGenerated desc","spl_snippet":"index=wineventlog source=\"WinEventLog:Microsoft-Windows-PowerShell/Operational\" EventCode=4103\n| table _time, host, UserId, HostApplication, Payload","sample_log":"EventCode: 4103\nUserId: CORP\\jsmith\nHostApplication: powershell.exe -NoProfile\nPayload: CommandInvocation(Invoke-WebRequest): \"Invoke-WebRequest\"","source_url":"https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows"}
+{
+    "id":  "4103",
+    "source":  "windows_security",
+    "category":  "PowerShell",
+    "name":  "PowerShell Module Logging",
+    "priority":  "P1",
+    "applicable_version":  "Windows PowerShell 3.0 and later with Module Logging enabled",
+    "last_reviewed":  "2026-07-10",
+    "definition":  "PowerShell Event ID 4103 records pipeline execution details for configured modules and provides command-level context for PowerShell activity.",
+    "trigger_scenarios":  "The PowerShell operational log writes this event when Module Logging is enabled and a configured module processes commands.",
+    "key_fields":  [
+                       {
+                           "field":  "Payload",
+                           "explanation":  "The logged command and parameter data. Review it with the associated host and user context."
+                       },
+                       {
+                           "field":  "HostApplication",
+                           "explanation":  "The PowerShell host command line, which can expose encoded commands and noninteractive execution."
+                       },
+                       {
+                           "field":  "UserId",
+                           "explanation":  "The security principal running the pipeline."
+                       }
+                   ],
+    "false_positives":  [
+                            "Administrative automation and configuration management often generate extensive module logging.",
+                            "Developer and operations systems can have diverse PowerShell command activity."
+                        ],
+    "related_event_ids":  [
+                              "4104",
+                              "4688",
+                              "4624"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1059.001",
+                              "technique_name":  "Command and Scripting Interpreter: PowerShell"
+                          }
+                      ],
+    "detection_notes":  "Use 4103 alongside 4104: Module Logging gives pipeline context, while Script Block Logging captures code. Prioritize web download, remoting, credential, and encoded-command activity from unusual users or hosts. Mapped ATT\u0026CK techniques: T1059.001.",
+    "kql_snippet":  "Event\n| where Source == \"Microsoft-Windows-PowerShell\" and EventID == 4103\n| project TimeGenerated, Computer, UserName, RenderedDescription\n| order by TimeGenerated desc",
+    "spl_snippet":  "index=wineventlog source=\"WinEventLog:Microsoft-Windows-PowerShell/Operational\" EventCode=4103\n| table _time, host, UserId, HostApplication, Payload",
+    "sample_log":  "EventCode: 4103\nUserId: CORP\\jsmith\nHostApplication: powershell.exe -NoProfile\nPayload: CommandInvocation(Invoke-WebRequest): \"Invoke-WebRequest\"",
+    "source_url":  "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows"
+}
