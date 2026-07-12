@@ -1,0 +1,45 @@
+{
+  "id": "4706",
+  "source": "windows_security",
+  "category": "Trust",
+  "name": "A new trust was created to a domain",
+  "priority": "P2",
+  "applicable_version": "Windows Server 2008 R2 and later",
+  "last_reviewed": "2026-07-12",
+  "definition": "Windows Security Event ID 4706 records that a new Active Directory domain trust was created on a domain controller, logging the new trust's target domain, type, direction, and attribute bitmask.",
+  "trigger_scenarios": "A domain administrator runs netdom, the Active Directory Domains and Trusts console, or PowerShell to create a trust between the local domain and another. This is a low-frequency infrastructure operation and should only occur during planned directory changes.",
+  "key_fields": [
+    {
+      "field": "Trust Information\\Trust Type",
+      "explanation": "The kind of trust object created. Type 2 (Forest Trust) and Type 3 (External Trust) are the high-risk values because they expand the authentication boundary beyond the local domain: a forest trust creates a transitive path across all domains in the trusted forest, while an external trust creates a non-transitive path to a specific external domain."
+    },
+    {
+      "field": "Trust Information\\Trust Direction",
+      "explanation": "The direction of authentication flow. Direction 0 = Disabled, 1 = Inbound (the trusted domain can authenticate to this one), 2 = Outbound (this domain's users can authenticate to the trusted domain), 3 = Bidirectional. Direction 3 (Bidirectional) creates the largest exposure and is the most commonly abused for cross-forest lateral movement."
+    },
+    {
+      "field": "Trust Information\\Trust Attributes",
+      "explanation": "A bitmask of additional trust properties. Bit 0x8 (FOREST_TRANSITIVE) means the trust is transitive across the entire trusted forest. Bit 0x10 (CROSS_ORGANIZATION) marks trusts across separate organizations. An unexpected 0x8 or 0x10 value in a new trust should be validated against the change ticket before the domain controller replicates the object."
+    },
+    {
+      "field": "New Domain\\Domain Name / Domain SID",
+      "explanation": "The trusted domain's name and SID. Verify these against the expected target domain documented in the change-management record; an unfamiliar domain name or SID indicates an unauthorized trust."
+    }
+  ],
+  "false_positives": [
+    "Planned Active Directory forest consolidations and organizational mergers create domain trusts with appropriate change-management approval.",
+    "Azure AD Connect or hybrid identity configurations create specific trust objects that are expected in hybrid deployments."
+  ],
+  "related_event_ids": ["4707"],
+  "attck_mapping": [
+    {
+      "technique_id": "T1484.002",
+      "technique_name": "Domain Policy Modification: Trust Modification"
+    }
+  ],
+  "detection_notes": "Every 4706 should trigger a review against a change-management record, per the verbatim Microsoft recommendation: \"Any changes related to Active Directory domain trusts (especially creation of the new trust) must be monitored and alerts should be triggered.\" The concrete field values to validate are Trust Type (2=Forest, 3=External are high impact), Trust Direction (3=Bidirectional maximizes exposure), and Trust Attributes (0x8 FOREST_TRANSITIVE or 0x10 CROSS_ORGANIZATION widen scope). A T1484.002 Trust Modification scenario involves an attacker with domain-admin rights creating an unauthorized forest or external trust to an attacker-controlled domain, then using that trust to authenticate across the boundary with accounts that have no legitimate use in the victim forest. An unexpected Domain SID in New Domain\\Domain SID is the single fastest way to confirm that the target of the trust is not the expected organization.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4706\n| project TimeGenerated, Computer, SubjectUserName, DomainName, TrustType, TrustDirection, TrustAttributes",
+  "spl_snippet": "index=wineventlog EventCode=4706\n| table _time, host, SubjectUserName, DomainName, TrustType, TrustDirection, TrustAttributes",
+  "sample_log": "Subject:\n  Security ID: CORP\\svc-admin\n  Account Name: svc-admin\n  Account Domain: CORP\n  Logon ID: 0x3F1E0\nNew Domain:\n  Domain Name: evil.example\n  Domain SID: S-1-5-21-9999999999-9999999999-9999999999\nTrust Information:\n  Trust Type: 2 (Forest)\n  Trust Direction: 3 (Bidirectional)\n  Trust Attributes: 0x8",
+  "source_url": "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4706"
+}

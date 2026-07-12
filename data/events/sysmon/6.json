@@ -1,0 +1,46 @@
+{
+  "id": "6",
+  "source": "sysmon",
+  "category": "Driver",
+  "name": "Driver loaded",
+  "priority": "P2",
+  "applicable_version": "Sysmon 2.0 and later",
+  "last_reviewed": "2026-07-12",
+  "definition": "Sysmon Event ID 6 records that a kernel driver was loaded, including the driver's image path, hashes, and Authenticode signature status.",
+  "trigger_scenarios": "Sysmon logs Event ID 6 whenever the kernel loads a driver, whether at boot from a legitimate hardware or security vendor, or later through a service installation or an exploited signed driver used to gain kernel access (Bring Your Own Vulnerable Driver, BYOVD).",
+  "key_fields": [
+    {
+      "field": "SignatureStatus",
+      "explanation": "Sysmon's verified Authenticode validation result. A value other than \"Valid\" (for example \"Unsigned\" or \"Invalid\") on a driver load is the direct signal that the kernel accepted unsigned or improperly signed code, which standard Driver Signature Enforcement should have blocked unless test signing or a policy exception is active."
+    },
+    {
+      "field": "Signed",
+      "explanation": "Boolean companion to SignatureStatus; Signed=false paired with a driver loading from outside %SystemRoot%\\System32\\drivers is materially higher risk than an unsigned driver in a standard location."
+    },
+    {
+      "field": "Hashes",
+      "explanation": "SHA256/IMPHASH of the driver image. Match this value against known-vulnerable driver hash lists (LOLDrivers) to catch signed-but-abusable drivers that pass signature checks yet are documented BYOVD vectors."
+    },
+    {
+      "field": "ImageLoaded",
+      "explanation": "Full path of the driver file. A driver loading from a user-writable path such as %TEMP% or %APPDATA% instead of the driver store is inconsistent with legitimate installation."
+    }
+  ],
+  "false_positives": [
+    "New hardware installations and Windows Update driver rollouts generate legitimate Event ID 6 records for signed drivers from standard paths.",
+    "Security and virtualization vendors ship their own signed kernel drivers that load at every boot.",
+    "Test-signed drivers on developer workstations with test signing mode enabled will show SignatureStatus other than Valid without malicious intent."
+  ],
+  "related_event_ids": ["1", "7"],
+  "attck_mapping": [
+    {
+      "technique_id": "T1547.006",
+      "technique_name": "Boot or Logon Autostart Execution: Kernel Modules and Extensions"
+    }
+  ],
+  "detection_notes": "SignatureStatus not equal to \"Valid\" on a driver load is the concrete field value that indicates a kernel-mode integrity failure: Windows Driver Signature Enforcement is designed to reject exactly this condition outside test-signing mode, so its presence indicates either a disabled enforcement policy or exploitation. Independently, a driver Hashes value that matches a known LOLDrivers entry is a T1547.006 BYOVD indicator even when SignatureStatus is Valid, because the vendor's own signed driver exposes an exploitable kernel primitive (arbitrary read/write, process-kill) that malware loads deliberately for defense evasion or privilege escalation. Correlate the loading Image (via the parent Event ID 1 process) to identify whether a driver-install utility or an unexpected process performed the load, and treat any unsigned or hash-flagged driver load outside a documented maintenance window as an incident.",
+  "kql_snippet": "Sysmon\n| where EventID == 6\n| where SignatureStatus != \"Valid\"\n| project TimeGenerated, Computer, ImageLoaded, Signed, SignatureStatus, Hashes",
+  "spl_snippet": "index=sysmon EventCode=6 SignatureStatus!=Valid\n| table _time, host, ImageLoaded, Signed, SignatureStatus, Hashes",
+  "sample_log": "UtcTime: 2026-07-12 08:41:19.005\nImageLoaded: C:\\Windows\\Temp\\gdrv.sys\nHashes: SHA256=REDACTED\nSigned: false\nSignature: -\nSignatureStatus: Unsigned",
+  "source_url": "https://github.com/trustedsec/SysmonCommunityGuide"
+}

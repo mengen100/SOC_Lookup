@@ -1,0 +1,41 @@
+{
+  "id": "5",
+  "source": "sysmon",
+  "category": "Process",
+  "name": "Process terminated",
+  "priority": "P2",
+  "applicable_version": "Sysmon 1.0 and later",
+  "last_reviewed": "2026-07-12",
+  "definition": "Sysmon Event ID 5 records that a monitored process exited, logging its UtcTime, ProcessGuid, ProcessId, and Image path at termination.",
+  "trigger_scenarios": "Sysmon logs Event ID 5 every time a monitored process ends, whether through normal completion, a user closing it, a crash, or being killed by another process or by security tooling. The event carries almost no context beyond process identity, so its value is in timing correlation rather than standalone content.",
+  "key_fields": [
+    {
+      "field": "ProcessGuid",
+      "explanation": "The unique identifier for this specific process instance. Because ProcessId is reused by the OS over time, ProcessGuid is the only reliable key to join this termination back to the exact Event ID 1 creation record and any Event ID 3, 8, 10, or 11 events generated during that process's lifetime."
+    },
+    {
+      "field": "Image",
+      "explanation": "The executable path of the process that ended. A short-lived security or logging process (wevtutil.exe, vssadmin.exe, an EDR agent binary) terminating is more significant than a routine utility exiting."
+    },
+    {
+      "field": "UtcTime",
+      "explanation": "The exact termination timestamp. A termination occurring within seconds of a file-deletion (Event ID 23/26) or event-log-clear (4719/1102) timestamp for the same host supports a deliberate cleanup sequence rather than coincidence."
+    }
+  ],
+  "false_positives": [
+    "The overwhelming majority of Event ID 5 records are routine terminations of ordinary user and system processes with no security relevance.",
+    "Software updaters and installers that launch short-lived helper processes generate high volumes of this event during patch cycles."
+  ],
+  "related_event_ids": ["1", "23", "26"],
+  "attck_mapping": [
+    {
+      "technique_id": "T1070.004",
+      "technique_name": "Indicator Removal: File Deletion"
+    }
+  ],
+  "detection_notes": "Event ID 5 has no risk field of its own; the concrete signal is a timing correlation. A process previously flagged as suspicious from Event ID 1 (for example, an unsigned binary launched from %TEMP% or a LOLBin invoked with deletion-related switches like cipher.exe /w or sdelete.exe) that terminates within seconds of a corresponding Sysmon file-delete event (Event ID 23 FileDelete or 26 FileDeleteDetected) for the same ProcessGuid is a T1070.004 File Deletion cleanup pattern: the attacker ran a tool specifically to remove evidence and exited immediately after. Join on ProcessGuid, not ProcessId, since PIDs are recycled. Treat a termination-to-deletion gap under a few seconds, on a process with no legitimate deletion mandate, as a strong indicator; long-running system and user processes exiting normally do not warrant this correlation.",
+  "kql_snippet": "Sysmon\n| where EventID == 5\n| join kind=inner (Sysmon | where EventID in (23, 26)) on ProcessGuid\n| where abs(datetime_diff('second', TimeGenerated, TimeGenerated1)) < 10\n| project TimeGenerated, Computer, Image, ProcessGuid, TargetFilename",
+  "spl_snippet": "index=sysmon EventCode=5\n| join ProcessGuid [search index=sysmon EventCode IN (23,26)]\n| eval gap=abs(_time-_time1)\n| where gap<10\n| table _time, host, Image, ProcessGuid, TargetFilename, gap",
+  "sample_log": "UtcTime: 2026-07-12 10:02:47.812\nProcessGuid: {aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee}\nProcessId: 6188\nImage: C:\\Windows\\System32\\cipher.exe",
+  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+}

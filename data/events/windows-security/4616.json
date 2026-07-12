@@ -1,0 +1,42 @@
+{
+  "id": "4616",
+  "source": "windows_security",
+  "category": "System",
+  "name": "The system time was changed",
+  "priority": "P2",
+  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
+  "last_reviewed": "2026-07-12",
+  "definition": "Windows Security Event ID 4616 records that the system clock was changed, capturing the previous and new time, the Subject account, and the process that performed the modification.",
+  "trigger_scenarios": "The Windows Time Service (w32tm) running as LOCAL SERVICE adjusts the clock against NTP sources and generates this event legitimately many times per day. Any other process or user account changing the system time also generates it and is the anomaly of interest.",
+  "key_fields": [
+    {
+      "field": "Subject\\Security ID",
+      "explanation": "The SID of the account that changed the time. S-1-5-19 (LOCAL SERVICE, used by the Windows Time Service) is the expected value for normal NTP adjustments. Any SID other than S-1-5-19 is a Microsoft-documented alert condition."
+    },
+    {
+      "field": "Process Information\\Name",
+      "explanation": "The executable that made the API call. C:\\Windows\\System32\\svchost.exe is the expected process for the Windows Time Service. Any other process path (e.g., a script host, a user application, or an attacker tool) performing the change is the concrete indicator of unauthorized modification."
+    },
+    {
+      "field": "Previous Time / New Time",
+      "explanation": "The before-and-after clock values. A large jump backwards can make preceding log entries appear to have occurred after subsequent events, which is the T1070.006 evasion goal: reordering the apparent timeline to confuse correlation."
+    }
+  ],
+  "false_positives": [
+    "The Windows Time Service (LOCAL SERVICE via svchost.exe) performs routine NTP clock corrections and generates the majority of legitimate 4616 events.",
+    "Hypervisor clock synchronization on virtual machines can produce this event from expected system contexts.",
+    "Some hardware-synchronized time solutions or endpoint management agents adjust time and may produce this event from a service account."
+  ],
+  "related_event_ids": ["1102", "4719"],
+  "attck_mapping": [
+    {
+      "technique_id": "T1070.006",
+      "technique_name": "Indicator Removal: Timestomp"
+    }
+  ],
+  "detection_notes": "Alert on every 4616 where Subject\\Security ID is not S-1-5-19 (LOCAL SERVICE), per the verbatim Microsoft Security Monitoring Recommendation: legitimate NTP adjustments run only as LOCAL SERVICE. Independently, alert when Process Information\\Name is not C:\\Windows\\System32\\svchost.exe: the Windows Time Service uses exactly that binary, so any other process changing the system clock is anomalous. Both conditions together are a strong T1070.006 signal: an attacker who changes system time before or after executing tools forces the SIEM to misorder log events relative to the true attack timeline, which can defeat time-windowed correlation rules. Correlate a non-svchost 4616 with process-creation event 4688 or Sysmon Event ID 1 for the same process to identify the parent and command line.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4616\n| where SubjectUserSid != \"S-1-5-19\"\n| project TimeGenerated, Computer, SubjectUserSid, SubjectUserName, ProcessName, PreviousTime, NewTime",
+  "spl_snippet": "index=wineventlog EventCode=4616\n| search NOT SubjectUserSid=\"S-1-5-19\"\n| table _time, host, SubjectUserName, SubjectUserSid, ProcessName, PreviousTime, NewTime",
+  "sample_log": "Subject:\n  Security ID: CORP\\jsmith\n  Account Name: jsmith\n  Account Domain: CORP\n  Logon ID: 0x4A3F2\nProcess Information:\n  Name: C:\\Windows\\Temp\\timeset.exe\nPrevious Time: 2026-07-12 11:05:00\nNew Time: 2026-07-12 09:00:00",
+  "source_url": "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4616"
+}

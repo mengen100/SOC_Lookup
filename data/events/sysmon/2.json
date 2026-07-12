@@ -1,0 +1,46 @@
+{
+  "id": "2",
+  "source": "sysmon",
+  "category": "File",
+  "name": "A process changed a file creation time",
+  "priority": "P2",
+  "applicable_version": "Sysmon 2.0 and later",
+  "last_reviewed": "2026-07-12",
+  "definition": "Sysmon Event ID 2 records that a monitored process changed the creation timestamp of a file, capturing both the new CreationUtcTime and the file's PreviousCreationUtcTime.",
+  "trigger_scenarios": "Sysmon logs Event ID 2 whenever a monitored process changes a file's creation time using SetFileTime or an equivalent API. Software installers that preserve packaged timestamps, archive extraction tools, and file-copy utilities with timestamp-preservation flags generate this event legitimately; so do deliberate timestomping tools such as SetMACE or scripted calls to .NET's File.SetCreationTime.",
+  "key_fields": [
+    {
+      "field": "CreationUtcTime / PreviousCreationUtcTime",
+      "explanation": "The exact new and prior creation timestamps. A CreationUtcTime set earlier than PreviousCreationUtcTime, or earlier than the file's own compile timestamp or the host's OS install date, is inconsistent with normal file lifecycle and is Sysmon's direct timestomping signal."
+    },
+    {
+      "field": "TargetFilename",
+      "explanation": "Full path of the file whose creation time changed. Files dropped into user-writable or temp directories are higher risk than timestamp changes on files under vendor installer paths."
+    },
+    {
+      "field": "Image / ProcessGuid",
+      "explanation": "The process that performed the modification. ProcessGuid joins this event to the exact Event ID 1 process-creation record for that process's lifetime."
+    },
+    {
+      "field": "User",
+      "explanation": "The account context of the process performing the change; compare against the account's normal administrative or deployment role."
+    }
+  ],
+  "false_positives": [
+    "Many MSI-based installers intentionally preserve packaged timestamps on extracted files, producing a legitimate backdated CreationUtcTime.",
+    "Archive extraction tools (7-Zip, tar) and robocopy /COPY:DAT commonly restore original timestamps during file copies.",
+    "Git checkouts and build pipelines that restore source timestamps from version control metadata."
+  ],
+  "related_event_ids": ["1", "11"],
+  "attck_mapping": [
+    {
+      "technique_id": "T1070.006",
+      "technique_name": "Indicator Removal: Timestomp"
+    }
+  ],
+  "detection_notes": "CreationUtcTime that is earlier than PreviousCreationUtcTime is Sysmon's exact timestomping signal: legitimate copy or extraction operations produce a CreationUtcTime close to the current time, not one that moves backward relative to the file's own prior value. A rewrite that sets CreationUtcTime to a date before the file's own compile timestamp or before the host's OS install date is inconsistent with any normal file lifecycle and indicates deliberate T1070.006 Indicator Removal: Timestomp. Correlate TargetFilename and ProcessGuid with the preceding Sysmon Event ID 1 process creation and Event ID 11 file creation to identify the process that performed the rewrite, and treat backdated timestamps on newly dropped executables or documents as high-confidence tampering rather than routine IT activity.",
+  "kql_snippet": "Sysmon\n| where EventID == 2\n| where CreationUtcTime < PreviousCreationUtcTime\n| project TimeGenerated, Computer, User, Image, TargetFilename, PreviousCreationUtcTime, CreationUtcTime",
+  "spl_snippet": "index=sysmon EventCode=2\n| eval backdated=if(strptime(CreationUtcTime,\"%Y-%m-%d %H:%M:%S\") < strptime(PreviousCreationUtcTime,\"%Y-%m-%d %H:%M:%S\"), 1, 0)\n| search backdated=1\n| table _time, host, User, Image, TargetFilename, PreviousCreationUtcTime, CreationUtcTime",
+  "sample_log": "UtcTime: 2026-07-12 09:14:02.331\nProcessGuid: {11111111-2222-3333-4444-555555555555}\nProcessId: 5210\nImage: C:\\Users\\Public\\tools\\setmace.exe\nTargetFilename: C:\\Windows\\Temp\\payload.exe\nCreationUtcTime: 2019-03-01 00:00:00.000\nPreviousCreationUtcTime: 2026-07-12 09:13:58.104\nUser: CORP\\jsmith",
+  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+}

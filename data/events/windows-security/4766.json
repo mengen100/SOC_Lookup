@@ -1,0 +1,41 @@
+{
+  "id": "4766",
+  "source": "windows_security",
+  "category": "AccountMgmt",
+  "name": "An attempt to add SID History to an account failed",
+  "priority": "P2",
+  "applicable_version": "Windows Server 2008 R2 and later",
+  "last_reviewed": "2026-07-12",
+  "definition": "Windows Security Event ID 4766 records a failed attempt to add a SID to the SID History attribute of an Active Directory account, logging the Subject who attempted the change, the Target Account to be modified, and the Source Account whose SID was to be injected.",
+  "trigger_scenarios": "SID History additions are a specialized migration operation requiring domain-level privilege. A failed attempt is generated when an attacker lacks the necessary rights, when SID filtering blocks the attempted cross-forest SID, or when a deliberate probe tests whether the operation would succeed before attempting it with different credentials.",
+  "key_fields": [
+    {
+      "field": "Target Account\\Account Name / Security ID",
+      "explanation": "The account that was the intended recipient of the injected SID. Targeting a highly-privileged account (Domain Admins member, Krbtgt, or an admin service account) signals an attempt to grant that account the access rights of the Source Account's SID."
+    },
+    {
+      "field": "Source Account\\Account Name",
+      "explanation": "The account whose SID was to be injected into Target Account's SID History. If Source Account Name belongs to a domain admin, Enterprise Admin, or a privileged service account in another domain, the attacker intended to grant Target Account those cross-domain rights silently."
+    },
+    {
+      "field": "Subject\\Account Name / Security ID",
+      "explanation": "The identity that attempted the modification. This event fires because the attempt failed, so Subject may be a low-privilege account probing the operation; cross-reference with any 4765 (success) records nearby to check whether a subsequent attempt with elevated credentials succeeded."
+    }
+  ],
+  "false_positives": [
+    "Active Directory migration tools (Quest Migration Manager, ADMT) legitimately write SID History during planned forest migrations and will generate 4766 during configuration testing if privileges are not yet in place.",
+    "Accidental permission misconfigurations during migration projects can cause expected failures from authorized tools."
+  ],
+  "related_event_ids": ["4765"],
+  "attck_mapping": [
+    {
+      "technique_id": "T1134.005",
+      "technique_name": "Access Token Manipulation: SID-History Injection"
+    }
+  ],
+  "detection_notes": "This event has no status or failure-code field; the signal lies in the identities involved. Treat any 4766 where Source Account\\Account Name corresponds to a highly-privileged identity (a domain admin, Enterprise Admin, or Krbtgt) or where Source Account belongs to a different domain than Target Account as a T1134.005 SID-History Injection probe: the attacker was attempting to grant Target Account the inherited rights of that privileged SID across domain or forest boundaries. A 4766 followed by a 4765 for the same Target Account and Source Account combination in a short window indicates the attacker re-tried with higher privileges and succeeded; escalate immediately and inspect the Target Account's msDS-SIDHistory attribute directly on the domain controller.",
+  "kql_snippet": "SecurityEvent\n| where EventID in (4766, 4765)\n| project TimeGenerated, Computer, EventID, SubjectUserName, TargetUserName, SubjectUserSid\n| order by TimeGenerated asc",
+  "spl_snippet": "index=wineventlog EventCode IN (4766, 4765)\n| table _time, host, EventCode, SubjectUserName, TargetUserName",
+  "sample_log": "Subject:\n  Security ID: CORP\\lowpriv\n  Account Name: lowpriv\n  Account Domain: CORP\n  Logon ID: 0x91A2F0\nTarget Account:\n  Security ID: CORP\\svc-ops\n  Account Name: svc-ops\n  Account Domain: CORP\nSource Account:\n  Account Name: Enterprise Admins\nAdditional Information:\n  Privileges: -",
+  "source_url": "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4766"
+}

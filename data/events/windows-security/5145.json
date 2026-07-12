@@ -1,0 +1,46 @@
+{
+  "id": "5145",
+  "source": "windows_security",
+  "category": "FileShare",
+  "name": "A network share object was checked for access",
+  "priority": "P2",
+  "applicable_version": "Windows Server 2008 R2 and later",
+  "last_reviewed": "2026-07-12",
+  "definition": "Windows Security Event ID 5145 records that Windows evaluated a client's access request against a network share object, logging the share name, relative target path, client identity, source IP, and the access mask requested or denied.",
+  "trigger_scenarios": "This event fires for every SMB file or directory access check on audited shares. It is extremely high-volume on file servers and is usually filtered in production to administrative shares (ADMIN$, C$, IPC$), failure events, or specific high-value share paths. Attack-relevant scenarios include lateral movement via PsExec or Impacket, ransomware staging, and credential-file access via SYSVOL.",
+  "key_fields": [
+    {
+      "field": "Share Name",
+      "explanation": "The UNC name of the accessed share. ADMIN$, C$, and IPC$ are administrative shares used by remote management protocols and lateral movement tools; access to these by non-administrative accounts or from unusual sources is a T1021.002 indicator."
+    },
+    {
+      "field": "Relative Target Name",
+      "explanation": "The path to the specific file or directory within the share. A RelativeTargetName ending in .exe or .dll under ADMIN$ or C$ is the PsExec/Impacket binary-staging pattern for lateral movement. A path like Policies\\...\\Groups.xml under SYSVOL indicates Group Policy Preferences credential harvesting."
+    },
+    {
+      "field": "Access Mask",
+      "explanation": "Bitmask of the requested operations. Key values: 0x2 (WriteData/AddFile) means write access — the attacker is dropping a file; 0x10000 (DELETE) means deletion; 0x40000 (WRITE_DAC) and 0x80000 (WRITE_OWNER) mean ACL modification. Microsoft recommends alerting on these values on failure events particularly for WriteData, AppendData, WriteEA, DeleteChild, WriteAttributes, DELETE, WRITE_DAC, and WRITE_OWNER."
+    },
+    {
+      "field": "Network Information\\Source Address / Source Port",
+      "explanation": "The IP address and port of the client. A source IP not in the expected administrative subnet accessing ADMIN$ or C$ is a concrete indicator of unauthorized lateral movement rather than routine administration."
+    }
+  ],
+  "false_positives": [
+    "Backup agents, antivirus scanners, and SCCM/Intune management traffic legitimately access administrative shares at high frequency.",
+    "DFS replication and Windows Update processes access specific share paths under ADMIN$.",
+    "Help-desk remote support tools that use ADMIN$ for file staging during troubleshooting."
+  ],
+  "related_event_ids": ["4624", "5140"],
+  "attck_mapping": [
+    {
+      "technique_id": "T1021.002",
+      "technique_name": "Remote Services: SMB/Windows Admin Shares"
+    }
+  ],
+  "detection_notes": "Access Mask 0x2 (WriteData) against Share Name containing ADMIN$ and a Relative Target Name ending in .exe or .dll is the binary-staging pattern for T1021.002 lateral movement: PsExec uploads a service binary to ADMIN$ before creating a service on the target. Impacket's psexec.py additionally writes named pipes with predictable RelativeTargetName values (Remcom_Communication, RemCom_stderrt, RemCom_stdoutt) under IPC$ — alert on those strings regardless of Access Mask. For failure events, Microsoft recommends monitoring any 5145 failure involving Access Mask bits 0x2 (WriteData), 0x4 (AppendData), 0x10 (WriteEA), 0x40 (DeleteChild), 0x100 (WriteAttributes), 0x10000 (DELETE), 0x40000 (WRITE_DAC), or 0x80000 (WRITE_OWNER) — these operations on a denied share indicate an account probing access boundaries rather than routine reads. Correlate the Source Address and Subject Logon ID with the originating 4624 Type 3 logon for the same session.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 5145\n| where ShareName has_any (\"ADMIN$\", \"C$\", \"IPC$\")\n| where AccessMask has_any (\"0x2\", \"0x10000\")\n| project TimeGenerated, Computer, SubjectUserName, IpAddress, ShareName, RelativeTargetName, AccessMask, Keywords",
+  "spl_snippet": "index=wineventlog EventCode=5145\n| search ShareName IN (\"*ADMIN$*\", \"*C$*\", \"*IPC$*\") AccessMask IN (\"0x2\", \"0x10000\")\n| table _time, host, SubjectUserName, IpAddress, ShareName, RelativeTargetName, AccessMask",
+  "sample_log": "Subject:\n  Security ID: CORP\\jsmith\n  Account Name: jsmith\n  Account Domain: CORP\n  Logon ID: 0x5BE120\nNetwork Information:\n  Source Address: 10.10.20.55\n  Source Port: 49155\nShare Information:\n  Share Name: \\\\DC01\\ADMIN$\n  Share Path: C:\\Windows\n  Relative Target Name: PSEXESVC.exe\nAccess Information:\n  Access Mask: 0x2\n  Accesses: WriteData (or AddFile)",
+  "source_url": "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-5145"
+}

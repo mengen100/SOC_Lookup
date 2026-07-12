@@ -32,8 +32,8 @@ Status values: `done`, `needs-rework`, `pending`.
 - [done] windows_security:4723 - An attempt was made to change an account's password
 - [done] windows_security:4724 - An attempt was made to reset an account's password
 - [done] windows_security:4725 - A user account was disabled
-- [pending] windows_security:4726 - A user account was deleted
-- [pending] windows_security:4728 - A member was added to a security-enabled global group
+- [done] windows_security:4726 - A user account was deleted
+- [done] windows_security:4728 - A member was added to a security-enabled global group
 - [pending] windows_security:4729 - A member was removed from a security-enabled global group
 - [done] windows_security:4732 - A member was added to a security-enabled local group
 - [pending] windows_security:4733 - A member was removed from a security-enabled local group
@@ -41,13 +41,13 @@ Status values: `done`, `needs-rework`, `pending`.
 - [done] windows_security:4738 - A user account was changed
 - [done] windows_security:4740 - A user account was locked out
 - [pending] windows_security:4756 - A member was added to a security-enabled universal group
-- [pending] windows_security:4767 - A user account was unlocked
+- [done] windows_security:4767 - A user account was unlocked
 - [done] windows_security:1102 - The audit log was cleared
 - [done] windows_security:4719 - System audit policy was changed
 - [pending] windows_security:4907 - Auditing settings on object were changed
-- [pending] windows_security:4616 - The system time was changed
+- [done] windows_security:4616 - The system time was changed
 - [done] windows_security:5140 - A network share object was accessed
-- [pending] windows_security:5145 - A network share object was checked for access
+- [done] windows_security:5145 - A network share object was checked for access
 - [done] windows_security:4103 - PowerShell Module Logging
 - [done] windows_security:4104 - PowerShell Script Block Logging
 - [pending] windows_security:4608 - Windows is starting up
@@ -61,13 +61,13 @@ Status values: `done`, `needs-rework`, `pending`.
 - [pending] windows_security:4675 - SIDs were filtered
 - [pending] windows_security:4692 - Backup of data protection master key was attempted
 - [pending] windows_security:4693 - Recovery of data protection master key was attempted
-- [pending] windows_security:4706 - A new trust was created to a domain
+- [done] windows_security:4706 - A new trust was created to a domain
 - [pending] windows_security:4713 - Kerberos policy was changed
 - [pending] windows_security:4714 - Encrypted data recovery policy was changed
 - [pending] windows_security:4715 - The audit policy (SACL) on an object was changed
 - [pending] windows_security:4716 - Trusted domain information was modified
 - [done] windows_security:4765 - SID History was added to an account
-- [pending] windows_security:4766 - An attempt to add SID History to an account failed
+- [done] windows_security:4766 - An attempt to add SID History to an account failed
 - [pending] windows_security:4780 - ACL was set on accounts in administrators groups
 - [done] windows_security:4794 - An attempt was made to set the Directory Services Restore Mode
 - [pending] windows_security:4964 - Special groups have been assigned to a new logon
@@ -84,12 +84,12 @@ Status values: `done`, `needs-rework`, `pending`.
 
 ## sysmon
 - [done] sysmon:1 - Process creation
-- [pending] sysmon:2 - A process changed a file creation time
+- [done] sysmon:2 - A process changed a file creation time
 - [done] sysmon:3 - Network connection detected
 - [pending] sysmon:4 - Sysmon service state changed
-- [pending] sysmon:5 - Process terminated
-- [pending] sysmon:6 - Driver loaded
-- [pending] sysmon:7 - Image loaded (DLL/EXE)
+- [done] sysmon:5 - Process terminated
+- [done] sysmon:6 - Driver loaded
+- [done] sysmon:7 - Image loaded (DLL/EXE)
 - [done] sysmon:8 - CreateRemoteThread
 - [pending] sysmon:9 - RawAccessRead
 - [done] sysmon:10 - ProcessAccess
@@ -107,7 +107,7 @@ Status values: `done`, `needs-rework`, `pending`.
 - [done] sysmon:22 - DNSEvent (DNS query)
 - [pending] sysmon:23 - FileDelete (archived)
 - [pending] sysmon:24 - ClipboardChange
-- [pending] sysmon:25 - ProcessTampering
+- [done] sysmon:25 - ProcessTampering
 - [pending] sysmon:26 - FileDeleteDetected
 - [pending] sysmon:27 - FileBlockExecutable
 - [pending] sysmon:28 - FileBlockShredding
