@@ -12,7 +12,8 @@ Static Windows Security / Sysmon event ID reference for SOC analysts.
 - A compact header search is available from every page, including event details and tools.
 - The Tools navigation menu links directly to each utility while retaining the full tools overview page.
 - Unfinished skeleton entries are visible but not linked, avoiding empty detail pages.
-- Detail pages include canonical metadata, TechArticle JSON-LD, related event pivots, source links, KQL, SPL, and sample log blocks.
+- Detail pages include long-tail titles, canonical metadata, breadcrumb navigation, TechArticle and BreadcrumbList JSON-LD, social metadata, related event pivots, source links, KQL, SPL, and sample log blocks.
+- The homepage publishes WebSite structured data, and every indexable static route is included in `sitemap.xml`.
 - Completed event records are exported as machine-readable static JSON under `/api/events/`.
 - `sitemap.xml` and `robots.txt` are generated from static routes and complete event records.
 - Data validation fails the build when full event JSON misses required schema fields.
@@ -94,3 +95,18 @@ They are derived artifacts and are ignored by Git. During development, `npm run 
 ## Deployment
 
 The project uses `output: "export"` and is suitable for Vercel or static hosting. Run `npm run build`; the exported site is written to `out/`.
+
+Set `NEXT_PUBLIC_SITE_URL` to the production origin before building so canonical URLs, Open Graph URLs, structured data, `sitemap.xml`, and `robots.txt` all use the correct domain:
+
+```bash
+NEXT_PUBLIC_SITE_URL=https://example.com npm run build
+```
+
+On Windows PowerShell:
+
+```powershell
+$env:NEXT_PUBLIC_SITE_URL = "https://example.com"
+npm run build
+```
+
+Until a custom domain is configured, the site falls back to `https://soc-event-lookup.vercel.app`. Use the origin only, without a path; a trailing slash is accepted and normalized.

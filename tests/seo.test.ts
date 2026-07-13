@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import robots from "../app/robots";
+import sitemap from "../app/sitemap";
 import { getEventByRoute } from "../lib/events";
 import { buildEventStructuredData, buildWebsiteJsonLd, eventPageTitle } from "../lib/schema-org";
 import { absoluteUrl, normalizeSiteUrl, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "../lib/site";
@@ -43,4 +45,29 @@ test("builds website and event breadcrumb structured data", () => {
     "Windows Events",
     "Event ID 4625",
   ]);
+});
+
+test("includes every indexable route without fake static modification dates", () => {
+  const entries = sitemap();
+  assert.equal(entries.length, 118);
+
+  for (const path of [
+    "/tools/",
+    "/tools/timestamp-converter/",
+    "/tools/sigma-converter/",
+    "/tools/cvss-calculator/",
+  ]) {
+    assert.ok(entries.some((entry) => entry.url === absoluteUrl(path)), `Missing sitemap route: ${path}`);
+  }
+
+  const homepage = entries.find((entry) => entry.url === absoluteUrl("/"));
+  assert.ok(homepage);
+  assert.equal("lastModified" in homepage, false);
+
+  const event = entries.find((entry) => entry.url === absoluteUrl("/windows-events/4625/"));
+  assert.ok(event?.lastModified);
+});
+
+test("points robots.txt at the configured sitemap origin", () => {
+  assert.equal(robots().sitemap, absoluteUrl("/sitemap.xml"));
 });
