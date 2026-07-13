@@ -1,44 +1,46 @@
 {
-    "id":  "4780",
-    "source":  "windows_security",
-    "category":  "ObjectAccess",
-    "name":  "ACL was set on accounts in administrators groups",
-    "priority":  "P2",
-    "applicable_version":  "Windows Server 2008 R2 and later",
-    "last_reviewed":  "2026-07-13",
-    "definition":  "Windows Security Event ID 4780 records ACL was set on accounts in administrators groups.",
-    "trigger_scenarios":  "Windows logs the event when the audited security operation occurs.",
-    "key_fields":  [
-                       {
-                           "field":  "Primary field",
-                           "explanation":  "Object Name naming an administrators group and an Access Mask granting WRITE_DAC (0x40000) or WRITE_OWNER (0x80000) is delegated privilege persistence."
-                       },
-                       {
-                           "field":  "Subject / Logon ID",
-                           "explanation":  "The initiating account and Logon ID support attribution and correlation to 4624 and 4688."
-                       },
-                       {
-                           "field":  "Computer",
-                           "explanation":  "The affected host determines the operational impact."
-                       }
-                   ],
-    "false_positives":  [
-                            "Documented maintenance, policy changes, or approved administration can generate this event.",
-                            "Validate change control and host role before suppressing."
-                        ],
-    "related_event_ids":  [
-                              "4624",
-                              "4688"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1098",
-                              "technique_name":  "Account Manipulation"
-                          }
-                      ],
-    "detection_notes":  "Object Name naming an administrators group and an Access Mask granting WRITE_DAC (0x40000) or WRITE_OWNER (0x80000) is delegated privilege persistence. This is a T1098 Account Manipulation signal; preserve the concrete value and correlate the actor, process, and related events.",
-    "kql_snippet":  "SecurityEvent\n| where EventID == 4780\n| project TimeGenerated, Computer, Account",
-    "spl_snippet":  "index=wineventlog EventCode=4780 | table _time, host",
-    "sample_log":  "EventID: 4780\nComputer: HOST01\nSubject: CORP\\\\admin.ops",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4780"
+  "id": "4780",
+  "source": "windows_security",
+  "category": "ObjectAccess",
+  "name": "ACL was set on accounts in administrators groups",
+  "priority": "P2",
+  "applicable_version": "Windows Server 2008 R2 and later",
+  "last_reviewed": "2026-07-13",
+  "definition": "Windows Security Event ID 4780 records AdminSDHolder ACL reset activity for protected administrative accounts.",
+  "trigger_scenarios": "On the PDC emulator, Windows compares protected security principals with AdminCount=1 against the AdminSDHolder ACL about every hour and resets differing ACLs, generating this event.",
+  "key_fields": [
+    {
+      "field": "Target Account: Security ID / Account Name / Account Domain",
+      "explanation": "Identifies the protected user, group, or machine account whose ACL was reset to match AdminSDHolder."
+    },
+    {
+      "field": "Subject: Security ID / Account Name / Logon ID",
+      "explanation": "Identifies the security context associated with the reset operation and supports correlation to administrative activity."
+    },
+    {
+      "field": "Privileges",
+      "explanation": "Additional Information field in the Microsoft schema. Use it to understand whether special privileges were present during the ACL reset."
+    }
+  ],
+  "false_positives": [
+    "Expected hourly AdminSDHolder protection can generate this event after legitimate ACL drift on protected accounts.",
+    "Directory cleanup or privileged group membership changes can cause new accounts with AdminCount=1 to be protected."
+  ],
+  "related_event_ids": [
+    "4728",
+    "4732",
+    "4756",
+    "4624"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1098",
+      "technique_name": "Account Manipulation"
+    }
+  ],
+  "detection_notes": "Use threshold=1 unexpected Target Account newly showing AdminCount=1 or appearing after privileged group changes. Microsoft documents that the PDC compares protected accounts every hour and resets ACLs to AdminSDHolder; therefore 4780 after a new 4728/4732/4756 membership event can reveal T1098 Account Manipulation that placed an account into a protected administrative group. Do not look for Access Mask 0x40000 or 0x80000 here; those fields are not in the Microsoft 4780 schema.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4780\n| project TimeGenerated, Computer, Account",
+  "spl_snippet": "index=wineventlog EventCode=4780 | table _time, host",
+  "sample_log": "EventID: 4780\nTarget Account Name: svc-build\nTarget Account Domain: CORP\nSubject Account Name: DC01$\nLogon ID: 0x3e7\nPrivileges: -",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4780"
 }

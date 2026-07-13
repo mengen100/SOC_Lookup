@@ -1,44 +1,45 @@
 {
-    "id":  "5035",
-    "source":  "windows_security",
-    "category":  "Firewall",
-    "name":  "The Windows Firewall Driver failed to start",
-    "priority":  "P2",
-    "applicable_version":  "Windows Server 2008 R2 and later",
-    "last_reviewed":  "2026-07-13",
-    "definition":  "Windows Security Event ID 5035 records The Windows Firewall Driver failed to start.",
-    "trigger_scenarios":  "Windows logs the event when the audited security operation occurs.",
-    "key_fields":  [
-                       {
-                           "field":  "Primary field",
-                           "explanation":  "Driver failure with error code 0xC0000001 or recurring timeout=60 seconds can disable filtering before logon; investigate service and driver image integrity."
-                       },
-                       {
-                           "field":  "Subject / Logon ID",
-                           "explanation":  "The initiating account and Logon ID support attribution and correlation to 4624 and 4688."
-                       },
-                       {
-                           "field":  "Computer",
-                           "explanation":  "The affected host determines the operational impact."
-                       }
-                   ],
-    "false_positives":  [
-                            "Documented maintenance, policy changes, or approved administration can generate this event.",
-                            "Validate change control and host role before suppressing."
-                        ],
-    "related_event_ids":  [
-                              "4624",
-                              "4688"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1562.004",
-                              "technique_name":  "Impair Defenses: Disable or Modify System Firewall"
-                          }
-                      ],
-    "detection_notes":  "Driver failure with error code 0xC0000001 or recurring timeout=60 seconds can disable filtering before logon; investigate service and driver image integrity. This is a T1562.004 Impair Defenses: Disable or Modify System Firewall signal; preserve the concrete value and correlate the actor, process, and related events.",
-    "kql_snippet":  "SecurityEvent\n| where EventID == 5035\n| project TimeGenerated, Computer, Account",
-    "spl_snippet":  "index=wineventlog EventCode=5035 | table _time, host",
-    "sample_log":  "EventID: 5035\nComputer: HOST01\nSubject: CORP\\\\admin.ops",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-5035"
+  "id": "5035",
+  "source": "windows_security",
+  "category": "Firewall",
+  "name": "The Windows Firewall Driver failed to start",
+  "priority": "P2",
+  "applicable_version": "Windows Server 2008 R2 and later",
+  "last_reviewed": "2026-07-13",
+  "definition": "Windows Security Event ID 5035 records that the Windows Firewall Driver failed to start or unexpectedly terminated.",
+  "trigger_scenarios": "Windows logs this event when the Windows Firewall driver fails to start or unexpectedly terminates and includes an Error Code in the message text.",
+  "key_fields": [
+    {
+      "field": "Error Code",
+      "explanation": "The Microsoft schema exposes Error Code:%1 as the concrete driver-failure reason. Preserve the exact value from the event."
+    },
+    {
+      "field": "Computer",
+      "explanation": "Identifies the host where packet filtering may be impaired before or during service startup."
+    },
+    {
+      "field": "EventID",
+      "explanation": "Event 5035 is firewall-driver specific; correlate it with 5030 for service failure and boot/service events."
+    }
+  ],
+  "false_positives": [
+    "Microsoft notes software or operating-system issues can cause this event.",
+    "Driver corruption or dependency failures during maintenance can create non-malicious failures."
+  ],
+  "related_event_ids": [
+    "5030",
+    "5029",
+    "5028"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1562.004",
+      "technique_name": "Impair Defenses: Disable or Modify System Firewall"
+    }
+  ],
+  "detection_notes": "Use threshold=1 on high-value assets: Microsoft recommends monitoring 5035 because it can indicate malicious activity that corrupted the Windows Firewall Driver. Preserve the exact Error Code value from Error Code:%1 and correlate with 5030, boot-time service failures, driver integrity events, and recent firewall policy changes. If the driver was disabled or corrupted to reduce network filtering, map the chain to T1562.004 Disable or Modify System Firewall.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 5035\n| project TimeGenerated, Computer, Account",
+  "spl_snippet": "index=wineventlog EventCode=5035 | table _time, host",
+  "sample_log": "EventID: 5035\nComputer: HOST01\nError Code: 5",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-5035"
 }

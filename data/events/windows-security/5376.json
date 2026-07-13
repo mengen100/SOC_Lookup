@@ -1,44 +1,45 @@
 {
-    "id":  "5376",
-    "source":  "windows_security",
-    "category":  "CredentialMgr",
-    "name":  "Credential Manager credentials were backed up",
-    "priority":  "P2",
-    "applicable_version":  "Windows Server 2008 R2 and later",
-    "last_reviewed":  "2026-07-13",
-    "definition":  "Windows Security Event ID 5376 records Credential Manager credentials were backed up.",
-    "trigger_scenarios":  "Windows logs the event when the audited security operation occurs.",
-    "key_fields":  [
-                       {
-                           "field":  "Primary field",
-                           "explanation":  "Backup target path under C:\\\\Users\\\\ or a removable drive and Subject outside the account owner can expose stored credentials; correlate vaultcmd.exe or rundll32.exe."
-                       },
-                       {
-                           "field":  "Subject / Logon ID",
-                           "explanation":  "The initiating account and Logon ID support attribution and correlation to 4624 and 4688."
-                       },
-                       {
-                           "field":  "Computer",
-                           "explanation":  "The affected host determines the operational impact."
-                       }
-                   ],
-    "false_positives":  [
-                            "Documented maintenance, policy changes, or approved administration can generate this event.",
-                            "Validate change control and host role before suppressing."
-                        ],
-    "related_event_ids":  [
-                              "4624",
-                              "4688"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1555",
-                              "technique_name":  "Credentials from Password Stores"
-                          }
-                      ],
-    "detection_notes":  "Backup target path under C:\\\\Users\\\\ or a removable drive and Subject outside the account owner can expose stored credentials; correlate vaultcmd.exe or rundll32.exe. This is a T1555 Credentials from Password Stores signal; preserve the concrete value and correlate the actor, process, and related events.",
-    "kql_snippet":  "SecurityEvent\n| where EventID == 5376\n| project TimeGenerated, Computer, Account",
-    "spl_snippet":  "index=wineventlog EventCode=5376 | table _time, host",
-    "sample_log":  "EventID: 5376\nComputer: HOST01\nSubject: CORP\\\\admin.ops",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-5376"
+  "id": "5376",
+  "source": "windows_security",
+  "category": "CredentialMgr",
+  "name": "Credential Manager credentials were backed up",
+  "priority": "P2",
+  "applicable_version": "Windows Server 2008 R2 and later",
+  "last_reviewed": "2026-07-13",
+  "definition": "Windows Security Event ID 5376 records successful backup of the user Credential Manager database.",
+  "trigger_scenarios": "This event is generated when the Subject successfully backs up the Credential Manager database, typically through the Credential Manager control-panel workflow.",
+  "key_fields": [
+    {
+      "field": "SubjectUserName / SubjectDomainName",
+      "explanation": "Identifies the account that performed the backup operation. Microsoft documents that this is the Subject account."
+    },
+    {
+      "field": "SubjectLogonId",
+      "explanation": "Hexadecimal logon ID that correlates the backup to the user logon session and nearby process creation."
+    },
+    {
+      "field": "Computer",
+      "explanation": "Identifies whether the backup occurred on a domain controller, member server, or workstation; Microsoft documents that the event can occur on all three."
+    }
+  ],
+  "false_positives": [
+    "Legitimate user-initiated credential backup through Credential Manager is possible but rare.",
+    "Help-desk migration workflows can intentionally back up user credentials during device replacement."
+  ],
+  "related_event_ids": [
+    "5377",
+    "4624",
+    "4688"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1555.004",
+      "technique_name": "Credentials from Password Stores: Windows Credential Manager"
+    }
+  ],
+  "detection_notes": "Use threshold=1 occurrence because Microsoft states every 5376 should be recorded and that Credential Manager backup is very rarely used and can indicate malicious activity. MITRE T1555.004 explicitly notes credential backups via rundll32.exe keymgr.dll KRShowKeyMgr and Windows Credential Manager vault material under %Systemdrive%\\Users\\[Username]\\AppData\\Local\\Microsoft\\[Vault/Credentials]\\. Correlate SubjectLogonId to 4688 for rundll32.exe, vaultcmd.exe, or unusual interactive activity before closing.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 5376\n| project TimeGenerated, Computer, Account",
+  "spl_snippet": "index=wineventlog EventCode=5376 | table _time, host",
+  "sample_log": "EventID: 5376\nSubjectUserName: j.smith\nSubjectDomainName: CORP\nSubjectLogonId: 0x30d7c\nComputer: WS-042",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-5376"
 }
