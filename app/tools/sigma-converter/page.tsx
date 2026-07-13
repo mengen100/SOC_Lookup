@@ -1,12 +1,11 @@
-import type { Metadata } from "next";
-
 import { SigmaConverter } from "../../../components/tools/SigmaConverter";
+import { buildPageMetadata } from "../../../lib/site";
 
-export const metadata: Metadata = {
+export const metadata = buildPageMetadata({
   title: "Sigma Converter",
   description: "Convert simple Sigma rule selections to starter KQL and SPL.",
-  alternates: { canonical: "/tools/sigma-converter/" },
-};
+  path: "/tools/sigma-converter/",
+});
 
 export default function SigmaConverterPage() {
   return (

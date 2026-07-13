@@ -1,11 +1,11 @@
 import Link from "next/link";
-import type { Metadata } from "next";
+import { buildPageMetadata } from "../../lib/site";
 
-export const metadata: Metadata = {
+export const metadata = buildPageMetadata({
   title: "SOC Tools",
   description: "Lightweight front-end tools for timestamp conversion, Sigma conversion, and CVSS scoring.",
-  alternates: { canonical: "/tools/" },
-};
+  path: "/tools/",
+});
 
 const tools = [
   { href: "/tools/timestamp-converter/", title: "Timestamp Converter", body: "Detect Unix, Windows FileTime, and ISO 8601 timestamps." },

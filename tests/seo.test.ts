@@ -5,13 +5,25 @@ import robots from "../app/robots";
 import sitemap from "../app/sitemap";
 import { getEventByRoute } from "../lib/events";
 import { buildEventStructuredData, buildWebsiteJsonLd, eventPageTitle } from "../lib/schema-org";
-import { absoluteUrl, normalizeSiteUrl, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "../lib/site";
+import { absoluteUrl, buildPageMetadata, normalizeSiteUrl, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "../lib/site";
 
 test("normalizes the configured site origin", () => {
   assert.equal(normalizeSiteUrl("https://example.com/"), "https://example.com");
   assert.equal(normalizeSiteUrl(undefined), "https://soc-event-lookup.vercel.app");
   assert.equal(SITE_URL, normalizeSiteUrl(process.env.NEXT_PUBLIC_SITE_URL));
   assert.equal(absoluteUrl("/windows-events/4625/"), `${SITE_URL}/windows-events/4625/`);
+});
+
+test("keeps static page canonical and social URLs aligned", () => {
+  const metadata = buildPageMetadata({
+    title: "SOC Tools",
+    description: "Browser-based tools for SOC analysts.",
+    path: "/tools/",
+  });
+
+  assert.equal(metadata.alternates?.canonical, "/tools/");
+  assert.equal(metadata.openGraph?.url, "/tools/");
+  assert.equal(metadata.twitter?.title, `SOC Tools | ${SITE_NAME}`);
 });
 
 test("builds source-specific long-tail event titles", () => {

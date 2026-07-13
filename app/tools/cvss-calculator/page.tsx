@@ -1,12 +1,11 @@
-import type { Metadata } from "next";
-
 import { CvssCalculator } from "../../../components/tools/CvssCalculator";
+import { buildPageMetadata } from "../../../lib/site";
 
-export const metadata: Metadata = {
+export const metadata = buildPageMetadata({
   title: "CVSS Calculator",
   description: "Calculate CVSS 3.1 base scores in the browser.",
-  alternates: { canonical: "/tools/cvss-calculator/" },
-};
+  path: "/tools/cvss-calculator/",
+});
 
 export default function CvssCalculatorPage() {
   return (

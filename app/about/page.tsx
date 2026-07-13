@@ -1,10 +1,10 @@
-import type { Metadata } from "next";
+import { buildPageMetadata } from "../../lib/site";
 
-export const metadata: Metadata = {
+export const metadata = buildPageMetadata({
   title: "About",
   description: "About the SOC Event Lookup knowledge base.",
-  alternates: { canonical: "/about/" },
-};
+  path: "/about/",
+});
 
 export default function AboutPage() {
   return (

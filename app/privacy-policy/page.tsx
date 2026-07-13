@@ -1,10 +1,10 @@
-import type { Metadata } from "next";
+import { buildPageMetadata } from "../../lib/site";
 
-export const metadata: Metadata = {
+export const metadata = buildPageMetadata({
   title: "Privacy Policy",
   description: "Privacy policy for SOC Event Lookup.",
-  alternates: { canonical: "/privacy-policy/" },
-};
+  path: "/privacy-policy/",
+});
 
 export default function PrivacyPolicyPage() {
   return (

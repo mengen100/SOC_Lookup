@@ -1,14 +1,13 @@
-import type { Metadata } from "next";
-
 import { EventBrowser } from "../../components/EventBrowser";
 import { getCategoriesForSource, getCompleteEvents, getSkeletonEvents } from "../../lib/events";
 import { buildEventSearchDocuments } from "../../lib/search";
+import { buildPageMetadata } from "../../lib/site";
 
-export const metadata: Metadata = {
+export const metadata = buildPageMetadata({
   title: "Windows Security Event IDs",
   description: "Browse Windows Security event IDs with SOC investigation guidance, key fields, ATT&CK mappings, KQL, and SPL.",
-  alternates: { canonical: "/windows-events/" },
-};
+  path: "/windows-events/",
+});
 
 export default function WindowsEventsPage() {
   const events = buildEventSearchDocuments(getSkeletonEvents(), getCompleteEvents())

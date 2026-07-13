@@ -1,10 +1,10 @@
-import type { Metadata } from "next";
+import { buildPageMetadata } from "../../lib/site";
 
-export const metadata: Metadata = {
+export const metadata = buildPageMetadata({
   title: "Disclaimer",
   description: "Disclaimer for SOC Event Lookup.",
-  alternates: { canonical: "/disclaimer/" },
-};
+  path: "/disclaimer/",
+});
 
 export default function DisclaimerPage() {
   return (

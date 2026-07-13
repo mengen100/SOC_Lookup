@@ -1,12 +1,11 @@
-import type { Metadata } from "next";
-
 import { TimestampConverter } from "../../../components/tools/TimestampConverter";
+import { buildPageMetadata } from "../../../lib/site";
 
-export const metadata: Metadata = {
+export const metadata = buildPageMetadata({
   title: "Timestamp Converter",
   description: "Convert Unix seconds, Unix milliseconds, Windows FileTime, and ISO 8601 timestamps.",
-  alternates: { canonical: "/tools/timestamp-converter/" },
-};
+  path: "/tools/timestamp-converter/",
+});
 
 export default function TimestampConverterPage() {
   return (
