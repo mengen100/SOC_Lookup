@@ -1,0 +1,44 @@
+{
+    "id":  "4716",
+    "source":  "windows_security",
+    "category":  "Trust",
+    "name":  "Trusted domain information was modified",
+    "priority":  "P2",
+    "applicable_version":  "Windows Server 2008 R2 and later",
+    "last_reviewed":  "2026-07-13",
+    "definition":  "Windows Security Event ID 4716 records Trusted domain information was modified.",
+    "trigger_scenarios":  "Windows logs the event when the audited security operation occurs.",
+    "key_fields":  [
+                       {
+                           "field":  "Primary field",
+                           "explanation":  "Trust Direction and Trust Attributes changes can expand authentication paths; an attribute value enabling SIDHistory or disabling quarantine requires change-ticket validation."
+                       },
+                       {
+                           "field":  "Subject / Logon ID",
+                           "explanation":  "The initiating account and Logon ID support attribution and correlation to 4624 and 4688."
+                       },
+                       {
+                           "field":  "Computer",
+                           "explanation":  "The affected host determines the operational impact."
+                       }
+                   ],
+    "false_positives":  [
+                            "Documented maintenance, policy changes, or approved administration can generate this event.",
+                            "Validate change control and host role before suppressing."
+                        ],
+    "related_event_ids":  [
+                              "4624",
+                              "4688"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1484.002",
+                              "technique_name":  "Domain Policy Modification: Trust Modification"
+                          }
+                      ],
+    "detection_notes":  "Trust Direction and Trust Attributes changes can expand authentication paths; an attribute value enabling SIDHistory or disabling quarantine requires change-ticket validation. This is a T1484.002 Domain Policy Modification: Trust Modification signal; preserve the concrete value and correlate the actor, process, and related events. Review the change against the approved baseline in a window=60 minute correlation period.",
+    "kql_snippet":  "SecurityEvent\n| where EventID == 4716\n| project TimeGenerated, Computer, Account",
+    "spl_snippet":  "index=wineventlog EventCode=4716 | table _time, host",
+    "sample_log":  "EventID: 4716\nComputer: HOST01\nSubject: CORP\\\\admin.ops",
+    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4716"
+}

@@ -1,0 +1,44 @@
+{
+    "id":  "5828",
+    "source":  "windows_security",
+    "category":  "Netlogon",
+    "name":  "Netlogon denied a vulnerable secure channel connection (trust)",
+    "priority":  "P2",
+    "applicable_version":  "Windows Server 2008 R2 and later",
+    "last_reviewed":  "2026-07-13",
+    "definition":  "Windows Security Event ID 5828 records Netlogon denied a vulnerable secure channel connection (trust).",
+    "trigger_scenarios":  "Windows logs the event when the audited security operation occurs.",
+    "key_fields":  [
+                       {
+                           "field":  "Primary field",
+                           "explanation":  "A denied vulnerable trust secure channel shows blocked Zerologon-style trust abuse; repeated attempts from a trust partner within window=15 minutes require patch review."
+                       },
+                       {
+                           "field":  "Subject / Logon ID",
+                           "explanation":  "The initiating account and Logon ID support attribution and correlation to 4624 and 4688."
+                       },
+                       {
+                           "field":  "Computer",
+                           "explanation":  "The affected host determines the operational impact."
+                       }
+                   ],
+    "false_positives":  [
+                            "Documented maintenance, policy changes, or approved administration can generate this event.",
+                            "Validate change control and host role before suppressing."
+                        ],
+    "related_event_ids":  [
+                              "4624",
+                              "4688"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1210",
+                              "technique_name":  "Exploitation of Remote Services"
+                          }
+                      ],
+    "detection_notes":  "A denied vulnerable trust secure channel shows blocked Zerologon-style trust abuse; repeated attempts from a trust partner within window=15 minutes require patch review. This is a T1210 Exploitation of Remote Services signal; preserve the concrete value and correlate the actor, process, and related events.",
+    "kql_snippet":  "SecurityEvent\n| where EventID == 5828\n| project TimeGenerated, Computer, Account",
+    "spl_snippet":  "index=wineventlog EventCode=5828 | table _time, host",
+    "sample_log":  "EventID: 5828\nComputer: HOST01\nSubject: CORP\\\\admin.ops",
+    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-5828"
+}

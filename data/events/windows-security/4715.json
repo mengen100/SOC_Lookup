@@ -1,0 +1,44 @@
+{
+    "id":  "4715",
+    "source":  "windows_security",
+    "category":  "Policy",
+    "name":  "The audit policy (SACL) on an object was changed",
+    "priority":  "P2",
+    "applicable_version":  "Windows Server 2008 R2 and later",
+    "last_reviewed":  "2026-07-13",
+    "definition":  "Windows Security Event ID 4715 records The audit policy (SACL) on an object was changed.",
+    "trigger_scenarios":  "Windows logs the event when the audited security operation occurs.",
+    "key_fields":  [
+                       {
+                           "field":  "Primary field",
+                           "explanation":  "Object Name and SACL change removing Success or Failure auditing from a sensitive file or registry key is audit suppression; compare previous and new SDDL."
+                       },
+                       {
+                           "field":  "Subject / Logon ID",
+                           "explanation":  "The initiating account and Logon ID support attribution and correlation to 4624 and 4688."
+                       },
+                       {
+                           "field":  "Computer",
+                           "explanation":  "The affected host determines the operational impact."
+                       }
+                   ],
+    "false_positives":  [
+                            "Documented maintenance, policy changes, or approved administration can generate this event.",
+                            "Validate change control and host role before suppressing."
+                        ],
+    "related_event_ids":  [
+                              "4624",
+                              "4688"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1562.002",
+                              "technique_name":  "Impair Defenses: Disable Windows Event Logging"
+                          }
+                      ],
+    "detection_notes":  "Object Name and SACL change removing Success or Failure auditing from a sensitive file or registry key is audit suppression; compare previous and new SDDL. This is a T1562.002 Impair Defenses: Disable Windows Event Logging signal; preserve the concrete value and correlate the actor, process, and related events. Review the change against the approved baseline in a window=60 minute correlation period.",
+    "kql_snippet":  "SecurityEvent\n| where EventID == 4715\n| project TimeGenerated, Computer, Account",
+    "spl_snippet":  "index=wineventlog EventCode=4715 | table _time, host",
+    "sample_log":  "EventID: 4715\nComputer: HOST01\nSubject: CORP\\\\admin.ops",
+    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4715"
+}

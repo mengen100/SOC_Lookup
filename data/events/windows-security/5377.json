@@ -1,0 +1,44 @@
+{
+    "id":  "5377",
+    "source":  "windows_security",
+    "category":  "CredentialMgr",
+    "name":  "Credential Manager credentials were restored from backup",
+    "priority":  "P2",
+    "applicable_version":  "Windows Server 2008 R2 and later",
+    "last_reviewed":  "2026-07-13",
+    "definition":  "Windows Security Event ID 5377 records Credential Manager credentials were restored from backup.",
+    "trigger_scenarios":  "Windows logs the event when the audited security operation occurs.",
+    "key_fields":  [
+                       {
+                           "field":  "Primary field",
+                           "explanation":  "Restoring Credential Manager data from a backup path under C:\\\\Users\\\\ can import stolen credentials; correlate the Subject Logon ID with later 4624 use."
+                       },
+                       {
+                           "field":  "Subject / Logon ID",
+                           "explanation":  "The initiating account and Logon ID support attribution and correlation to 4624 and 4688."
+                       },
+                       {
+                           "field":  "Computer",
+                           "explanation":  "The affected host determines the operational impact."
+                       }
+                   ],
+    "false_positives":  [
+                            "Documented maintenance, policy changes, or approved administration can generate this event.",
+                            "Validate change control and host role before suppressing."
+                        ],
+    "related_event_ids":  [
+                              "4624",
+                              "4688"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1555",
+                              "technique_name":  "Credentials from Password Stores"
+                          }
+                      ],
+    "detection_notes":  "Restoring Credential Manager data from a backup path under C:\\\\Users\\\\ can import stolen credentials; correlate the Subject Logon ID with later 4624 use. This is a T1555 Credentials from Password Stores signal; preserve the concrete value and correlate the actor, process, and related events.",
+    "kql_snippet":  "SecurityEvent\n| where EventID == 5377\n| project TimeGenerated, Computer, Account",
+    "spl_snippet":  "index=wineventlog EventCode=5377 | table _time, host",
+    "sample_log":  "EventID: 5377\nComputer: HOST01\nSubject: CORP\\\\admin.ops",
+    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-5377"
+}
