@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { HeaderSearch } from "../components/HeaderSearch";
+import { ToolsMenu } from "../components/ToolsMenu";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -13,9 +15,7 @@ export const metadata: Metadata = {
 
 const navItems = [
   { href: "/windows-events/", label: "Windows Events" },
-  { href: "/sysmon-events/", label: "Sysmon Events" },
-  { href: "/tools/", label: "Tools" },
-  { href: "/about/", label: "About" }
+  { href: "/sysmon-events/", label: "Sysmon Events" }
 ];
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
@@ -23,11 +23,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en">
       <body className="min-h-screen font-sans antialiased">
         <header className="border-b border-line bg-[#fbfcf8]/95">
-          <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <Link href="/" className="text-lg font-semibold tracking-normal text-ink">
+          <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 lg:flex-row lg:items-center">
+            <Link href="/" className="shrink-0 text-lg font-semibold tracking-normal text-ink">
               SOC Event Lookup
             </Link>
-            <nav className="flex flex-wrap gap-2 text-sm text-steel">
+            <HeaderSearch />
+            <nav className="flex flex-wrap items-center gap-1 text-sm text-steel lg:ml-auto">
               {navItems.map((item) => (
                 <Link
                   key={item.href}
@@ -37,6 +38,13 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                   {item.label}
                 </Link>
               ))}
+              <ToolsMenu />
+              <Link
+                className="rounded border border-transparent px-2.5 py-1.5 hover:border-line hover:bg-white"
+                href="/about/"
+              >
+                About
+              </Link>
             </nav>
           </div>
         </header>

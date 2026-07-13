@@ -34,7 +34,7 @@ export function HomeEventSearch({ documents }: HomeEventSearchProps) {
               <Link className="flex items-start justify-between gap-4 border-b border-line px-4 py-3 last:border-b-0 hover:bg-panel" href={event.href} key={`${event.source}:${event.id}`}>
                 <span>
                   <span className="block font-semibold text-ink">{event.name}</span>
-                  <span className="mt-1 block text-sm text-steel">{event.category} · {event.source === "windows_security" ? "Windows Security" : "Sysmon"}</span>
+                  <span className="mt-1 block text-sm text-steel">{event.category} - {event.source === "windows_security" ? "Windows Security" : "Sysmon"}</span>
                 </span>
                 <span className="shrink-0 font-mono text-sm font-semibold text-accent">ID {event.id}</span>
               </Link>

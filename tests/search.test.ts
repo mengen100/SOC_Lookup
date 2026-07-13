@@ -25,6 +25,12 @@ test("searches key field names from complete event records", () => {
   assert.equal(results[0]?.id, "4625");
 });
 
+test("matches field names with or without separators", () => {
+  const results = searchEventDocuments(documents, "LogonType");
+
+  assert.equal(results.some((event) => event.id === "4625"), true);
+});
+
 test("requires every query token to match the same event", () => {
   const results = searchEventDocuments(documents, "kerberos ticket");
 

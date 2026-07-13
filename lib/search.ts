@@ -4,6 +4,7 @@ export interface EventSearchDocument extends SkeletonEvent {
   href: string;
   isComplete: boolean;
   searchText: string;
+  compactSearchText: string;
 }
 
 const priorityRank = { P1: 0, P2: 1, P3: 2 } as const;
@@ -30,19 +31,22 @@ export function buildEventSearchDocuments(
         ]
       : [];
 
+    const searchText = normalizeSearchText([
+      event.id,
+      event.name,
+      event.category,
+      event.priority,
+      event.notes ?? "",
+      sourceTerms,
+      ...completeTerms,
+    ].join(" "));
+
     return {
       ...event,
       href: getSearchResultHref(event.source, event.id),
       isComplete: Boolean(complete),
-      searchText: normalizeSearchText([
-        event.id,
-        event.name,
-        event.category,
-        event.priority,
-        event.notes ?? "",
-        sourceTerms,
-        ...completeTerms,
-      ].join(" ")),
+      searchText,
+      compactSearchText: compactSearchText(searchText),
     };
   });
 }
@@ -65,7 +69,9 @@ export function searchEventDocuments(documents: EventSearchDocument[], query: st
   }
 
   return documents
-    .filter((document) => tokens.every((token) => document.searchText.includes(token)))
+    .filter((document) => tokens.every((token) => (
+      document.searchText.includes(token) || document.compactSearchText.includes(compactSearchText(token))
+    )))
     .sort((left, right) => {
       const scoreDifference = scoreDocument(right, normalizedQuery, tokens) - scoreDocument(left, normalizedQuery, tokens);
       if (scoreDifference !== 0) {
@@ -111,4 +117,8 @@ function normalizeSearchText(value: string): string {
     .replace(/[^a-z0-9.\\/_:-]+/g, " ")
     .trim()
     .replace(/\s+/g, " ");
+}
+
+function compactSearchText(value: string): string {
+  return value.replace(/[^a-z0-9]+/g, "");
 }

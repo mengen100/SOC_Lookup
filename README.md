@@ -9,6 +9,8 @@ Static Windows Security / Sysmon event ID reference for SOC analysts.
 - `/windows-events/` and `/sysmon-events/` list all 108 skeleton entries with category filters.
 - Static full-text search covers event IDs, names, categories, key fields, ATT&CK techniques, and detection guidance.
 - Search queries persist in the `?q=` URL parameter so filtered views can be shared.
+- A compact header search is available from every page, including event details and tools.
+- The Tools navigation menu links directly to each utility while retaining the full tools overview page.
 - Unfinished skeleton entries are visible but not linked, avoiding empty detail pages.
 - Detail pages include canonical metadata, TechArticle JSON-LD, related event pivots, source links, KQL, SPL, and sample log blocks.
 - Completed event records are exported as machine-readable static JSON under `/api/events/`.
