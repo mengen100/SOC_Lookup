@@ -5,3 +5,4 @@ out/
 public/api/
 *.tsbuildinfo
 .env*.local
+AGENTS.md
