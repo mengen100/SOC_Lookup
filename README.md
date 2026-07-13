@@ -94,7 +94,7 @@ They are derived artifacts and are ignored by Git. During development, `npm run 
 
 ## Deployment
 
-The project uses `output: "export"` and is suitable for Vercel or static hosting. Run `npm run build`; the exported site is written to `out/`.
+The project uses `output: "export"` and deploys to Cloudflare Pages Free. Run `npm run build`; the exported site is written to `out/`.
 
 Set `NEXT_PUBLIC_SITE_URL` to the production origin before building so canonical URLs, Open Graph URLs, structured data, `sitemap.xml`, and `robots.txt` all use the correct domain:
 
@@ -109,4 +109,21 @@ $env:NEXT_PUBLIC_SITE_URL = "https://example.com"
 npm run build
 ```
 
-Until a custom domain is configured, the site falls back to `https://soc-event-lookup.vercel.app`. Use the origin only, without a path; a trailing slash is accepted and normalized.
+The default production origin is `https://soceventlookup.com`. Use the origin only, without a path; a trailing slash is accepted and normalized.
+
+Cloudflare Pages settings:
+
+```text
+Production branch: master
+Build command: npm run build
+Output directory: out
+NEXT_PUBLIC_SITE_URL: https://soceventlookup.com
+```
+
+After deployment or any domain change, run:
+
+```bash
+npm run verify:production -- https://soceventlookup.com
+```
+
+See [docs/launch-runbook.md](docs/launch-runbook.md) for DNS, TLS, redirect, acceptance, and Search Console steps.
