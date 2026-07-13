@@ -1,6 +1,7 @@
+import { Breadcrumbs } from "./Breadcrumbs";
 import { CodeBlock } from "./CodeBlock";
 import { RelatedEvents } from "./RelatedEvents";
-import { buildTechArticleJsonLd } from "../lib/schema-org";
+import { buildEventStructuredData, eventPageTitle } from "../lib/schema-org";
 import { sourceToRouteSlug, type EventPageRecord } from "../lib/events";
 
 interface EventPageProps {
@@ -8,18 +9,19 @@ interface EventPageProps {
 }
 
 export function EventPage({ event }: EventPageProps) {
-  const jsonLd = buildTechArticleJsonLd(event);
+  const structuredData = buildEventStructuredData(event);
 
   return (
     <article className="mx-auto max-w-5xl px-4 py-10">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
+      <Breadcrumbs event={event} />
       <header className="border-b border-line pb-8">
         <div className="flex flex-wrap gap-2 text-sm text-steel">
           <span className="rounded border border-line bg-white px-2 py-1">Event ID {event.id}</span>
           <span className="rounded border border-line bg-white px-2 py-1">{event.category}</span>
           <span className="rounded border border-line bg-white px-2 py-1">{event.priority}</span>
         </div>
-        <h1 className="mt-4 max-w-3xl text-3xl font-semibold text-ink sm:text-4xl">{event.name}</h1>
+        <h1 className="mt-4 max-w-4xl text-3xl font-semibold text-ink sm:text-4xl">{eventPageTitle(event)}</h1>
         <p className="mt-4 max-w-3xl text-lg leading-8 text-steel">{event.definition}</p>
         <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-2">
           <div>

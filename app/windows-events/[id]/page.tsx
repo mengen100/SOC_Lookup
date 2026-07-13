@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { EventPage } from "../../../components/EventPage";
 import { getCompleteEvents, getEventByRoute } from "../../../lib/events";
-import { eventDescription } from "../../../lib/schema-org";
+import { eventDescription, eventPageTitle } from "../../../lib/schema-org";
 
 export const dynamicParams = false;
 
@@ -20,10 +20,16 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     return {};
   }
 
+  const title = eventPageTitle(event);
+  const description = eventDescription(event);
+  const canonical = `/windows-events/${event.id}/`;
+
   return {
-    title: `${event.name} (Event ID ${event.id}) - ${event.category}`,
-    description: eventDescription(event),
+    title,
+    description,
     alternates: { canonical: `/windows-events/${event.id}/` },
+    openGraph: { type: "article", title, description, url: canonical },
+    twitter: { card: "summary", title, description },
   };
 }
 
