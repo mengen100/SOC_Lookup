@@ -120,6 +120,25 @@ test("connects each completed event to a specific ATT&CK technique in detection 
   assert.deepEqual(incompleteEvents, [], `Detection guidance missing ATT&CK technique IDs:\n${incompleteEvents.join("\n")}`);
 });
 
+test("requires concrete detection values beyond ATT&CK technique identifiers", () => {
+  const incompleteEvents: string[] = [];
+  const concreteValuePattern = /0x[0-9a-f]+|\b(?:type|port|threshold|mask|window|timeout)\s*[=:]?\s*\d+|HK(?:LM|CU)\\|\\(?:Users|Windows|ProgramData|Temp|AppData)\\/i;
+
+  for (const event of getCompleteEvents()) {
+    const guidanceWithoutAttackIds = event.detection_notes.replace(/T\d{4}(?:\.\d{3})?/g, "");
+
+    if (!concreteValuePattern.test(guidanceWithoutAttackIds)) {
+      incompleteEvents.push(`${event.source}:${event.id}`);
+    }
+  }
+
+  assert.deepEqual(
+    incompleteEvents,
+    [],
+    `Detection guidance missing a concrete value after ATT&CK IDs are removed:\n${incompleteEvents.join("\n")}`,
+  );
+});
+
 test("returns completed events by public route", () => {
   const windowsEvent = getEventByRoute("windows-events", "4625");
   const sysmonEvent = getEventByRoute("sysmon-events", "1");
