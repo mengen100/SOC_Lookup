@@ -57,29 +57,29 @@ Status values: `done`, `needs-rework`, `pending`.
 - [pending] windows_security:4612 - Internal audit queue resources exhausted
 - [pending] windows_security:4614 - A notification package has been loaded by the SAM
 - [pending] windows_security:4621 - Administrator recovered system from CrashOnAuditFail
-- [done] windows_security:4649 - A replay attack was detected
+- [needs-rework] windows_security:4649 - A replay attack was detected
 - [pending] windows_security:4675 - SIDs were filtered
 - [pending] windows_security:4692 - Backup of data protection master key was attempted
 - [pending] windows_security:4693 - Recovery of data protection master key was attempted
 - [done] windows_security:4706 - A new trust was created to a domain
 - [pending] windows_security:4713 - Kerberos policy was changed
 - [pending] windows_security:4714 - Encrypted data recovery policy was changed
-- [done] windows_security:4715 - The audit policy (SACL) on an object was changed
-- [done] windows_security:4716 - Trusted domain information was modified
+- [needs-rework] windows_security:4715 - The audit policy (SACL) on an object was changed
+- [needs-rework] windows_security:4716 - Trusted domain information was modified
 - [done] windows_security:4765 - SID History was added to an account
 - [done] windows_security:4766 - An attempt to add SID History to an account failed
-- [done] windows_security:4780 - ACL was set on accounts in administrators groups
+- [needs-rework] windows_security:4780 - ACL was set on accounts in administrators groups
 - [done] windows_security:4794 - An attempt was made to set the Directory Services Restore Mode
-- [done] windows_security:4964 - Special groups have been assigned to a new logon
+- [needs-rework] windows_security:4964 - Special groups have been assigned to a new logon
 - [pending] windows_security:5027 - Windows Firewall Service unable to retrieve security policy
 - [pending] windows_security:5028 - Windows Firewall Service unable to parse new security policy
-- [done] windows_security:5030 - The Windows Firewall Service failed to start
-- [done] windows_security:5035 - The Windows Firewall Driver failed to start
-- [done] windows_security:5038 - Code integrity determined image hash is not valid
-- [done] windows_security:5376 - Credential Manager credentials were backed up
-- [done] windows_security:5377 - Credential Manager credentials were restored from backup
-- [done] windows_security:5827 - Netlogon denied a vulnerable secure channel connection (machine)
-- [done] windows_security:5828 - Netlogon denied a vulnerable secure channel connection (trust)
+- [needs-rework] windows_security:5030 - The Windows Firewall Service failed to start
+- [needs-rework] windows_security:5035 - The Windows Firewall Driver failed to start
+- [needs-rework] windows_security:5038 - Code integrity determined image hash is not valid
+- [needs-rework] windows_security:5376 - Credential Manager credentials were backed up
+- [needs-rework] windows_security:5377 - Credential Manager credentials were restored from backup
+- [needs-rework] windows_security:5827 - Netlogon denied a vulnerable secure channel connection (machine)
+- [needs-rework] windows_security:5828 - Netlogon denied a vulnerable secure channel connection (trust)
 - [pending] windows_security:6145 - Errors occurred while processing security policy in GPOs
 
 ## sysmon
@@ -94,22 +94,22 @@ Status values: `done`, `needs-rework`, `pending`.
 - [pending] sysmon:9 - RawAccessRead
 - [done] sysmon:10 - ProcessAccess
 - [done] sysmon:11 - FileCreate
-- [done] sysmon:12 - RegistryEvent (Object create/delete)
-- [done] sysmon:13 - RegistryEvent (Value Set)
+- [needs-rework] sysmon:12 - RegistryEvent (Object create/delete)
+- [needs-rework] sysmon:13 - RegistryEvent (Value Set)
 - [pending] sysmon:14 - RegistryEvent (Key/Value Rename)
 - [pending] sysmon:15 - FileCreateStreamHash
-- [done] sysmon:16 - ServiceConfigurationChange (Sysmon config change)
-- [done] sysmon:17 - PipeEvent - Pipe Created
-- [done] sysmon:18 - PipeEvent - Pipe Connected
-- [done] sysmon:19 - WmiEvent - WmiEventFilter activity detected
-- [done] sysmon:20 - WmiEvent - WmiEventConsumer activity detected
-- [done] sysmon:21 - WmiEvent - WmiEventConsumerToFilter activity detected
+- [needs-rework] sysmon:16 - ServiceConfigurationChange (Sysmon config change)
+- [needs-rework] sysmon:17 - PipeEvent - Pipe Created
+- [needs-rework] sysmon:18 - PipeEvent - Pipe Connected
+- [needs-rework] sysmon:19 - WmiEvent - WmiEventFilter activity detected
+- [needs-rework] sysmon:20 - WmiEvent - WmiEventConsumer activity detected
+- [needs-rework] sysmon:21 - WmiEvent - WmiEventConsumerToFilter activity detected
 - [done] sysmon:22 - DNSEvent (DNS query)
-- [done] sysmon:23 - FileDelete (archived)
+- [needs-rework] sysmon:23 - FileDelete (archived)
 - [pending] sysmon:24 - ClipboardChange
 - [done] sysmon:25 - ProcessTampering
 - [pending] sysmon:26 - FileDeleteDetected
 - [pending] sysmon:27 - FileBlockExecutable
 - [pending] sysmon:28 - FileBlockShredding
-- [done] sysmon:29 - FileExecutableDetected
+- [needs-rework] sysmon:29 - FileExecutableDetected
 - [pending] sysmon:255 - Sysmon service error report
