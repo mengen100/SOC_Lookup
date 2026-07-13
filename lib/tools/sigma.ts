@@ -26,22 +26,22 @@ export function convertSigmaRule(input: string): SigmaConversionResult {
   try {
     parsed = yaml.load(input) as SigmaRule;
   } catch {
-    return unsupported("该规则不是有效的YAML。");
+    return unsupported("The rule is not valid YAML.");
   }
 
   const detection = parsed?.detection;
   const condition = typeof detection?.condition === "string" ? detection.condition.trim() : "";
   if (!detection || !condition) {
-    return unsupported("该规则缺少detection.condition。");
+    return unsupported("The rule is missing detection.condition.");
   }
 
   if (!/^[A-Za-z0-9_]+$/.test(condition)) {
-    return unsupported("该规则包含暂不支持的语法结构。");
+    return unsupported("The rule contains unsupported syntax.");
   }
 
   const selection = detection[condition];
   if (!selection || typeof selection !== "object" || Array.isArray(selection)) {
-    return unsupported("该规则的selection结构暂不支持。");
+    return unsupported("The rule selection structure is not supported yet.");
   }
 
   const entries = Object.entries(selection as Record<string, unknown>);
@@ -51,7 +51,7 @@ export function convertSigmaRule(input: string): SigmaConversionResult {
   for (const [sigmaField, rawValue] of entries) {
     const mapped = fieldMap[sigmaField];
     if (!mapped || Array.isArray(rawValue) || (typeof rawValue !== "string" && typeof rawValue !== "number")) {
-      return unsupported("该规则包含暂不支持的语法结构。");
+      return unsupported("The rule contains unsupported syntax.");
     }
 
     if (typeof rawValue === "number") {

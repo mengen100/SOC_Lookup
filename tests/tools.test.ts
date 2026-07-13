@@ -41,7 +41,7 @@ detection:
   condition: selection_one or selection_two
 `);
 
-  assert.match(result.unsupportedReason ?? "", /暂不支持/);
+  assert.match(result.unsupportedReason ?? "", /unsupported syntax/);
 });
 
 test("calculates CVSS 3.1 base score and severity", () => {

@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "EventPageRecord",
-  "description": "单个Windows Security或Sysmon事件详情页的数据结构",
+  "description": "Data structure for a single Windows Security or Sysmon event detail page.",
   "type": "object",
   "required": [
     "id",
@@ -23,95 +23,121 @@
   "properties": {
     "id": {
       "type": "string",
-      "description": "事件ID，如 '4625' 或 '1'"
+      "description": "Event ID, such as '4625' or '1'."
     },
     "source": {
       "type": "string",
-      "enum": ["windows_security", "sysmon"]
+      "enum": [
+        "windows_security",
+        "sysmon"
+      ]
     },
     "category": {
       "type": "string",
-      "description": "功能分类，如 Logon、Process、Registry等，用于导航筛选"
+      "description": "Functional category such as Logon, Process, or Registry, used for navigation filters."
     },
     "name": {
       "type": "string",
-      "description": "官方事件名称"
+      "description": "Official event name."
     },
     "priority": {
       "type": "string",
-      "enum": ["P1", "P2", "P3"]
+      "enum": [
+        "P1",
+        "P2",
+        "P3"
+      ]
     },
     "applicable_version": {
       "type": "string",
-      "description": "适用的Windows/Sysmon版本范围"
+      "description": "Applicable Windows or Sysmon version range."
     },
     "last_reviewed": {
       "type": "string",
       "format": "date",
-      "description": "本页内容最后核对日期，ISO 8601格式"
+      "description": "Date this page content was last reviewed, in ISO 8601 format."
     },
     "definition": {
       "type": "string",
-      "description": "一句话定义"
+      "description": "One-sentence event definition."
     },
     "trigger_scenarios": {
       "type": "string",
-      "description": "触发场景说明"
+      "description": "Explanation of scenarios that trigger the event."
     },
     "key_fields": {
       "type": "array",
-      "description": "关键日志字段解读",
+      "description": "Key log fields and how analysts should interpret them.",
       "items": {
         "type": "object",
-        "required": ["field", "explanation"],
+        "required": [
+          "field",
+          "explanation"
+        ],
         "properties": {
-          "field": { "type": "string" },
-          "explanation": { "type": "string" }
+          "field": {
+            "type": "string"
+          },
+          "explanation": {
+            "type": "string"
+          }
         }
       }
     },
     "false_positives": {
       "type": "array",
-      "description": "常见误报场景列表",
-      "items": { "type": "string" }
+      "description": "List of common false-positive scenarios.",
+      "items": {
+        "type": "string"
+      }
     },
     "related_event_ids": {
       "type": "array",
-      "description": "关联事件ID列表，用于内部互链",
-      "items": { "type": "string" }
+      "description": "Related event IDs for internal pivots.",
+      "items": {
+        "type": "string"
+      }
     },
     "attck_mapping": {
       "type": "array",
-      "description": "MITRE ATT&CK技术映射，如无可靠关联可留空数组",
+      "description": "MITRE ATT&CK technique mapping; use an empty array when there is no reliable mapping.",
       "items": {
         "type": "object",
-        "required": ["technique_id", "technique_name"],
+        "required": [
+          "technique_id",
+          "technique_name"
+        ],
         "properties": {
-          "technique_id": { "type": "string", "description": "如 T1110.003" },
-          "technique_name": { "type": "string" }
+          "technique_id": {
+            "type": "string",
+            "description": "Example: T1110.003."
+          },
+          "technique_name": {
+            "type": "string"
+          }
         }
       }
     },
     "detection_notes": {
       "type": "string",
-      "description": "检测与排查建议，体现专业判断的核心字段"
+      "description": "Detection and investigation guidance; this is the core field for analyst judgment."
     },
     "kql_snippet": {
       "type": "string",
-      "description": "Microsoft Sentinel KQL查询示例，可选"
+      "description": "Optional Microsoft Sentinel KQL query example."
     },
     "spl_snippet": {
       "type": "string",
-      "description": "Splunk SPL查询示例，可选"
+      "description": "Optional Splunk SPL query example."
     },
     "sample_log": {
       "type": "string",
-      "description": "脱敏后的示例日志文本"
+      "description": "Sanitized sample log text."
     },
     "source_url": {
       "type": "string",
       "format": "uri",
-      "description": "官方文档出处链接"
+      "description": "Official documentation source URL."
     }
   }
 }
