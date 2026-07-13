@@ -2,19 +2,19 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Deploy the verified static site to Vercel on `soceventlookup.com`, validate the canonical production output, and prepare Search Console submission without committing credentials.
+**Goal:** Deploy the verified static site to Cloudflare Pages Free on `soceventlookup.com`, validate the canonical production output, and prepare Search Console submission without committing credentials.
 
-**Architecture:** Keep deployment configuration build-time and environment-driven through `NEXT_PUBLIC_SITE_URL`. Add a small production verifier with dependency-injected HTTP access so its behavior is unit-testable, then use that verifier against the real Vercel deployment after DNS and TLS activate. Record the human account steps and launch evidence in a focused runbook.
+**Architecture:** Keep deployment configuration build-time and environment-driven through `NEXT_PUBLIC_SITE_URL`. Add a small production verifier with dependency-injected HTTP access so its behavior is unit-testable, then use that verifier against the real Cloudflare Pages deployment after DNS and TLS activate. Record the account steps and launch evidence in a focused runbook.
 
-**Tech Stack:** Next.js 15 static export, TypeScript, Node test runner, Vercel, GitHub, Google Search Console
+**Tech Stack:** Next.js 15 static export, TypeScript, Node test runner, Cloudflare Pages Free, GitHub, Google Search Console
 
 ## Global Constraints
 
 - Canonical origin: `https://soceventlookup.com`
 - Canonical hostname: apex domain; permanently redirect `www` to apex.
 - Production branch: `master` from `mengen100/SOC_Lookup`.
-- Never commit credentials, tokens, payment details, ownership TXT values, or generated Vercel account metadata.
-- Confirm the exact registration and renewal prices before submitting the domain purchase.
+- Never commit credentials, tokens, payment details, ownership TXT values, or generated Cloudflare account metadata.
+- Domain registration is complete at USD 10.46 per year; Pages hosting must remain on the Free plan.
 - Do not submit a sitemap until production verification passes.
 
 ---
@@ -108,9 +108,9 @@ git commit -m "feat: add production launch verifier"
 - Consumes: the command from Task 1 and the production architecture from the design specification.
 - Produces: a repeatable deployment, DNS, verification, and Search Console checklist.
 
-- [ ] **Step 1: Document Vercel project settings**
+- [ ] **Step 1: Document Cloudflare Pages project settings**
 
-Record the GitHub repository, production branch, build command, output directory, environment variable, apex canonical policy, `www` redirect, and the rule that both hostnames must be attached to the Vercel project.
+Record the GitHub repository, production branch, build command, output directory, environment variable, apex canonical policy, `www` redirect, and the rule that both hostnames must resolve through the Cloudflare zone.
 
 - [ ] **Step 2: Document purchase and DNS checkpoints**
 
@@ -145,44 +145,38 @@ git commit -m "docs: add production launch runbook"
 
 ---
 
-### Task 3: Vercel Deployment And Domain Registration
+### Task 3: Cloudflare Pages Deployment And Domain Binding
 
 **Files:**
 - Modify only if needed after platform inspection: `docs/launch-runbook.md`
 
 **Interfaces:**
-- Consumes: authenticated Vercel and GitHub sessions, the pushed `master` commit, and the approved production origin.
-- Produces: an active Vercel production deployment and exact checkout details for user confirmation.
+- Consumes: the authenticated Cloudflare account that owns the domain, GitHub authorization, the pushed `master` commit, and the approved production origin.
+- Produces: an active Cloudflare Pages deployment with the apex and `www` hostnames configured.
 
-- [ ] **Step 1: Authenticate and inspect the account**
+- [ ] **Step 1: Inspect the Cloudflare account**
 
-The user completes GitHub login in the in-app browser. Confirm the intended Vercel account/team before creating or importing anything.
+Confirm the active Cloudflare account owns `soceventlookup.com`. Do not expose account identifiers or billing information in project files.
 
-- [ ] **Step 2: Verify domain availability and checkout terms**
+- [ ] **Step 2: Create the Pages project**
 
-Search for `soceventlookup.com` in Vercel Domains. Record the displayed initial price, renewal price, term, tax, and auto-renewal state without exposing payment details.
+Connect GitHub, select `mengen100/SOC_Lookup`, choose `master`, use `npm run build`, and set the build output directory to `out`.
 
-If unavailable, evaluate the approved fallback order and stop before selecting a replacement. If available, stop at the final purchase action and request transaction confirmation with the exact total.
+- [ ] **Step 3: Configure the production origin**
 
-- [ ] **Step 3: Complete the confirmed purchase**
+Set `NEXT_PUBLIC_SITE_URL` to `https://soceventlookup.com` for Production and Preview, then deploy the current pushed commit to its `pages.dev` address.
 
-Only after action-time confirmation, submit the purchase. Confirm the success page names exactly `soceventlookup.com`.
+- [ ] **Step 4: Verify the Pages deployment**
 
-- [ ] **Step 4: Import the GitHub repository**
+Run the automated production verifier against the `pages.dev` deployment while checking that generated metadata still uses `https://soceventlookup.com`. Fix any build problem before attaching the domain.
 
-Import `mengen100/SOC_Lookup`, select `master`, retain Next.js framework detection, use `npm run build`, and use `out` for the static output when Vercel requires an explicit output directory.
+- [ ] **Step 5: Attach both hostnames**
 
-- [ ] **Step 5: Configure the production origin**
+Attach `soceventlookup.com` and `www.soceventlookup.com`. Configure a Cloudflare permanent redirect from `www` to the HTTPS apex hostname.
 
-Set `NEXT_PUBLIC_SITE_URL` to `https://soceventlookup.com` for Production and Preview, then deploy the current pushed commit.
+- [ ] **Step 6: Verify platform state**
 
-- [ ] **Step 6: Attach both hostnames**
-
-Attach `soceventlookup.com` and `www.soceventlookup.com`. Configure a permanent `www` to apex redirect. Use only the DNS values displayed by the authenticated Vercel project.
-
-- [ ] **Step 7: Verify platform state**
-
-Confirm Vercel reports valid DNS configuration, active TLS, the correct production deployment, and the correct canonical domain.
+Confirm Cloudflare reports active custom domains and TLS, the correct production deployment, and the correct canonical domain.
 
 ---
 

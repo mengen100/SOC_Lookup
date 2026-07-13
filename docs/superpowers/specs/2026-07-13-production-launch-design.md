@@ -2,46 +2,38 @@
 
 ## Objective
 
-Launch SOC Event Lookup on a permanent `.com` domain using Vercel, with one canonical hostname, reproducible build configuration, verified crawl metadata, and a documented Search Console handoff.
+Launch SOC Event Lookup on its permanent `.com` domain using Cloudflare Pages Free, with one canonical hostname, reproducible build configuration, verified crawl metadata, and a documented Search Console handoff.
 
 ## Domain Decision
 
-The first candidate is `soceventlookup.com`. Availability and the exact registration and renewal prices must be verified in the authenticated Vercel domain purchase flow before purchase.
-
-If the first candidate is unavailable or materially overpriced, stop before choosing a substitute. The approved fallback order for evaluation is:
-
-1. `soclookup.com`
-2. `eventidlookup.com`
-
-No domain purchase may be submitted until the checkout screen shows the exact domain, registration term, initial price, renewal price, taxes, and automatic-renewal state and the user confirms that transaction.
+`soceventlookup.com` was registered through Cloudflare Registrar for USD 10.46 per year. The registrar displayed the same USD 10.46 renewal price at checkout. Domain registration is the only required recurring launch cost; Cloudflare Pages hosting remains on the Free plan.
 
 ## Hosting Architecture
 
 - GitHub repository: `mengen100/SOC_Lookup`
 - Production branch: `master`
-- Hosting provider: Vercel
+- Hosting provider: Cloudflare Pages Free
 - Build command: `npm run build`
 - Output directory: `out`
 - Production environment variable: `NEXT_PUBLIC_SITE_URL=https://soceventlookup.com`
 - Canonical origin: `https://soceventlookup.com`
 - Secondary hostname: `www.soceventlookup.com`
 
-The apex hostname is the canonical production hostname. Vercel must permanently redirect `www.soceventlookup.com` to `https://soceventlookup.com`. Both hostnames must be attached to the Vercel project so neither returns a platform 404.
+The apex hostname is the canonical production hostname. Cloudflare must permanently redirect `www.soceventlookup.com` to `https://soceventlookup.com`. Both hostnames must resolve through the Cloudflare zone so neither returns a platform error.
 
-Preview deployments may retain Vercel-generated URLs, but generated canonical URLs, structured data, sitemap entries, and machine-readable event URLs must continue to point to the production origin.
+Preview deployments may retain Cloudflare-generated `pages.dev` URLs, but generated canonical URLs, structured data, sitemap entries, and machine-readable event URLs must continue to point to the production origin.
 
 ## Deployment Flow
 
-1. Authenticate to Vercel using the GitHub account that can access `mengen100/SOC_Lookup`.
-2. Verify `soceventlookup.com` availability and checkout terms.
-3. Confirm the exact purchase transaction with the user, then complete registration.
-4. Import the GitHub repository into Vercel without uploading a separate source archive.
-5. Confirm framework detection, build command, and static output settings.
-6. Configure `NEXT_PUBLIC_SITE_URL` for Production and Preview.
-7. Deploy the current `master` commit.
-8. Attach the apex and `www` hostnames and configure the permanent redirect.
-9. Wait for DNS verification and TLS certificate issuance.
-10. Run the launch verification checklist before submitting the site to search engines.
+1. Authenticate to Cloudflare using the account that owns `soceventlookup.com`.
+2. Create a Pages project by connecting the GitHub repository `mengen100/SOC_Lookup`.
+3. Select `master` as the production branch.
+4. Configure `npm run build` as the build command and `out` as the output directory.
+5. Configure `NEXT_PUBLIC_SITE_URL=https://soceventlookup.com` for production and preview builds.
+6. Deploy the current `master` commit.
+7. Attach the apex and `www` hostnames and configure the permanent redirect.
+8. Wait for DNS verification and TLS certificate issuance.
+9. Run the launch verification checklist before submitting the site to search engines.
 
 ## Launch Verification
 
@@ -73,9 +65,9 @@ Search Console verification and sitemap submission require the user's authentica
 
 ## Safety And Rollback
 
-- Never store Vercel, registrar, GitHub, or Google credentials in project files.
+- Never store Cloudflare, registrar, GitHub, or Google credentials in project files.
 - Do not expose payment details in logs, screenshots, commits, or reports.
-- Do not change DNS before a successful Vercel production deployment exists.
+- Do not attach the apex domain before a successful `pages.dev` production deployment exists.
 - If production validation fails, keep the domain attached but do not submit the sitemap. Fix the repository, deploy a new immutable commit, and repeat verification.
 - Do not force-push or rewrite `master`; every deployment fix is a normal commit.
 
