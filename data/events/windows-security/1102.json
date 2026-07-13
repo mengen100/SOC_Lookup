@@ -1,45 +1,45 @@
 {
-    "id":  "1102",
-    "source":  "windows_security",
-    "category":  "AuditLog",
-    "name":  "The audit log was cleared",
-    "priority":  "P1",
-    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
-    "last_reviewed":  "2026-07-10",
-    "definition":  "Windows Security Event ID 1102 records clearing of the Windows Security audit log and is a high-confidence defense-evasion signal.",
-    "trigger_scenarios":  "The event is generated when a user or process clears the Security log. It can be logged immediately before older records are removed.",
-    "key_fields":  [
-                       {
-                           "field":  "Subject",
-                           "explanation":  "The identity associated with the log clear. A local SYSTEM context still requires correlation to the initiating process or administrator."
-                       },
-                       {
-                           "field":  "Logon ID",
-                           "explanation":  "The session identifier used to join the event to 4624 and 4688 activity."
-                       },
-                       {
-                           "field":  "Computer",
-                           "explanation":  "The host whose Security log was cleared. Domain controllers and critical servers have heightened impact."
-                       }
-                   ],
-    "false_positives":  [
-                            "Authorized maintenance or log-retention workflows may clear logs, although this is uncommon for Security logs.",
-                            "Lab rebuilds and forensic test procedures can generate intentional clears."
-                        ],
-    "related_event_ids":  [
-                              "4719",
-                              "4688",
-                              "4624"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1070.001",
-                              "technique_name":  "Indicator Removal: Clear Windows Event Logs"
-                          }
-                      ],
-    "detection_notes":  "T1070.001 is high confidence when Event ID 1102 follows wevtutil.exe cl Security or Clear-EventLog in 4688 under the same Subject Logon ID. Security log clearing has no threshold: one unexpected clear on a domain controller or server is an incident. Review the preceding 60-minute window and preserve forwarded copies because the local retention window is destroyed.  Review a window=60 minute period before the clear.",
-    "kql_snippet":  "SecurityEvent\n| where EventID == 1102\n| project TimeGenerated, Computer, Account, SubjectLogonId\n| order by TimeGenerated desc",
-    "spl_snippet":  "index=wineventlog EventCode=1102\n| table _time, host, SubjectUserName, SubjectLogonId",
-    "sample_log":  "Subject: Account Name: CORP\\admin.ops\nLogon ID: 0x8e2c\nComputer: DC01",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-1102"
+  "id": "1102",
+  "source": "windows_security",
+  "category": "AuditLog",
+  "name": "The audit log was cleared",
+  "priority": "P1",
+  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
+  "last_reviewed": "2026-07-10",
+  "definition": "Windows Security Event ID 1102 records clearing of the Windows Security audit log and is a high-confidence defense-evasion signal.",
+  "trigger_scenarios": "The event is generated when a user or process clears the Security log. It can be logged immediately before older records are removed.",
+  "key_fields": [
+    {
+      "field": "Subject",
+      "explanation": "The identity associated with the log clear. A local SYSTEM context still requires correlation to the initiating process or administrator."
+    },
+    {
+      "field": "Logon ID",
+      "explanation": "The session identifier used to join the event to 4624 and 4688 activity."
+    },
+    {
+      "field": "Computer",
+      "explanation": "The host whose Security log was cleared. Domain controllers and critical servers have heightened impact."
+    }
+  ],
+  "false_positives": [
+    "Authorized maintenance or log-retention workflows may clear logs, although this is uncommon for Security logs.",
+    "Lab rebuilds and forensic test procedures can generate intentional clears."
+  ],
+  "related_event_ids": [
+    "4719",
+    "4688",
+    "4624"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1070.001",
+      "technique_name": "Indicator Removal: Clear Windows Event Logs"
+    }
+  ],
+  "detection_notes": "T1070.001 is high confidence when Event ID 1102 follows wevtutil.exe cl Security or Clear-EventLog in 4688 under the same Subject Logon ID. Security log clearing has no universal volume threshold: one unexpected clear on a domain controller or server is an incident. Use a local correlation window=60 minutes before the clear to review process creation, logon, and audit-policy changes, and preserve forwarded copies because the local retention window is destroyed.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 1102\n| project TimeGenerated, Computer, Account, SubjectLogonId\n| order by TimeGenerated desc",
+  "spl_snippet": "index=wineventlog EventCode=1102\n| table _time, host, SubjectUserName, SubjectLogonId",
+  "sample_log": "Subject: Account Name: CORP\\admin.ops\nLogon ID: 0x8e2c\nComputer: DC01",
+  "source_url": "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-1102"
 }

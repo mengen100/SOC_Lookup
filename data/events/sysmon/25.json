@@ -1,45 +1,45 @@
 {
-    "id":  "25",
-    "source":  "sysmon",
-    "category":  "Process",
-    "name":  "Process tampering",
-    "priority":  "P2",
-    "applicable_version":  "Sysmon 13.0 and later",
-    "last_reviewed":  "2026-07-12",
-    "definition":  "Sysmon Event ID 25 records that a running process\u0027s memory image was tampered with in a way that Sysmon\u0027s process-image integrity check detected, logging the affected process\u0027s Image, ProcessGuid, and the Type of tampering observed.",
-    "trigger_scenarios":  "Sysmon generates Event ID 25 when it detects that a monitored process\u0027s loaded executable image has been replaced or has its disk-to-memory mapping severed. This occurs during process-image replacement techniques such as process herpaderping, where an attacker overwrites the on-disk image after mapping it to obscure the file from scanning, or when a process\u0027s section object is backed by a different file than the one visible on disk.",
-    "key_fields":  [
-                       {
-                           "field":  "Type",
-                           "explanation":  "The specific tampering variant detected. The confirmed value \"Image is replaced\" indicates Sysmon detected a discrepancy between the mapped image in memory and the corresponding file on disk, consistent with process herpaderping or similar image-replacement evasion. This is the concrete observable field value for detection rules."
-                       },
-                       {
-                           "field":  "Image",
-                           "explanation":  "The full path of the process whose image was found to be tampered with. This is the victim process whose on-disk image was replaced after mapping; it is not the attacker process."
-                       },
-                       {
-                           "field":  "ProcessGuid",
-                           "explanation":  "Joins this tampering event to the Event ID 1 process-creation record for the affected process, to the Event ID 8 (CreateRemoteThread) or Event ID 10 (ProcessAccess) records if another process interacted with it, and to any network or file events in the same process\u0027s lifetime."
-                       }
-                   ],
-    "false_positives":  [
-                            "No widely documented legitimate software is known to produce this event on patched, production Windows systems; false-positive rates for Event ID 25 are generally very low.",
-                            "Some advanced packers or self-modifying installers on developer machines may theoretically trigger this, but this is rare."
-                        ],
-    "related_event_ids":  [
-                              "1",
-                              "8",
-                              "10"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1055",
-                              "technique_name":  "Process Injection"
-                          }
-                      ],
-    "detection_notes":  "T1055 ProcessTampering is generated for process image change/hollowing detections. The real fields are Type and Image: Type = \"Image is replaced\" for an Image under C:\\\\Users\\\\ or C:\\\\Temp\\\\ is a concrete hollowing signal; join ProcessGuid to Event ID 1 and Event ID 8.",
-    "kql_snippet":  "Sysmon\n| where EventID == 25\n| where Type == \"Image is replaced\"\n| project TimeGenerated, Computer, User, Image, ProcessGuid, ProcessId, Type",
-    "spl_snippet":  "index=sysmon EventCode=25 Type=\"Image is replaced\"\n| table _time, host, User, Image, ProcessGuid, ProcessId, Type",
-    "sample_log":  "UtcTime: 2026-07-12 09:55:12.440\nProcessGuid: {bbbbbbbb-cccc-dddd-eeee-ffffffffffff}\nProcessId: 3904\nImage: C:\\Windows\\System32\\svchost.exe\nType: Image is replaced\nUser: CORP\\jsmith",
-    "source_url":  "https://www.ultimatewindowssecurity.com/securitylog/encyclopedia/event.aspx?eventid=sysmon25"
+  "id": "25",
+  "source": "sysmon",
+  "category": "Process",
+  "name": "Process tampering",
+  "priority": "P2",
+  "applicable_version": "Sysmon 13.0 and later",
+  "last_reviewed": "2026-07-12",
+  "definition": "Sysmon Event ID 25 records that a running process's memory image was tampered with in a way that Sysmon's process-image integrity check detected, logging the affected process's Image, ProcessGuid, and the Type of tampering observed.",
+  "trigger_scenarios": "Sysmon generates Event ID 25 when it detects that a monitored process's loaded executable image has been replaced or has its disk-to-memory mapping severed. This occurs during process-image replacement techniques such as process herpaderping, where an attacker overwrites the on-disk image after mapping it to obscure the file from scanning, or when a process's section object is backed by a different file than the one visible on disk.",
+  "key_fields": [
+    {
+      "field": "Type",
+      "explanation": "The specific tampering variant detected. The confirmed value \"Image is replaced\" indicates Sysmon detected a discrepancy between the mapped image in memory and the corresponding file on disk, consistent with process herpaderping or similar image-replacement evasion. This is the concrete observable field value for detection rules."
+    },
+    {
+      "field": "Image",
+      "explanation": "The full path of the process whose image was found to be tampered with. This is the victim process whose on-disk image was replaced after mapping; it is not the attacker process."
+    },
+    {
+      "field": "ProcessGuid",
+      "explanation": "Joins this tampering event to the Event ID 1 process-creation record for the affected process, to the Event ID 8 (CreateRemoteThread) or Event ID 10 (ProcessAccess) records if another process interacted with it, and to any network or file events in the same process's lifetime."
+    }
+  ],
+  "false_positives": [
+    "No widely documented legitimate software is known to produce this event on patched, production Windows systems; false-positive rates for Event ID 25 are generally very low.",
+    "Some advanced packers or self-modifying installers on developer machines may theoretically trigger this, but this is rare."
+  ],
+  "related_event_ids": [
+    "1",
+    "8",
+    "10"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1055",
+      "technique_name": "Process Injection"
+    }
+  ],
+  "detection_notes": "T1055 ProcessTampering is generated for process image change/hollowing detections. The real fields are Type and Image: Type = \"Image is replaced\" for an Image under C:\\\\Users\\\\ or C:\\\\Temp\\\\ is a concrete hollowing signal; join ProcessGuid to Event ID 1 and Event ID 8.",
+  "kql_snippet": "Sysmon\n| where EventID == 25\n| where Type == \"Image is replaced\"\n| project TimeGenerated, Computer, User, Image, ProcessGuid, ProcessId, Type",
+  "spl_snippet": "index=sysmon EventCode=25 Type=\"Image is replaced\"\n| table _time, host, User, Image, ProcessGuid, ProcessId, Type",
+  "sample_log": "UtcTime: 2026-07-12 09:55:12.440\nProcessGuid: {bbbbbbbb-cccc-dddd-eeee-ffffffffffff}\nProcessId: 3904\nImage: C:\\Windows\\System32\\svchost.exe\nType: Image is replaced\nUser: CORP\\jsmith",
+  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
 }
