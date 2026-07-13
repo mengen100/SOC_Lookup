@@ -73,12 +73,14 @@ Record only non-sensitive operational evidence:
 
 | Evidence | Status |
 | --- | --- |
-| Pages project | Not deployed |
-| Production `pages.dev` URL | Not deployed |
-| Deployed commit | Not deployed |
-| Apex DNS and TLS | Not active |
-| `www` redirect | Not active |
-| Production verifier | Not run |
+| Pages project | `soc-event-lookup` deployed on 2026-07-13 |
+| Production `pages.dev` URL | `https://soc-event-lookup.pages.dev` |
+| Deployed commit | `5b3f126` |
+| Apex DNS and TLS | Active on 2026-07-13 |
+| `www` redirect | Active 301 to apex with path and query preserved |
+| Production verifier | Passed against `pages.dev` and `https://soceventlookup.com` on 2026-07-13 |
+| HTTP and 404 checks | HTTP redirects to HTTPS; unknown routes return 404 |
+| Search smoke test | Homepage and detail-page header search passed |
 | Search Console Domain property | Not configured |
 | Sitemap submission | Not submitted |
 
