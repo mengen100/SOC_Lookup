@@ -1,0 +1,45 @@
+{
+  "id": "27",
+  "source": "sysmon",
+  "priority": "P3",
+  "applicable_version": "Sysmon with this event enabled",
+  "last_reviewed": "2026-07-13",
+  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+  "category": "File",
+  "name": "FileBlockExecutable",
+  "definition": "Sysmon Event ID 27 records that Sysmon detected and blocked creation of a PE-format executable file.",
+  "trigger_scenarios": "Microsoft documents that this event is generated when Sysmon detects and blocks creation of executable files in PE format.",
+  "key_fields": [
+    {
+      "field": "TargetFilename",
+      "explanation": "The attempted executable path. User-writable locations are higher risk than managed installer directories."
+    },
+    {
+      "field": "Image / ProcessGuid",
+      "explanation": "The process that attempted to create the executable and the join key to Event ID 1."
+    },
+    {
+      "field": "Hashes",
+      "explanation": "Use hash values, when present, to identify the blocked executable and compare against malware intelligence."
+    }
+  ],
+  "false_positives": [
+    "Software installers, developer tools, and Windows updates can legitimately create PE files.",
+    "Blocking rules must be tuned carefully to avoid interrupting approved update and build workflows."
+  ],
+  "related_event_ids": [
+    "1",
+    "11",
+    "29"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1105",
+      "technique_name": "Ingress Tool Transfer"
+    }
+  ],
+  "detection_notes": "Alert when TargetFilename is a PE file under C:\\Users\\, C:\\ProgramData\\, C:\\Windows\\Temp, or AppData and Image is a browser, archive utility, PowerShell, or script host. Microsoft documents Event 27 as blocked PE-format executable creation; this supports T1105 Ingress Tool Transfer when the attempted file is a transferred tool or payload. Correlate ProcessGuid to Event 1 and look for alternate staging through Event 15 ADS or Event 29 executable detection.",
+  "kql_snippet": "Sysmon\n| where EventID == 27\n| project TimeGenerated, Computer, Image, TargetFilename, Hashes, ProcessGuid",
+  "spl_snippet": "index=sysmon EventCode=27 | table _time, host, Image, TargetFilename, Hashes, ProcessGuid",
+  "sample_log": "UtcTime: 2026-07-13 03:06:00.000\nImage: C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\nTargetFilename: C:\\ProgramData\\stage.exe\nHashes: SHA256=REDACTED\nProcessGuid: {REDACTED}"
+}

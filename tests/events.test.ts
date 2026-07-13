@@ -103,6 +103,15 @@ test("discovers complete event records from data/events", () => {
     "windows_security:5377",
     "windows_security:5827",
     "windows_security:5828",
+    "sysmon:4",
+    "sysmon:9",
+    "sysmon:14",
+    "sysmon:15",
+    "sysmon:24",
+    "sysmon:26",
+    "sysmon:27",
+    "sysmon:28",
+    "sysmon:255",
   ];
 
   assert.equal(completeEvents.length, expectedEvents.length);

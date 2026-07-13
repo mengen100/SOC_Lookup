@@ -1,0 +1,45 @@
+{
+  "id": "4",
+  "source": "sysmon",
+  "priority": "P3",
+  "applicable_version": "Sysmon with this event enabled",
+  "last_reviewed": "2026-07-13",
+  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+  "category": "Service",
+  "name": "Sysmon service state changed",
+  "definition": "Sysmon Event ID 4 reports that the Sysmon service state changed.",
+  "trigger_scenarios": "Microsoft documents that this event reports the Sysmon service state as started or stopped.",
+  "key_fields": [
+    {
+      "field": "State",
+      "explanation": "The service state transition. A stopped state means Sysmon telemetry collection may be degraded or absent."
+    },
+    {
+      "field": "UtcTime",
+      "explanation": "UTC timestamp for aligning the service transition with process creation, service-control, and configuration-change events."
+    },
+    {
+      "field": "Computer",
+      "explanation": "The host whose Sysmon service state changed; prioritize domain controllers, jump hosts, and security tooling servers."
+    }
+  ],
+  "false_positives": [
+    "Approved Sysmon upgrades and configuration reloads can restart the service.",
+    "Host shutdown and boot cycles can produce expected started or stopped transitions."
+  ],
+  "related_event_ids": [
+    "1",
+    "16",
+    "255"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1562.001",
+      "technique_name": "Impair Defenses: Disable or Modify Tools"
+    }
+  ],
+  "detection_notes": "Use threshold=1 unexpected stopped transition on high-value hosts. Microsoft documents Event 4 as Sysmon service started or stopped telemetry; a stopped state after sysmon64.exe -u, sc.exe stop, or a service-control process under C:\\Windows\\System32 can indicate T1562.001 Disable or Modify Tools. Correlate UtcTime with Event 1 process creation, Event 16 configuration changes, and Event 255 errors before suppressing planned upgrades.",
+  "kql_snippet": "Sysmon\n| where EventID == 4\n| project TimeGenerated, Computer, EventID, RenderedDescription",
+  "spl_snippet": "index=sysmon EventCode=4 | table _time, host, Message",
+  "sample_log": "UtcTime: 2026-07-13 03:00:00.000\nState: Stopped\nImage: C:\\Windows\\System32\\sc.exe\nComputer: HOST01"
+}

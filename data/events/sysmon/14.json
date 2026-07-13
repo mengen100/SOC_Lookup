@@ -1,0 +1,45 @@
+{
+  "id": "14",
+  "source": "sysmon",
+  "priority": "P3",
+  "applicable_version": "Sysmon with this event enabled",
+  "last_reviewed": "2026-07-13",
+  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+  "category": "Registry",
+  "name": "RegistryEvent (Key and Value Rename)",
+  "definition": "Sysmon Event ID 14 records registry key and value rename operations.",
+  "trigger_scenarios": "Microsoft documents that registry key and value rename operations map to this event type and record the new name of the renamed key or value.",
+  "key_fields": [
+    {
+      "field": "TargetObject",
+      "explanation": "The registry object being renamed. Public Sysmon field references identify this as the original key or value path."
+    },
+    {
+      "field": "NewName",
+      "explanation": "The new key or value name recorded for the rename operation."
+    },
+    {
+      "field": "Image / ProcessGuid",
+      "explanation": "The process that performed the rename and the stable join key to Event ID 1."
+    }
+  ],
+  "false_positives": [
+    "Installers and management tools can rename registry values during upgrades.",
+    "Application configuration migrations can rename values under vendor-owned keys."
+  ],
+  "related_event_ids": [
+    "1",
+    "12",
+    "13"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1112",
+      "technique_name": "Modify Registry"
+    }
+  ],
+  "detection_notes": "Alert when TargetObject or NewName is under HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run, HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run, or HKLM\\System\\CurrentControlSet\\Services and the Image is not an approved installer. Microsoft documents Event 14 as registry rename telemetry, and Sysmon documents HKLM/HKU/HKCR registry-root abbreviations for registry events. Renaming a persistence value can hide or activate autostart material, supporting T1112 Modify Registry; correlate ProcessGuid to Event 1 and adjacent Events 12/13.",
+  "kql_snippet": "Sysmon\n| where EventID == 14\n| project TimeGenerated, Computer, Image, TargetObject, NewName, ProcessGuid",
+  "spl_snippet": "index=sysmon EventCode=14 | table _time, host, Image, TargetObject, NewName, ProcessGuid",
+  "sample_log": "UtcTime: 2026-07-13 03:02:00.000\nImage: C:\\Users\\Public\\regtool.exe\nTargetObject: HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\OldName\nNewName: Updater\nProcessGuid: {REDACTED}"
+}

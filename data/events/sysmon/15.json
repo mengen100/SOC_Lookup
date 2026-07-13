@@ -1,0 +1,44 @@
+{
+  "id": "15",
+  "source": "sysmon",
+  "priority": "P3",
+  "applicable_version": "Sysmon with this event enabled",
+  "last_reviewed": "2026-07-13",
+  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+  "category": "File",
+  "name": "FileCreateStreamHash",
+  "definition": "Sysmon Event ID 15 records creation of a named file stream and hashes stream content.",
+  "trigger_scenarios": "Microsoft documents that this event logs when a named file stream is created and records hashes of the unnamed file contents and the named stream, with Zone.Identifier as a common mark-of-the-web stream.",
+  "key_fields": [
+    {
+      "field": "TargetFilename",
+      "explanation": "The file and stream path. A colon suffix such as file.txt:payload.exe indicates an NTFS alternate data stream."
+    },
+    {
+      "field": "Hash / Contents",
+      "explanation": "Sysmon records hashes of stream content, which should be used to preserve and triage the hidden payload."
+    },
+    {
+      "field": "Image / ProcessGuid",
+      "explanation": "The process that created the stream and the join key to Event ID 1 command-line context."
+    }
+  ],
+  "false_positives": [
+    "Browsers create Zone.Identifier streams on downloaded files.",
+    "Backup and endpoint tools may inspect or create metadata streams during scanning."
+  ],
+  "related_event_ids": [
+    "1",
+    "11"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1564.004",
+      "technique_name": "Hide Artifacts: NTFS File Attributes"
+    }
+  ],
+  "detection_notes": "Alert when TargetFilename contains an ADS suffix such as C:\\Users\\Public\\invoice.txt:payload.exe or a non-Zone.Identifier stream under Downloads, Temp, or ProgramData. Microsoft documents Event 15 for named file streams and Zone.Identifier; MITRE T1564.004 covers Alternate Data Streams used to hide data. Correlate ProcessGuid to Event 1 and preserve the stream hash before deleting the host artifact.",
+  "kql_snippet": "Sysmon\n| where EventID == 15\n| where TargetFilename contains \":\"\n| project TimeGenerated, Computer, Image, TargetFilename, Hashes, ProcessGuid",
+  "spl_snippet": "index=sysmon EventCode=15 TargetFilename=\"*:*\" | table _time, host, Image, TargetFilename, Hashes, ProcessGuid",
+  "sample_log": "UtcTime: 2026-07-13 03:03:00.000\nImage: C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\nTargetFilename: C:\\Users\\Public\\invoice.txt:payload.exe\nHashes: SHA256=REDACTED\nProcessGuid: {REDACTED}"
+}

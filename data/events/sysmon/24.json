@@ -1,0 +1,44 @@
+{
+  "id": "24",
+  "source": "sysmon",
+  "priority": "P3",
+  "applicable_version": "Sysmon with this event enabled",
+  "last_reviewed": "2026-07-13",
+  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+  "category": "Clipboard",
+  "name": "ClipboardChange",
+  "definition": "Sysmon Event ID 24 records new content in the system clipboard.",
+  "trigger_scenarios": "Microsoft documents that this event is generated when system clipboard contents change.",
+  "key_fields": [
+    {
+      "field": "Image / ProcessGuid",
+      "explanation": "The process that changed the clipboard and the join key to Event ID 1."
+    },
+    {
+      "field": "Session / ClientInfo",
+      "explanation": "Public Sysmon field references expose session and client context, useful for RDP clipboard investigation."
+    },
+    {
+      "field": "Archived / Hashes",
+      "explanation": "Public Sysmon field references expose whether clipboard content was archived and its hashes; treat archived content as sensitive evidence."
+    }
+  ],
+  "false_positives": [
+    "Normal user copy/paste activity is common and can include sensitive personal data.",
+    "RDP clipboard redirection and productivity tools can generate expected clipboard changes."
+  ],
+  "related_event_ids": [
+    "1",
+    "4624"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1115",
+      "technique_name": "Clipboard Data"
+    }
+  ],
+  "detection_notes": "Alert selectively when Image is powershell.exe, cmd.exe, wscript.exe, or an unknown binary under C:\\Users\\ or C:\\ProgramData\\ and Archived=true or Hashes changes repeatedly in an interactive session. Microsoft documents Event 24 as clipboard-change telemetry, and MITRE T1115 covers adversaries collecting clipboard data with Windows tooling such as Get-Clipboard. Correlate ProcessGuid to Event 1 and Session/ClientInfo to RDP or console logons before handling archived clipboard content.",
+  "kql_snippet": "Sysmon\n| where EventID == 24\n| project TimeGenerated, Computer, Image, Session, ClientInfo, Hashes, Archived, ProcessGuid",
+  "spl_snippet": "index=sysmon EventCode=24 | table _time, host, Image, Session, ClientInfo, Hashes, Archived, ProcessGuid",
+  "sample_log": "UtcTime: 2026-07-13 03:04:00.000\nImage: C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\nSession: 2\nClientInfo: RDP\nArchived: true\nHashes: SHA256=REDACTED\nProcessGuid: {REDACTED}"
+}

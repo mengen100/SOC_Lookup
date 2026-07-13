@@ -1,0 +1,44 @@
+{
+  "id": "9",
+  "source": "sysmon",
+  "priority": "P3",
+  "applicable_version": "Sysmon with this event enabled",
+  "last_reviewed": "2026-07-13",
+  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+  "category": "RawAccess",
+  "name": "RawAccessRead",
+  "definition": "Sysmon Event ID 9 records raw read access to disks or volumes using the \\.\\ denotation.",
+  "trigger_scenarios": "Microsoft documents that RawAccessRead detects a process conducting reading operations from the drive using \\.\\ notation, often to bypass file access auditing or read locked files.",
+  "key_fields": [
+    {
+      "field": "Device",
+      "explanation": "The target raw device path, such as \\.\\C: or \\.\\PhysicalDrive0, from the official Sysmon schema example."
+    },
+    {
+      "field": "Image / ProcessGuid / ProcessId",
+      "explanation": "The process that opened the raw device. Microsoft documents these fields in the RawAccessRead schema example."
+    },
+    {
+      "field": "UtcTime",
+      "explanation": "UTC timestamp used to correlate raw access with backup tools, forensic tools, or suspicious file staging."
+    }
+  ],
+  "false_positives": [
+    "Backup agents, EDR products, disk encryption tools, forensic tools, and defragmentation utilities may legitimately read raw volumes.",
+    "Baseline approved Image values before treating every raw read as malicious."
+  ],
+  "related_event_ids": [
+    "1",
+    "11"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1006",
+      "technique_name": "Direct Volume Access"
+    }
+  ],
+  "detection_notes": "Alert when Device is \\.\\C: or \\.\\PhysicalDrive0 and Image is not an approved backup, EDR, encryption, or forensic binary. Microsoft documents Event 9 for raw reads using \\.\\ notation and MITRE T1006 describes direct volume access used to bypass file access controls and monitoring. Correlate ProcessGuid to Event 1 and inspect whether the same process later writes files under C:\\Users\\, C:\\ProgramData\\, or C:\\Windows\\Temp.",
+  "kql_snippet": "Sysmon\n| where EventID == 9\n| project TimeGenerated, Computer, Image, Device, ProcessGuid",
+  "spl_snippet": "index=sysmon EventCode=9 | table _time, host, Image, Device, ProcessGuid",
+  "sample_log": "UtcTime: 2026-07-13 03:01:00.000\nProcessGuid: {REDACTED}\nProcessId: 4812\nImage: C:\\Users\\Public\\rawcopy.exe\nDevice: \\.\\PhysicalDrive0"
+}

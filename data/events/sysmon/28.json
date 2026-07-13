@@ -1,0 +1,45 @@
+{
+  "id": "28",
+  "source": "sysmon",
+  "priority": "P3",
+  "applicable_version": "Sysmon with this event enabled",
+  "last_reviewed": "2026-07-13",
+  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+  "category": "File",
+  "name": "FileBlockShredding",
+  "definition": "Sysmon Event ID 28 records that Sysmon detected and blocked file shredding behavior.",
+  "trigger_scenarios": "Microsoft documents that this event is generated when Sysmon detects and blocks file shredding from tools such as SDelete.",
+  "key_fields": [
+    {
+      "field": "TargetFilename",
+      "explanation": "The file targeted for shredding. Prioritize logs, tools, archives, and payloads in user-writable or temporary paths."
+    },
+    {
+      "field": "Image / ProcessGuid",
+      "explanation": "The process that attempted shredding and the join key to Event ID 1."
+    },
+    {
+      "field": "Hashes",
+      "explanation": "Hash values, when present, support triage of the file targeted for destruction."
+    }
+  ],
+  "false_positives": [
+    "Approved secure-delete tools may be used by administrators under documented data-handling procedures.",
+    "Privacy tools and backup cleanup jobs can shred files during normal operations."
+  ],
+  "related_event_ids": [
+    "1",
+    "23",
+    "26"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1070.004",
+      "technique_name": "Indicator Removal: File Deletion"
+    }
+  ],
+  "detection_notes": "Alert when TargetFilename is under C:\\Users\\, C:\\ProgramData\\, C:\\Windows\\Temp, or AppData and Image resembles SDelete or an unapproved secure-delete binary. Microsoft documents Event 28 as blocked file shredding from tools such as SDelete; this supports T1070.004 File Deletion when an actor attempts to remove intrusion artifacts or evidence. Correlate ProcessGuid to Event 1 and retrieve related Event 23 archives or backups immediately.",
+  "kql_snippet": "Sysmon\n| where EventID == 28\n| project TimeGenerated, Computer, Image, TargetFilename, Hashes, ProcessGuid",
+  "spl_snippet": "index=sysmon EventCode=28 | table _time, host, Image, TargetFilename, Hashes, ProcessGuid",
+  "sample_log": "UtcTime: 2026-07-13 03:07:00.000\nImage: C:\\Users\\Public\\sdelete.exe\nTargetFilename: C:\\Users\\Public\\loot.zip\nHashes: SHA256=REDACTED\nProcessGuid: {REDACTED}"
+}

@@ -1,0 +1,45 @@
+{
+  "id": "26",
+  "source": "sysmon",
+  "priority": "P3",
+  "applicable_version": "Sysmon with this event enabled",
+  "last_reviewed": "2026-07-13",
+  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+  "category": "File",
+  "name": "FileDeleteDetected",
+  "definition": "Sysmon Event ID 26 records file deletion without preserving the deleted file.",
+  "trigger_scenarios": "Microsoft documents Event 26 as behavior similar to Event 23 file deletion, but without saving deleted files to the archive directory.",
+  "key_fields": [
+    {
+      "field": "TargetFilename",
+      "explanation": "The deleted file path. Focus on staged tools and scripts under C:\\Users\\, C:\\ProgramData\\, C:\\Windows\\Temp, or AppData."
+    },
+    {
+      "field": "Image / ProcessGuid",
+      "explanation": "The deleting process and stable join key to Event ID 1."
+    },
+    {
+      "field": "Hashes / IsExecutable",
+      "explanation": "Public Sysmon field references expose hash and executable indicators that help distinguish payload deletion from routine cleanup."
+    }
+  ],
+  "false_positives": [
+    "Installers, browsers, endpoint agents, and cleanup jobs delete temporary files routinely.",
+    "Unlike Event 23, Event 26 does not preserve the deleted file, so hash and process context matter more."
+  ],
+  "related_event_ids": [
+    "1",
+    "11",
+    "23"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1070.004",
+      "technique_name": "Indicator Removal: File Deletion"
+    }
+  ],
+  "detection_notes": "Alert when TargetFilename under C:\\Users\\, C:\\ProgramData\\, C:\\Windows\\Temp, or AppData is deleted by cmd.exe, powershell.exe, or an unapproved process shortly after Event 11 file creation. Microsoft documents Event 26 as file deletion without archived preservation; MITRE T1070.004 covers deletion of dropped tools and intrusion artifacts. Correlate ProcessGuid to Event 1 and use any Hashes/IsExecutable data before the artifact is lost.",
+  "kql_snippet": "Sysmon\n| where EventID == 26\n| project TimeGenerated, Computer, Image, TargetFilename, Hashes, ProcessGuid",
+  "spl_snippet": "index=sysmon EventCode=26 | table _time, host, Image, TargetFilename, Hashes, ProcessGuid",
+  "sample_log": "UtcTime: 2026-07-13 03:05:00.000\nImage: C:\\Windows\\System32\\cmd.exe\nTargetFilename: C:\\Windows\\Temp\\stage.exe\nHashes: SHA256=REDACTED\nIsExecutable: true\nProcessGuid: {REDACTED}"
+}
