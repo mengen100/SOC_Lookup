@@ -6,7 +6,7 @@ import { buildEventSearchDocuments } from "../../lib/search";
 
 export const metadata: Metadata = {
   title: "Windows Security Event IDs",
-  description: "Browse Windows Security event IDs with SOC-focused categories and completed guide status.",
+  description: "Browse Windows Security event IDs with SOC investigation guidance, key fields, ATT&CK mappings, KQL, and SPL.",
   alternates: { canonical: "/windows-events/" },
 };
 
@@ -19,7 +19,7 @@ export default function WindowsEventsPage() {
       <header>
         <h1 className="text-3xl font-semibold text-ink">Windows Security Event IDs</h1>
         <p className="mt-3 max-w-3xl text-base leading-7 text-steel">
-          Browse Windows Security audit events by category. Completed entries link to full investigation guides; unfinished entries remain visible as content pipeline items.
+          Browse complete Windows Security event guides by category, with investigation context, key fields, false positives, ATT&CK mappings, KQL, and SPL.
         </p>
       </header>
       <EventBrowser events={events} categories={getCategoriesForSource("windows_security")} />

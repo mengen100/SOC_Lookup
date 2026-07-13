@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "About",
   description: "About the SOC Event Lookup knowledge base.",
+  alternates: { canonical: "/about/" },
 };
 
 export default function AboutPage() {

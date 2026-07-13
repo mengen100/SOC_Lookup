@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "SOC Tools",
   description: "Lightweight front-end tools for timestamp conversion, Sigma conversion, and CVSS scoring.",
+  alternates: { canonical: "/tools/" },
 };
 
 const tools = [

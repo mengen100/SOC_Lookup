@@ -2,15 +2,30 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { HeaderSearch } from "../components/HeaderSearch";
 import { ToolsMenu } from "../components/ToolsMenu";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "../lib/site";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://soc-event-lookup.vercel.app"),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: "SOC Event Lookup",
-    template: "%s | SOC Event Lookup"
+    default: SITE_NAME,
+    template: `%s | ${SITE_NAME}`
   },
-  description: "Structured Windows Security and Sysmon event ID reference for SOC analysts.",
+  description: SITE_DESCRIPTION,
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "/",
+    siteName: SITE_NAME,
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+  },
+  twitter: {
+    card: "summary",
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+  },
 };
 
 const navItems = [

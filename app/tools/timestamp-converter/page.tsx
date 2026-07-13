@@ -5,6 +5,7 @@ import { TimestampConverter } from "../../../components/tools/TimestampConverter
 export const metadata: Metadata = {
   title: "Timestamp Converter",
   description: "Convert Unix seconds, Unix milliseconds, Windows FileTime, and ISO 8601 timestamps.",
+  alternates: { canonical: "/tools/timestamp-converter/" },
 };
 
 export default function TimestampConverterPage() {

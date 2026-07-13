@@ -5,6 +5,7 @@ import { SigmaConverter } from "../../../components/tools/SigmaConverter";
 export const metadata: Metadata = {
   title: "Sigma Converter",
   description: "Convert simple Sigma rule selections to starter KQL and SPL.",
+  alternates: { canonical: "/tools/sigma-converter/" },
 };
 
 export default function SigmaConverterPage() {

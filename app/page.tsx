@@ -2,15 +2,18 @@ import Link from "next/link";
 
 import { HomeEventSearch } from "../components/HomeEventSearch";
 import { getCompleteEvents, getSkeletonEvents } from "../lib/events";
+import { buildWebsiteJsonLd } from "../lib/schema-org";
 import { buildEventSearchDocuments } from "../lib/search";
 
 export default function HomePage() {
   const skeleton = getSkeletonEvents();
   const complete = getCompleteEvents();
   const searchDocuments = buildEventSearchDocuments(skeleton, complete);
+  const websiteJsonLd = buildWebsiteJsonLd();
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }} />
       <section className="grid gap-8 lg:grid-cols-[1fr_320px] lg:items-end">
         <div>
           <p className="text-sm font-semibold uppercase text-accent">Windows Security and Sysmon knowledge base</p>

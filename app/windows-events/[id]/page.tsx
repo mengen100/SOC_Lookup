@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { EventPage } from "../../../components/EventPage";
 import { getCompleteEvents, getEventByRoute } from "../../../lib/events";
 import { eventDescription, eventPageTitle } from "../../../lib/schema-org";
+import { SITE_NAME } from "../../../lib/site";
 
 export const dynamicParams = false;
 
@@ -28,7 +29,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     title,
     description,
     alternates: { canonical: `/windows-events/${event.id}/` },
-    openGraph: { type: "article", title, description, url: canonical },
+    openGraph: { type: "article", title, description, url: canonical, siteName: SITE_NAME, locale: "en_US" },
     twitter: { card: "summary", title, description },
   };
 }

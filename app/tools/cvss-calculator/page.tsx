@@ -5,6 +5,7 @@ import { CvssCalculator } from "../../../components/tools/CvssCalculator";
 export const metadata: Metadata = {
   title: "CVSS Calculator",
   description: "Calculate CVSS 3.1 base scores in the browser.",
+  alternates: { canonical: "/tools/cvss-calculator/" },
 };
 
 export default function CvssCalculatorPage() {
