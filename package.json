@@ -9,7 +9,8 @@
     "export:json": "ts-node --compiler-options \"{\\\"module\\\":\\\"commonjs\\\"}\" scripts/export-json.ts",
     "test": "ts-node --compiler-options \"{\\\"module\\\":\\\"commonjs\\\"}\" tests/all.test.ts",
     "typecheck": "tsc --noEmit",
-    "validate:data": "ts-node --compiler-options \"{\\\"module\\\":\\\"commonjs\\\"}\" scripts/validate-data.ts"
+    "validate:data": "ts-node --compiler-options \"{\\\"module\\\":\\\"commonjs\\\"}\" scripts/validate-data.ts",
+    "verify:production": "ts-node --compiler-options \"{\\\"module\\\":\\\"commonjs\\\"}\" scripts/verify-production.ts"
   },
   "dependencies": {
     "ajv": "^8.17.1",

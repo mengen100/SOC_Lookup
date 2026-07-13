@@ -39,5 +39,5 @@ test("exports deterministic machine-readable event JSON files", () => {
   assert.equal(sysmon.name, "Process creation");
   assert.equal(sysmon.source, "sysmon");
   assert.equal(sysmon.route, "/sysmon-events/1/");
-  assert.equal(sysmon.canonical_url, "https://soc-event-lookup.vercel.app/sysmon-events/1/");
+  assert.equal(sysmon.canonical_url, "https://soceventlookup.com/sysmon-events/1/");
 });
