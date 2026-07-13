@@ -11,22 +11,22 @@ Status values: `done`, `needs-rework`, `pending`.
 - [done] windows_security:4672 - Special privileges assigned to new logon
 - [done] windows_security:4768 - A Kerberos authentication ticket (TGT) was requested
 - [done] windows_security:4769 - A Kerberos service ticket was requested
-- [pending] windows_security:4770 - A Kerberos service ticket was renewed
+- [done] windows_security:4770 - A Kerberos service ticket was renewed
 - [done] windows_security:4771 - Kerberos pre-authentication failed
 - [done] windows_security:4776 - The domain controller attempted to validate credentials (NTLM)
-- [pending] windows_security:4778 - A session was reconnected to a Window Station
-- [pending] windows_security:4779 - A session was disconnected from a Window Station
+- [done] windows_security:4778 - A session was reconnected to a Window Station
+- [done] windows_security:4779 - A session was disconnected from a Window Station
 - [done] windows_security:4688 - A new process has been created
 - [done] windows_security:4689 - A process has exited
 - [done] windows_security:4697 - A service was installed in the system
 - [done] windows_security:4698 - A scheduled task was created
 - [done] windows_security:4699 - A scheduled task was deleted
-- [pending] windows_security:4700 - A scheduled task was enabled
-- [pending] windows_security:4701 - A scheduled task was disabled
+- [done] windows_security:4700 - A scheduled task was enabled
+- [done] windows_security:4701 - A scheduled task was disabled
 - [done] windows_security:4702 - A scheduled task was updated
 - [done] windows_security:4657 - A registry value was modified
 - [done] windows_security:4663 - An attempt was made to access an object
-- [pending] windows_security:4670 - Permissions on an object were changed
+- [done] windows_security:4670 - Permissions on an object were changed
 - [done] windows_security:4720 - A user account was created
 - [done] windows_security:4722 - A user account was enabled
 - [done] windows_security:4723 - An attempt was made to change an account's password
@@ -34,24 +34,24 @@ Status values: `done`, `needs-rework`, `pending`.
 - [done] windows_security:4725 - A user account was disabled
 - [done] windows_security:4726 - A user account was deleted
 - [done] windows_security:4728 - A member was added to a security-enabled global group
-- [pending] windows_security:4729 - A member was removed from a security-enabled global group
+- [done] windows_security:4729 - A member was removed from a security-enabled global group
 - [done] windows_security:4732 - A member was added to a security-enabled local group
-- [pending] windows_security:4733 - A member was removed from a security-enabled local group
-- [pending] windows_security:4735 - A security-enabled local group was changed
+- [done] windows_security:4733 - A member was removed from a security-enabled local group
+- [done] windows_security:4735 - A security-enabled local group was changed
 - [done] windows_security:4738 - A user account was changed
 - [done] windows_security:4740 - A user account was locked out
-- [pending] windows_security:4756 - A member was added to a security-enabled universal group
+- [done] windows_security:4756 - A member was added to a security-enabled universal group
 - [done] windows_security:4767 - A user account was unlocked
 - [done] windows_security:1102 - The audit log was cleared
 - [done] windows_security:4719 - System audit policy was changed
-- [pending] windows_security:4907 - Auditing settings on object were changed
+- [done] windows_security:4907 - Auditing settings on object were changed
 - [done] windows_security:4616 - The system time was changed
 - [done] windows_security:5140 - A network share object was accessed
 - [done] windows_security:5145 - A network share object was checked for access
 - [done] windows_security:4103 - PowerShell Module Logging
 - [done] windows_security:4104 - PowerShell Script Block Logging
-- [pending] windows_security:4608 - Windows is starting up
-- [pending] windows_security:4609 - Windows is shutting down
+- [done] windows_security:4608 - Windows is starting up
+- [done] windows_security:4609 - Windows is shutting down
 - [pending] windows_security:4610 - An authentication package has been loaded by the LSA
 - [pending] windows_security:4611 - A trusted logon process has been registered with the LSA
 - [pending] windows_security:4612 - Internal audit queue resources exhausted

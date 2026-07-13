@@ -1,0 +1,45 @@
+{
+  "id": "4608",
+  "source": "windows_security",
+  "priority": "P3",
+  "applicable_version": "Windows Server 2008 and later where the audit subcategory is enabled",
+  "last_reviewed": "2026-07-13",
+  "category": "System",
+  "name": "Windows is starting up",
+  "definition": "Windows Security Event ID 4608 records startup of LSASS and initialization of the auditing subsystem.",
+  "trigger_scenarios": "Microsoft documents that this event is logged when LSASS.EXE starts and the auditing subsystem initializes, typically during OS startup.",
+  "key_fields": [
+    {
+      "field": "EventID / TimeCreated",
+      "explanation": "Startup timestamp for the audited system, used to anchor boot timelines."
+    },
+    {
+      "field": "Computer",
+      "explanation": "The host whose auditing subsystem initialized."
+    },
+    {
+      "field": "Sequence with 4609",
+      "explanation": "Compare with 4609 shutdown and uptime expectations to identify unexpected reboots."
+    }
+  ],
+  "false_positives": [
+    "Normal OS startup after planned maintenance or patching.",
+    "Lab and workstation reboots create routine 4608 events."
+  ],
+  "related_event_ids": [
+    "4609",
+    "4616",
+    "1102"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1529",
+      "technique_name": "System Shutdown/Reboot"
+    }
+  ],
+  "detection_notes": "Use threshold=1 unexpected 4608 outside a maintenance window on servers where reboot should be rare. Microsoft documents 4608 as LSASS/auditing subsystem startup; if no matching 4609 or approved reboot exists and the host later shows cleared logs or service changes, the sequence can support T1529 System Shutdown/Reboot. Correlate TimeCreated with 4616 time changes, 1102 audit-log clears, and service-start events.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4608\n| project TimeGenerated, Computer",
+  "spl_snippet": "index=wineventlog EventCode=4608 | table _time, host",
+  "sample_log": "EventID: 4608\nComputer: DC01\nTimeCreated: 2026-07-13T03:10:00Z",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4608"
+}

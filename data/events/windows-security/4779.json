@@ -1,0 +1,45 @@
+{
+  "id": "4779",
+  "source": "windows_security",
+  "priority": "P3",
+  "applicable_version": "Windows Server 2008 and later where the audit subcategory is enabled",
+  "last_reviewed": "2026-07-13",
+  "category": "Logon",
+  "name": "A session was disconnected from a Window Station",
+  "definition": "Windows Security Event ID 4779 records disconnection from an existing Terminal Services, Fast User Switching, or Hyper-V Enhanced Session desktop session.",
+  "trigger_scenarios": "Microsoft documents that this event is generated when a user disconnects from an existing Terminal Services session or switches away from an existing desktop.",
+  "key_fields": [
+    {
+      "field": "Account Name / Account Domain / Logon ID",
+      "explanation": "The user and hexadecimal session identifier associated with the disconnect."
+    },
+    {
+      "field": "Session Name",
+      "explanation": "The terminal session name associated with the disconnect, commonly an RDP-Tcp session."
+    },
+    {
+      "field": "Client Name / Client Address",
+      "explanation": "The endpoint associated with the disconnected session."
+    }
+  ],
+  "false_positives": [
+    "Normal RDP disconnects, network drops, and users closing the RDP client are common.",
+    "Fast User Switching and Hyper-V Enhanced Session disconnects can be benign."
+  ],
+  "related_event_ids": [
+    "4778",
+    "4624",
+    "4634"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1021.001",
+      "technique_name": "Remote Services: Remote Desktop Protocol"
+    }
+  ],
+  "detection_notes": "Investigate 4779 when Client Address belongs to an unusual external/VPN host and the same Logon ID later reconnects through 4778, especially for administrators. Microsoft documents Client Address and Session Name fields; repeated RDP-Tcp disconnect/reconnect cycles can preserve T1021.001 Remote Desktop Protocol access while reducing full logon visibility. Correlate with 4624 Type 10, 4648 explicit credentials, and commands run after reconnection.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4779\n| project TimeGenerated, Computer, Account, SessionName, ClientAddress, LogonID",
+  "spl_snippet": "index=wineventlog EventCode=4779 | table _time, host, Account_Name, Session_Name, Client_Address, Logon_ID",
+  "sample_log": "EventID: 4779\nAccount Name: admin\nAccount Domain: CORP\nLogon ID: 0x169e9\nSession Name: RDP-Tcp#0\nClient Name: LAPTOP42\nClient Address: 10.42.42.211",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4779"
+}

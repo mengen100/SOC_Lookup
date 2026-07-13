@@ -1,0 +1,45 @@
+{
+  "id": "4729",
+  "source": "windows_security",
+  "priority": "P3",
+  "applicable_version": "Windows Server 2008 and later where the audit subcategory is enabled",
+  "last_reviewed": "2026-07-13",
+  "category": "AccountManagement",
+  "name": "A member was removed from a security-enabled global group",
+  "definition": "Windows Security Event ID 4729 records removal of a member from a security-enabled global group.",
+  "trigger_scenarios": "Microsoft documents 4729 as the global-group counterpart to 4733, with the same fields and recommendations except group type.",
+  "key_fields": [
+    {
+      "field": "Member Security ID / Account Name",
+      "explanation": "The user, group, or computer removed from the global security group."
+    },
+    {
+      "field": "Group Name / Group Domain / Group Security ID",
+      "explanation": "The affected global group. Privileged groups such as Domain Admins require immediate validation."
+    },
+    {
+      "field": "Subject Account Name / Logon ID",
+      "explanation": "The actor and hexadecimal logon session that performed the removal."
+    }
+  ],
+  "false_positives": [
+    "Privileged access reviews and role cleanup legitimately remove members from groups.",
+    "Automated identity governance can remove expired group memberships."
+  ],
+  "related_event_ids": [
+    "4728",
+    "4735",
+    "4624"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1098",
+      "technique_name": "Account Manipulation"
+    }
+  ],
+  "detection_notes": "Use threshold=1 for removals from privileged global groups such as Domain Admins, Enterprise Admins, or custom Tier 0 groups. Microsoft documents 4729 as the removal counterpart to 4728/4733; if Member Security ID is removed shortly after suspicious access, the actor may be hiding or changing persistence, which maps to T1098 Account Manipulation. Correlate Subject Logon ID with 4624/4688 and verify the identity-governance ticket.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4729\n| project TimeGenerated, Computer, Account, MemberName, GroupName, GroupDomain",
+  "spl_snippet": "index=wineventlog EventCode=4729 | table _time, host, Account_Name, Member_Account_Name, Group_Name, Group_Domain",
+  "sample_log": "EventID: 4729\nSubject Account Name: admin.ops\nSubject Logon ID: 0x27a79\nMember Security ID: S-1-5-21-111-222-333-1109\nMember Account Name: CN=svc-old,CN=Users,DC=corp,DC=local\nGroup Name: Domain Admins\nGroup Domain: CORP",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/audit-security-group-management"
+}

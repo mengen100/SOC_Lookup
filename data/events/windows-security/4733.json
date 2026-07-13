@@ -1,0 +1,45 @@
+{
+  "id": "4733",
+  "source": "windows_security",
+  "priority": "P3",
+  "applicable_version": "Windows Server 2008 and later where the audit subcategory is enabled",
+  "last_reviewed": "2026-07-13",
+  "category": "AccountManagement",
+  "name": "A member was removed from a security-enabled local group",
+  "definition": "Windows Security Event ID 4733 records removal of a member from a security-enabled local group.",
+  "trigger_scenarios": "Microsoft documents that this event is generated for each removed member on domain controllers, member servers, and workstations.",
+  "key_fields": [
+    {
+      "field": "Member Security ID / Account Name",
+      "explanation": "The principal removed from the local security group; Account Name may be - for some local-group cases."
+    },
+    {
+      "field": "Group Name / Group Domain",
+      "explanation": "The local group affected; compare Group Domain to Computer to distinguish local SAM and domain local groups."
+    },
+    {
+      "field": "Subject Logon ID / Privileges",
+      "explanation": "Actor session and any privilege list associated with the removal."
+    }
+  ],
+  "false_positives": [
+    "Group Policy Preferences and endpoint management can enforce local Administrators membership and remove unmanaged principals.",
+    "Deprovisioning and access review processes remove users from privileged local groups."
+  ],
+  "related_event_ids": [
+    "4732",
+    "4735",
+    "4624"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1098",
+      "technique_name": "Account Manipulation"
+    }
+  ],
+  "detection_notes": "Alert on threshold=1 removal from Administrators, Remote Desktop Users, Backup Operators, or other privileged local groups outside an approved endpoint-management cycle. Microsoft documents 4733 per removed member and notes 4735 often precedes it without details; a suspicious actor can remove competing administrators or cleanup evidence of earlier T1098 Account Manipulation. Correlate Subject Logon ID with 4624/4688 and compare Group Domain to Computer for local SAM scope.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4733\n| project TimeGenerated, Computer, Account, MemberName, GroupName, GroupDomain",
+  "spl_snippet": "index=wineventlog EventCode=4733 | table _time, host, Account_Name, Member_Account_Name, Group_Name, Group_Domain",
+  "sample_log": "EventID: 4733\nSubject Account Name: admin.ops\nSubject Logon ID: 0x27a79\nMember Security ID: S-1-5-21-111-222-333-1109\nMember Account Name: CN=helpdesk,CN=Users,DC=corp,DC=local\nGroup Name: Administrators\nGroup Domain: HOST01",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4733"
+}

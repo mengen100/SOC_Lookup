@@ -1,0 +1,45 @@
+{
+  "id": "4756",
+  "source": "windows_security",
+  "priority": "P3",
+  "applicable_version": "Windows Server 2008 and later where the audit subcategory is enabled",
+  "last_reviewed": "2026-07-13",
+  "category": "AccountManagement",
+  "name": "A member was added to a security-enabled universal group",
+  "definition": "Windows Security Event ID 4756 records addition of a member to a security-enabled universal group.",
+  "trigger_scenarios": "Microsoft documents 4756 as the universal-group counterpart to 4732, with the same fields and recommendations except group type.",
+  "key_fields": [
+    {
+      "field": "Member Security ID / Account Name",
+      "explanation": "The principal added to the universal security group."
+    },
+    {
+      "field": "Group Name / Group Domain / Group Security ID",
+      "explanation": "The affected universal group, which can be granted access in any trusting domain."
+    },
+    {
+      "field": "Expiration time / Privileges",
+      "explanation": "Newer event versions may include membership expiration time; privileges captures special rights involved in the change."
+    }
+  ],
+  "false_positives": [
+    "Approved cross-domain access provisioning can add users to universal groups.",
+    "Identity governance platforms may add temporary group memberships with expiration time."
+  ],
+  "related_event_ids": [
+    "4732",
+    "4728",
+    "4757"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1098",
+      "technique_name": "Account Manipulation"
+    }
+  ],
+  "detection_notes": "Use threshold=1 for additions to privileged universal groups or groups granting cross-domain access, especially when Expiration time is blank or unexpectedly long. Microsoft documents 4756 as the universal-group equivalent of 4732; adding a Member Security ID to a universal security group can extend access across trusting domains and supports T1098 Account Manipulation. Correlate Subject Logon ID with 4624/4688 and validate the provisioning request.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4756\n| project TimeGenerated, Computer, Account, MemberName, GroupName, GroupDomain",
+  "spl_snippet": "index=wineventlog EventCode=4756 | table _time, host, Account_Name, Member_Account_Name, Group_Name, Group_Domain",
+  "sample_log": "EventID: 4756\nSubject Account Name: admin.ops\nSubject Logon ID: 0x27a79\nMember Security ID: S-1-5-21-111-222-333-1109\nMember Account Name: CN=svc-sync,CN=Users,DC=corp,DC=local\nGroup Name: Forest-App-Admins\nGroup Domain: CORP\nExpiration time: -",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/audit-security-group-management"
+}

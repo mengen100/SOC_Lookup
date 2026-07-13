@@ -1,0 +1,45 @@
+{
+  "id": "4778",
+  "source": "windows_security",
+  "priority": "P3",
+  "applicable_version": "Windows Server 2008 and later where the audit subcategory is enabled",
+  "last_reviewed": "2026-07-13",
+  "category": "Logon",
+  "name": "A session was reconnected to a Window Station",
+  "definition": "Windows Security Event ID 4778 records reconnection to an existing Terminal Services, Fast User Switching, or Hyper-V Enhanced Session desktop session.",
+  "trigger_scenarios": "Microsoft documents that this event is generated when a user reconnects to an existing Terminal Services session or switches to an existing desktop.",
+  "key_fields": [
+    {
+      "field": "Account Name / Account Domain / Logon ID",
+      "explanation": "The user and hexadecimal session identifier associated with the reconnect."
+    },
+    {
+      "field": "Session Name",
+      "explanation": "The terminal session name such as RDP-Tcp#0."
+    },
+    {
+      "field": "Client Name / Client Address",
+      "explanation": "The reconnecting endpoint. Client Address is the concrete source for RDP session-return investigation."
+    }
+  ],
+  "false_positives": [
+    "Normal RDP reconnects after network interruption or user lock/unlock activity.",
+    "Hyper-V Enhanced Session reconnects can generate the same event."
+  ],
+  "related_event_ids": [
+    "4624",
+    "4779",
+    "4648"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1021.001",
+      "technique_name": "Remote Services: Remote Desktop Protocol"
+    }
+  ],
+  "detection_notes": "Alert when Client Address is a new external or VPN source for a privileged Account Name and Session Name is RDP-Tcp#0 or another RDP session. Microsoft documents Client Address and Session Name for 4778; reconnecting to an existing session can let T1021.001 Remote Desktop Protocol activity resume without a fresh interactive 4624 Type 10 pattern. Correlate Logon ID with 4624, 4779, and command execution after reconnection.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4778\n| project TimeGenerated, Computer, Account, SessionName, ClientAddress, LogonID",
+  "spl_snippet": "index=wineventlog EventCode=4778 | table _time, host, Account_Name, Session_Name, Client_Address, Logon_ID",
+  "sample_log": "EventID: 4778\nAccount Name: admin\nAccount Domain: CORP\nLogon ID: 0x169e9\nSession Name: RDP-Tcp#0\nClient Name: LAPTOP42\nClient Address: 10.42.42.211",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4778"
+}

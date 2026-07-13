@@ -1,0 +1,45 @@
+{
+  "id": "4907",
+  "source": "windows_security",
+  "priority": "P3",
+  "applicable_version": "Windows Server 2008 and later where the audit subcategory is enabled",
+  "last_reviewed": "2026-07-13",
+  "category": "Policy",
+  "name": "Auditing settings on object were changed",
+  "definition": "Windows Security Event ID 4907 records a change to the SACL auditing settings on a file or registry object.",
+  "trigger_scenarios": "Microsoft documents that this event is generated when an object SACL changes and does not generate for Active Directory objects.",
+  "key_fields": [
+    {
+      "field": "Object Server / Object Type / Object Name",
+      "explanation": "Identifies the object whose auditing settings changed; file and registry paths are the primary investigation pivots."
+    },
+    {
+      "field": "OldSd / NewSd",
+      "explanation": "Original and new SDDL strings for the object auditing settings."
+    },
+    {
+      "field": "Process ID / Process Name",
+      "explanation": "The process through which the SACL change occurred."
+    }
+  ],
+  "false_positives": [
+    "Security baseline deployment and audit policy hardening can legitimately change SACLs.",
+    "Administrators may update auditing on sensitive folders during compliance work."
+  ],
+  "related_event_ids": [
+    "4670",
+    "4715",
+    "4663"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1562.002",
+      "technique_name": "Impair Defenses: Disable Windows Event Logging"
+    }
+  ],
+  "detection_notes": "Alert when Object Name is C:\\Windows\\System32, C:\\ProgramData\\, C:\\Users\\Public, or a critical registry key and NewSd removes SACL audit entries such as SA/FA that were present in OldSd. Microsoft documents 4907 as object SACL-change telemetry and excludes Active Directory objects; removing auditing from high-value file or registry paths impairs evidence collection and supports T1562.002 Disable Windows Event Logging. Correlate Process ID to 4688 and compare with 4670 permission changes.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4907\n| project TimeGenerated, Computer, Account, ObjectName, OldSd, NewSd, ProcessName",
+  "spl_snippet": "index=wineventlog EventCode=4907 | table _time, host, Account_Name, Object_Name, OldSd, NewSd, Process_Name",
+  "sample_log": "EventID: 4907\nObject Type: File\nObject Name: C:\\ProgramData\\SecurityAgent\\logs\nOldSd: S:(AU;SAFA;FA;;;WD)\nNewSd: S:NO_ACCESS_CONTROL\nProcess Name: C:\\Windows\\System32\\icacls.exe",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4907"
+}

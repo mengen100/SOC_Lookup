@@ -1,0 +1,45 @@
+{
+  "id": "4670",
+  "source": "windows_security",
+  "priority": "P3",
+  "applicable_version": "Windows Server 2008 and later where the audit subcategory is enabled",
+  "last_reviewed": "2026-07-13",
+  "category": "ObjectAccess",
+  "name": "Permissions on an object were changed",
+  "definition": "Windows Security Event ID 4670 records that permissions on a file system, registry, or security token object changed.",
+  "trigger_scenarios": "Microsoft documents that this event is generated when object permissions change and that file/registry generation requires SACL auditing for Change Permissions, Take Ownership, Write DAC, or Write Owner.",
+  "key_fields": [
+    {
+      "field": "Object Type / Object Name / Handle ID",
+      "explanation": "Identifies the object whose permissions changed and provides a hexadecimal handle for correlation with 4663."
+    },
+    {
+      "field": "OldSd / NewSd",
+      "explanation": "Original and new SDDL values. Microsoft documents rights such as FA, WD Modify Permissions, WO Modify Owner, and hex rights such as 0xf0007."
+    },
+    {
+      "field": "Process ID / Process Name",
+      "explanation": "The process through which permissions were changed. Microsoft recommends monitoring processes outside standard folders or with restricted substrings."
+    }
+  ],
+  "false_positives": [
+    "Installers and administrators legitimately update ACLs on application directories and registry keys.",
+    "Token-object 4670 events are often informational and hard to attribute, per Microsoft guidance."
+  ],
+  "related_event_ids": [
+    "4663",
+    "4688",
+    "4907"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1222.001",
+      "technique_name": "File and Directory Permissions Modification"
+    }
+  ],
+  "detection_notes": "Alert when Object Name is C:\\Windows\\System32, C:\\ProgramData\\, C:\\Users\\Public, or a critical registry key and NewSd adds WD (Everyone), grants FA, or includes owner/permission rights such as WO/WD/0xf0007 not present in OldSd. Microsoft documents Object Type, Object Name, OldSd/NewSd, and SDDL rights for 4670; broadening DACLs on executable or service paths supports T1222.001 File and Directory Permissions Modification. Correlate Handle ID with 4663 and Process ID with 4688.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4670\n| project TimeGenerated, Computer, Account, ObjectType, ObjectName, OldSd, NewSd, ProcessName",
+  "spl_snippet": "index=wineventlog EventCode=4670 | table _time, host, Account_Name, Object_Type, Object_Name, OldSd, NewSd, Process_Name",
+  "sample_log": "EventID: 4670\nObject Type: File\nObject Name: C:\\ProgramData\\svc\\agent.exe\nHandle ID: 0x3f0\nOldSd: D:(A;;FR;;;BU)\nNewSd: D:(A;;FA;;;WD)\nProcess Name: C:\\Windows\\System32\\icacls.exe",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4670"
+}

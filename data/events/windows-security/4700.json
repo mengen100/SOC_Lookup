@@ -1,0 +1,46 @@
+{
+  "id": "4700",
+  "source": "windows_security",
+  "priority": "P3",
+  "applicable_version": "Windows Server 2008 and later where the audit subcategory is enabled",
+  "last_reviewed": "2026-07-13",
+  "category": "ScheduledTask",
+  "name": "A scheduled task was enabled",
+  "definition": "Windows Security Event ID 4700 records that a scheduled task was enabled.",
+  "trigger_scenarios": "Microsoft documents that this event is generated every time a scheduled task is enabled.",
+  "key_fields": [
+    {
+      "field": "Task Name",
+      "explanation": "The enabled task path. Microsoft recommends monitoring critical tasks that should never be enabled."
+    },
+    {
+      "field": "Task Content",
+      "explanation": "Task XML content that can expose command, arguments, trigger, and principal context."
+    },
+    {
+      "field": "Subject Logon ID",
+      "explanation": "Hexadecimal logon session for the account enabling the task."
+    }
+  ],
+  "false_positives": [
+    "Administrators may enable tasks during maintenance or application deployment.",
+    "Vendor updaters can re-enable their own disabled tasks."
+  ],
+  "related_event_ids": [
+    "4698",
+    "4699",
+    "4701",
+    "4702"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1053.005",
+      "technique_name": "Scheduled Task/Job: Scheduled Task"
+    }
+  ],
+  "detection_notes": "Use threshold=1 for critical Task Name values that should never be enabled, as Microsoft recommends. Task Name in the Task Scheduler Library root such as \\Updater or Task Content running powershell.exe from C:\\Users\\Public supports T1053.005 Scheduled Task when an actor reactivates persistence. Correlate Subject Logon ID with 4624/4688 and compare Task Content against the approved baseline.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4700\n| project TimeGenerated, Computer, Account, TaskName, TaskContent",
+  "spl_snippet": "index=wineventlog EventCode=4700 | table _time, host, Account_Name, Task_Name, Task_Content",
+  "sample_log": "EventID: 4700\nSubject Logon ID: 0x42a91\nTask Name: \\Updater\nTask Content: <Command>C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe</Command>",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4700"
+}

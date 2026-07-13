@@ -1,0 +1,45 @@
+{
+  "id": "4735",
+  "source": "windows_security",
+  "priority": "P3",
+  "applicable_version": "Windows Server 2008 and later where the audit subcategory is enabled",
+  "last_reviewed": "2026-07-13",
+  "category": "AccountManagement",
+  "name": "A security-enabled local group was changed",
+  "definition": "Windows Security Event ID 4735 records a change to a security-enabled local group.",
+  "trigger_scenarios": "Microsoft documents that this event is generated when a security-enabled local group is changed on domain controllers, member servers, and workstations, though some property changes do not invoke it.",
+  "key_fields": [
+    {
+      "field": "Group Name / Group Domain / Group Security ID",
+      "explanation": "The changed local group; privileged groups need additional scrutiny."
+    },
+    {
+      "field": "Changed Attributes",
+      "explanation": "Fields such as SamAccountName and SidHistory may show what changed, but Microsoft notes some changes produce limited detail."
+    },
+    {
+      "field": "Subject Logon ID",
+      "explanation": "Hexadecimal actor session to correlate with 4624 and process creation."
+    }
+  ],
+  "false_positives": [
+    "Group Policy and endpoint management commonly refresh local group attributes.",
+    "Administrative maintenance can rename or update group metadata without changing membership."
+  ],
+  "related_event_ids": [
+    "4732",
+    "4733",
+    "4624"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1098",
+      "technique_name": "Account Manipulation"
+    }
+  ],
+  "detection_notes": "Use threshold=1 for 4735 on Administrators, Remote Desktop Users, or backup/operator groups when Changed Attributes include SidHistory or SamAccountName changes, or when 4732/4733 occurs nearby. Microsoft documents 4735 as local security group change telemetry and notes it can precede membership events; changing privileged group properties can support T1098 Account Manipulation even when membership is not shown in this event. Correlate Subject Logon ID with 4624/4688 and directory or local SAM management activity.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4735\n| project TimeGenerated, Computer, Account, GroupName, GroupDomain, SidHistory, SamAccountName",
+  "spl_snippet": "index=wineventlog EventCode=4735 | table _time, host, Account_Name, Group_Name, Group_Domain, SidHistory, SamAccountName",
+  "sample_log": "EventID: 4735\nSubject Account Name: admin.ops\nSubject Logon ID: 0x27a79\nGroup Name: Administrators\nGroup Domain: HOST01\nChanged Attributes: SamAccountName=Administrators; SidHistory=-",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4735"
+}

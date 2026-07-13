@@ -1,0 +1,45 @@
+{
+  "id": "4770",
+  "source": "windows_security",
+  "priority": "P3",
+  "applicable_version": "Windows Server 2008 and later where the audit subcategory is enabled",
+  "last_reviewed": "2026-07-13",
+  "category": "Kerberos",
+  "name": "A Kerberos service ticket was renewed",
+  "definition": "Windows Security Event ID 4770 records Ticket Granting Service ticket renewal on a domain controller.",
+  "trigger_scenarios": "Microsoft documents that this event is generated for every TGS renewal and only on domain controllers.",
+  "key_fields": [
+    {
+      "field": "TargetUserName / TargetDomainName",
+      "explanation": "UPN and Kerberos realm of the account requesting ticket renewal; computer accounts typically end with $."
+    },
+    {
+      "field": "ServiceName / ServiceSid",
+      "explanation": "The service account or computer for which the renewed TGS is valid."
+    },
+    {
+      "field": "TicketOptions / TicketEncryptionType / IpAddress / IpPort",
+      "explanation": "Microsoft documents TicketOptions values such as 0x40810010 and encryption types including 0x11 AES128, 0x12 AES256, and 0x17 RC4-HMAC; IpPort 0 indicates localhost."
+    }
+  ],
+  "false_positives": [
+    "Microsoft states this event is typically informational.",
+    "Long-lived normal sessions renew Kerberos service tickets without user-visible activity."
+  ],
+  "related_event_ids": [
+    "4769",
+    "4768",
+    "4624"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1550.003",
+      "technique_name": "Use Alternate Authentication Material: Pass the Ticket"
+    }
+  ],
+  "detection_notes": "4770 is usually informational, but investigate renewals where TicketEncryptionType=0x17 in an AES-only domain, TicketOptions includes forwarded/renewable patterns such as 0x60810010, or IpAddress renews a privileged account from an unexpected host. Microsoft documents 0x17 as RC4-HMAC and 0x40810010/0x60810010 TicketOptions semantics; combined with unusual 4769/4624 activity this can support T1550.003 Pass the Ticket rather than normal ticket lifetime renewal.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4770\n| project TimeGenerated, Computer, Account, IpAddress, TicketOptions, TicketEncryptionType, ServiceName",
+  "spl_snippet": "index=wineventlog EventCode=4770 | table _time, host, TargetUserName, IpAddress, TicketOptions, TicketEncryptionType, ServiceName",
+  "sample_log": "EventID: 4770\nTargetUserName: admin@CORP.LOCAL\nServiceName: cifs/fileserver\nTicketOptions: 0x60810010\nTicketEncryptionType: 0x17\nIpAddress: ::ffff:10.0.0.12\nIpPort: 49964",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4770"
+}

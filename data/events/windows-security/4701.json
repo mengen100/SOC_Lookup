@@ -1,0 +1,46 @@
+{
+  "id": "4701",
+  "source": "windows_security",
+  "priority": "P3",
+  "applicable_version": "Windows Server 2008 and later where the audit subcategory is enabled",
+  "last_reviewed": "2026-07-13",
+  "category": "ScheduledTask",
+  "name": "A scheduled task was disabled",
+  "definition": "Windows Security Event ID 4701 records that a scheduled task was disabled.",
+  "trigger_scenarios": "Microsoft documents that this event is generated every time a scheduled task is disabled.",
+  "key_fields": [
+    {
+      "field": "Task Name",
+      "explanation": "The disabled task path. Microsoft recommends monitoring critical tasks that should never be disabled."
+    },
+    {
+      "field": "Task Content",
+      "explanation": "Task XML content that can identify the disabled command, trigger, and principal."
+    },
+    {
+      "field": "Subject Logon ID",
+      "explanation": "Hexadecimal logon session for the account disabling the task."
+    }
+  ],
+  "false_positives": [
+    "Maintenance windows may disable noisy or deprecated scheduled tasks.",
+    "Endpoint management software can temporarily disable vendor tasks during updates."
+  ],
+  "related_event_ids": [
+    "4698",
+    "4699",
+    "4700",
+    "4702"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1562.001",
+      "technique_name": "Impair Defenses: Disable or Modify Tools"
+    }
+  ],
+  "detection_notes": "Use threshold=1 for Task Name values tied to backups, EDR, logging, or vulnerability scanning that should never be disabled. Microsoft recommends monitoring 4701 for critical tasks; disabling a defensive scheduled task with Task Content pointing to C:\\Program Files\\SecurityAgent or a backup script is T1562.001 Disable or Modify Tools. Correlate Subject Logon ID with 4624/4688 and look for adjacent 4699 deletion or 4702 update.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4701\n| project TimeGenerated, Computer, Account, TaskName, TaskContent",
+  "spl_snippet": "index=wineventlog EventCode=4701 | table _time, host, Account_Name, Task_Name, Task_Content",
+  "sample_log": "EventID: 4701\nSubject Logon ID: 0x42a91\nTask Name: \\SecurityAgent\\DailyScan\nTask Content: <Command>C:\\Program Files\\SecurityAgent\\scan.exe</Command>",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4701"
+}

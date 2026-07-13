@@ -1,0 +1,45 @@
+{
+  "id": "4609",
+  "source": "windows_security",
+  "priority": "P3",
+  "applicable_version": "Windows Server 2008 and later where the audit subcategory is enabled",
+  "last_reviewed": "2026-07-13",
+  "category": "System",
+  "name": "Windows is shutting down",
+  "definition": "Windows Security Event ID 4609 records Windows shutdown.",
+  "trigger_scenarios": "Microsoft event monitoring guidance lists 4609 as Windows shutting down; use it with 4608 to bracket reboot activity.",
+  "key_fields": [
+    {
+      "field": "EventID / TimeCreated",
+      "explanation": "Shutdown timestamp for the audited system."
+    },
+    {
+      "field": "Computer",
+      "explanation": "The host that is shutting down."
+    },
+    {
+      "field": "Pairing with 4608",
+      "explanation": "A following 4608 indicates restart; absence can indicate extended downtime."
+    }
+  ],
+  "false_positives": [
+    "Planned patching, maintenance, and operator-initiated reboots.",
+    "Power events and virtualization host operations can shut down guest systems normally."
+  ],
+  "related_event_ids": [
+    "4608",
+    "4616",
+    "1102"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1529",
+      "technique_name": "System Shutdown/Reboot"
+    }
+  ],
+  "detection_notes": "Use threshold=1 unexpected 4609 on domain controllers, security servers, or production hosts outside maintenance windows. Microsoft monitoring guidance identifies 4609 as Windows shutting down; unexpected shutdown followed by 4608 startup can support T1529 System Shutdown/Reboot when paired with attacker activity, log clearing, or disabled services. Correlate TimeCreated with 1102, 4719, 5030/5035, and hypervisor or power-management records.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4609\n| project TimeGenerated, Computer",
+  "spl_snippet": "index=wineventlog EventCode=4609 | table _time, host",
+  "sample_log": "EventID: 4609\nComputer: DC01\nTimeCreated: 2026-07-13T03:09:00Z",
+  "source_url": "https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/plan/appendix-l--events-to-monitor"
+}
