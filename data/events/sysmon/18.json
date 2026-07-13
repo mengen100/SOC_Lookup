@@ -6,20 +6,20 @@
     "priority":  "P2",
     "applicable_version":  "Sysmon with this event enabled",
     "last_reviewed":  "2026-07-13",
-    "definition":  "Sysmon Event ID 18 records PipeEvent - Pipe Connected.",
-    "trigger_scenarios":  "The event is emitted when the configured Sysmon operation occurs.",
+    "definition":  "Sysmon Event ID 18 records a named pipe connection between a client and a server.",
+    "trigger_scenarios":  "Sysmon emits this event when a named pipe connection is made. It complements Event ID 17 by showing connection activity rather than only pipe creation.",
     "key_fields":  [
                        {
-                           "field":  "Event-specific field",
-                           "explanation":  "PipeName \\\\pipe\\\\svcctl or \\\\pipe\\\\samr accessed by a non-admin process under C:\\\\Temp\\\\ can identify suspicious IPC; correlate ProcessGuid with Event 1."
+                           "field":  "PipeName",
+                           "explanation":  "The connected named pipe. MITRE's IPC detection strategy uses anomalous named-pipe patterns, including \\\\.\\\\pipe\\\\svcctl, as an environment-specific detection element."
                        },
                        {
                            "field":  "Image / ProcessGuid",
-                           "explanation":  "Use the initiating image and ProcessGuid to join Event ID 1 command-line context."
+                           "explanation":  "Identifies the process connecting to the pipe and provides a stable join key to Sysmon Event ID 1 for command-line and parent-process context."
                        },
                        {
-                           "field":  "UtcTime",
-                           "explanation":  "Use the timestamp to correlate with related activity."
+                           "field":  "RuleName",
+                           "explanation":  "Shows the Sysmon rule that matched, if rule names are configured, and helps explain why this pipe connection was captured."
                        }
                    ],
     "false_positives":  [
@@ -35,9 +35,9 @@
                               "technique_name":  "Inter-Process Communication"
                           }
                       ],
-    "detection_notes":  "PipeName \\\\pipe\\\\svcctl or \\\\pipe\\\\samr accessed by a non-admin process under C:\\\\Temp\\\\ can identify suspicious IPC; correlate ProcessGuid with Event 1. This is a T1559 Inter-Process Communication signal; preserve the concrete value and correlate the initiating Image, ProcessGuid, and logon context before closing.",
+    "detection_notes":  "Alert when a process from C:\\\\Users\\\\, C:\\\\ProgramData\\\\, or C:\\\\Windows\\\\Temp connects to a rare named pipe or an administrative IPC pattern such as \\\\.\\\\pipe\\\\svcctl outside an approved administration workflow. Microsoft documents Event 18 as a named pipe connection between a client and server; MITRE DET0493 maps anomalous named-pipe creation or access to T1559 Inter-Process Communication. Correlate ProcessGuid to Event 1 and compare the Image, parent process, and host role with the named-pipe baseline.",
     "kql_snippet":  "Sysmon\n| where EventID == 18\n| project TimeGenerated, Computer, Image, ProcessGuid",
     "spl_snippet":  "index=sysmon EventCode=18 | table _time, host, Image, ProcessGuid",
-    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nImage: C:\\\\Windows\\\\System32\\\\example.exe\nProcessGuid: {REDACTED}",
+    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nPipeName: \\\\.\\\\pipe\\\\svcctl\nImage: C:\\\\Windows\\\\Temp\\\\client.exe\nProcessGuid: {REDACTED}\nRuleName: suspicious_pipe",
     "source_url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
 }

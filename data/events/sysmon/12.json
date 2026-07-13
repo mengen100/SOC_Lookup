@@ -6,20 +6,20 @@
     "priority":  "P2",
     "applicable_version":  "Sysmon with this event enabled",
     "last_reviewed":  "2026-07-13",
-    "definition":  "Sysmon Event ID 12 records RegistryEvent (Object create/delete).",
-    "trigger_scenarios":  "The event is emitted when the configured Sysmon operation occurs.",
+    "definition":  "Sysmon Event ID 12 records registry key and value create or delete operations.",
+    "trigger_scenarios":  "Sysmon emits this event when a configured RegistryEvent rule observes a registry object being created or deleted. Microsoft documents this event as useful for monitoring autostart locations and specific malware registry changes.",
     "key_fields":  [
                        {
-                           "field":  "Event-specific field",
-                           "explanation":  "TargetObject under HKLM\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run or Services is a persistence-relevant registry path; EventType CreateKey/DeleteKey identifies the operation."
+                           "field":  "EventType",
+                           "explanation":  "Identifies the registry object operation, such as CreateKey or DeleteKey, so analysts can distinguish new persistence material from cleanup activity."
+                       },
+                       {
+                           "field":  "TargetObject",
+                           "explanation":  "The registry path uses Sysmon's abbreviated root names such as HKLM, HKU, and HKCR. Paths under HKLM\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run or HKLM\\\\System\\\\CurrentControlSet\\\\Services are high-value persistence and service-control locations."
                        },
                        {
                            "field":  "Image / ProcessGuid",
-                           "explanation":  "Use the initiating image and ProcessGuid to join Event ID 1 command-line context."
-                       },
-                       {
-                           "field":  "UtcTime",
-                           "explanation":  "Use the timestamp to correlate with related activity."
+                           "explanation":  "Identifies the process that created or deleted the registry object and provides a stable join key to Sysmon Event ID 1 for the original command line."
                        }
                    ],
     "false_positives":  [
@@ -35,9 +35,9 @@
                               "technique_name":  "Modify Registry"
                           }
                       ],
-    "detection_notes":  "TargetObject under HKLM\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run or Services is a persistence-relevant registry path; EventType CreateKey/DeleteKey identifies the operation. This is a T1112 Modify Registry signal; preserve the concrete value and correlate the initiating Image, ProcessGuid, and logon context before closing.",
+    "detection_notes":  "Alert when EventType=CreateKey or EventType=DeleteKey touches HKLM\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run, HKCU\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run, or HKLM\\\\System\\\\CurrentControlSet\\\\Services from an Image outside the approved software deployment baseline. Sysinternals documents Event 12 for registry object create/delete activity and uses HKLM/HKU/HKCR abbreviations, so these TargetObject values are directly observable. Creation in Run or Services can establish persistence, while deletion can remove forensic or defensive configuration; map this to T1112 Modify Registry and correlate ProcessGuid to Event 1 for the full command line.",
     "kql_snippet":  "Sysmon\n| where EventID == 12\n| project TimeGenerated, Computer, Image, ProcessGuid",
     "spl_snippet":  "index=sysmon EventCode=12 | table _time, host, Image, ProcessGuid",
-    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nImage: C:\\\\Windows\\\\System32\\\\example.exe\nProcessGuid: {REDACTED}",
+    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nEventType: CreateKey\nTargetObject: HKLM\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run\\\\Updater\nImage: C:\\\\Users\\\\Public\\\\updater.exe\nProcessGuid: {REDACTED}",
     "source_url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
 }

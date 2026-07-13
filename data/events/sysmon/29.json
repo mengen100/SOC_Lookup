@@ -6,20 +6,20 @@
     "priority":  "P2",
     "applicable_version":  "Sysmon with this event enabled",
     "last_reviewed":  "2026-07-13",
-    "definition":  "Sysmon Event ID 29 records FileExecutableDetected.",
-    "trigger_scenarios":  "The event is emitted when the configured Sysmon operation occurs.",
+    "definition":  "Sysmon Event ID 29 records creation of a new executable file.",
+    "trigger_scenarios":  "Sysmon emits this event when it detects creation of a new PE-format executable file. Microsoft documents Event ID 29 as FileExecutableDetected.",
     "key_fields":  [
                        {
-                           "field":  "Event-specific field",
-                           "explanation":  "TargetFilename ending .exe, .dll, or .ps1 under C:\\\\Users\\\\ or C:\\\\Temp\\\\ is newly detected executable staging; correlate Image and ProcessGuid with Event 1 and execution."
+                           "field":  "TargetFilename",
+                           "explanation":  "The newly detected executable file. PE files under C:\\\\Users\\\\, C:\\\\ProgramData\\\\, C:\\\\Windows\\\\Temp, or AppData are higher-risk staging locations than managed install paths."
                        },
                        {
                            "field":  "Image / ProcessGuid",
-                           "explanation":  "Use the initiating image and ProcessGuid to join Event ID 1 command-line context."
+                           "explanation":  "Identifies the process that created the executable and provides a stable join key to Sysmon Event ID 1 for command-line and parent-process context."
                        },
                        {
-                           "field":  "UtcTime",
-                           "explanation":  "Use the timestamp to correlate with related activity."
+                           "field":  "Hashes / Signature",
+                           "explanation":  "Use configured hash and signature fields, when present, to triage whether the executable is known-good, unsigned, or newly observed."
                        }
                    ],
     "false_positives":  [
@@ -35,9 +35,9 @@
                               "technique_name":  "Ingress Tool Transfer"
                           }
                       ],
-    "detection_notes":  "TargetFilename ending .exe, .dll, or .ps1 under C:\\\\Users\\\\ or C:\\\\Temp\\\\ is newly detected executable staging; correlate Image and ProcessGuid with Event 1 and execution. This is a T1105 Ingress Tool Transfer signal; preserve the concrete value and correlate the initiating Image, ProcessGuid, and logon context before closing.",
+    "detection_notes":  "Alert when TargetFilename is a PE executable under C:\\\\Users\\\\, C:\\\\ProgramData\\\\, C:\\\\Windows\\\\Temp, or AppData and the creating Image is a browser, script interpreter, archive utility, or remote-management process. Microsoft documents Event 29 as creation of a new PE-format executable file; MITRE T1105 covers adversaries transferring tools or files into a compromised environment. Correlate ProcessGuid to Event 1, inspect hashes/signature if available, and look for immediate Sysmon Event 1 execution or Event 3 network activity from the new file.",
     "kql_snippet":  "Sysmon\n| where EventID == 29\n| project TimeGenerated, Computer, Image, ProcessGuid",
     "spl_snippet":  "index=sysmon EventCode=29 | table _time, host, Image, ProcessGuid",
-    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nImage: C:\\\\Windows\\\\System32\\\\example.exe\nProcessGuid: {REDACTED}",
+    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nTargetFilename: C:\\\\ProgramData\\\\stage.exe\nImage: C:\\\\Windows\\\\System32\\\\WindowsPowerShell\\\\v1.0\\\\powershell.exe\nProcessGuid: {REDACTED}\nHashes: SHA256=REDACTED",
     "source_url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
 }

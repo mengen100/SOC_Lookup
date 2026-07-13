@@ -6,20 +6,20 @@
     "priority":  "P2",
     "applicable_version":  "Sysmon with this event enabled",
     "last_reviewed":  "2026-07-13",
-    "definition":  "Sysmon Event ID 16 records ServiceConfigurationChange (Sysmon config change).",
-    "trigger_scenarios":  "The event is emitted when the configured Sysmon operation occurs.",
+    "definition":  "Sysmon Event ID 16 records changes to the active Sysmon configuration.",
+    "trigger_scenarios":  "Sysmon emits this event when the service configuration changes, including when filtering rules are updated. Microsoft documents Sysmon configuration entries such as ArchiveDirectory, HashAlgorithms, DnsLookup, CopyOnDeletePE, and event-filtering include/exclude rules.",
     "key_fields":  [
                        {
-                           "field":  "Event-specific field",
-                           "explanation":  "Configuration file hashes or RuleName changes that remove ProcessCreate, NetworkConnect, or ImageLoad coverage are defense impairment; compare the new configuration checksum with the approved baseline."
+                           "field":  "Configuration state",
+                           "explanation":  "Review the recorded configuration change against the approved Sysmon XML baseline. Changes to HashAlgorithms, ArchiveDirectory, CopyOnDeletePE, or event filters can materially change telemetry coverage."
                        },
                        {
-                           "field":  "Image / ProcessGuid",
-                           "explanation":  "Use the initiating image and ProcessGuid to join Event ID 1 command-line context."
+                           "field":  "EventFiltering",
+                           "explanation":  "Microsoft documents include/exclude filter tags such as ProcessCreate, NetworkConnect, DriverLoad, ImageLoad, PipeEvent, and RegistryEvent. Removing coverage or adding broad exclusions can blind detection."
                        },
                        {
                            "field":  "UtcTime",
-                           "explanation":  "Use the timestamp to correlate with related activity."
+                           "explanation":  "Use the configuration-change time to correlate with service-control events, file changes, and process creation from administrators or deployment tools."
                        }
                    ],
     "false_positives":  [
@@ -35,9 +35,9 @@
                               "technique_name":  "Impair Defenses: Disable or Modify Tools"
                           }
                       ],
-    "detection_notes":  "Configuration file hashes or RuleName changes that remove ProcessCreate, NetworkConnect, or ImageLoad coverage are defense impairment; compare the new configuration checksum with the approved baseline. This is a T1562.001 Impair Defenses: Disable or Modify Tools signal; preserve the concrete value and correlate the initiating Image, ProcessGuid, and logon context before closing.  Compare configuration changes in a window=60 minute interval and retain the approved configuration hash.",
+    "detection_notes":  "Treat an unexpected Event 16 as possible T1562.001 Disable or Modify Tools when the new configuration disables or broadly excludes high-value filters such as ProcessCreate, NetworkConnect, DriverLoad, ImageLoad, PipeEvent, RegistryEvent, or changes HashAlgorithms from SHA256/* to weaker or empty coverage. Microsoft documents Event 16 as a Sysmon configuration-change event and shows configuration updates with sysmon64.exe -c C:\\\\Windows\\\\config.xml; it also documents ArchiveDirectory with default C:\\\\Sysmon, CopyOnDeletePE, DnsLookup, and HashAlgorithms, so compare those concrete fields with the approved baseline. Correlate the UtcTime with process creation for sysmon64.exe -c, service-control activity, and change-ticket evidence before suppressing.",
     "kql_snippet":  "Sysmon\n| where EventID == 16\n| project TimeGenerated, Computer, Image, ProcessGuid",
     "spl_snippet":  "index=sysmon EventCode=16 | table _time, host, Image, ProcessGuid",
-    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nImage: C:\\\\Windows\\\\System32\\\\example.exe\nProcessGuid: {REDACTED}",
+    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nConfiguration: EventFiltering updated; ProcessCreate onmatch=exclude\nHashAlgorithms: SHA256\nArchiveDirectory: Sysmon",
     "source_url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
 }

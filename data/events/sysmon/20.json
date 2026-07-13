@@ -6,20 +6,20 @@
     "priority":  "P2",
     "applicable_version":  "Sysmon with this event enabled",
     "last_reviewed":  "2026-07-13",
-    "definition":  "Sysmon Event ID 20 records WmiEvent - WmiEventConsumer activity detected.",
-    "trigger_scenarios":  "The event is emitted when the configured Sysmon operation occurs.",
+    "definition":  "Sysmon Event ID 20 records WMI event consumer registration activity.",
+    "trigger_scenarios":  "Sysmon emits this event when a WMI event consumer is registered. Microsoft documents that the event records the consumer name, log, and destination.",
     "key_fields":  [
                        {
-                           "field":  "Event-specific field",
-                           "explanation":  "ConsumerType CommandLineEventConsumer with a CommandLineTemplate invoking powershell.exe or a C:\\\\Users\\\\ path is executable WMI persistence."
+                           "field":  "Name",
+                           "explanation":  "The WMI consumer name recorded by Sysmon. Correlate it with the Event 21 consumer path to prove a complete subscription."
                        },
                        {
-                           "field":  "Image / ProcessGuid",
-                           "explanation":  "Use the initiating image and ProcessGuid to join Event ID 1 command-line context."
+                           "field":  "Destination",
+                           "explanation":  "The destination recorded for the consumer. Command execution destinations that reference powershell.exe, cmd.exe, or C:\\\\Users\\\\ paths are high-risk because the consumer can execute attacker content."
                        },
                        {
-                           "field":  "UtcTime",
-                           "explanation":  "Use the timestamp to correlate with related activity."
+                           "field":  "Log",
+                           "explanation":  "The log field recorded by Sysmon for the consumer and useful for identifying scripted, command-line, or log-backed consumers."
                        }
                    ],
     "false_positives":  [
@@ -35,9 +35,9 @@
                               "technique_name":  "Event Triggered Execution: Windows Management Instrumentation Event Subscription"
                           }
                       ],
-    "detection_notes":  "ConsumerType CommandLineEventConsumer with a CommandLineTemplate invoking powershell.exe or a C:\\\\Users\\\\ path is executable WMI persistence. This is a T1546.003 Event Triggered Execution: Windows Management Instrumentation Event Subscription signal; preserve the concrete value and correlate the initiating Image, ProcessGuid, and logon context before closing.",
+    "detection_notes":  "Alert when Destination references powershell.exe, cmd.exe, wscript.exe, mshta.exe, or a payload under C:\\\\Users\\\\, C:\\\\ProgramData\\\\, or C:\\\\Windows\\\\Temp. Microsoft documents Event 20 as recording consumer name, log, and destination, and MITRE T1546.003 covers WMI consumers used to execute code from event subscriptions. Correlate the consumer Name with Event 19 filter registration and Event 21 binding to determine whether the executable destination is armed for persistence.",
     "kql_snippet":  "Sysmon\n| where EventID == 20\n| project TimeGenerated, Computer, Image, ProcessGuid",
     "spl_snippet":  "index=sysmon EventCode=20 | table _time, host, Image, ProcessGuid",
-    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nImage: C:\\\\Windows\\\\System32\\\\example.exe\nProcessGuid: {REDACTED}",
+    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nName: UpdaterConsumer\nLog: CommandLineEventConsumer\nDestination: powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\\\\ProgramData\\\\updater.ps1",
     "source_url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
 }

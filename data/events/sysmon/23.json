@@ -6,20 +6,20 @@
     "priority":  "P2",
     "applicable_version":  "Sysmon with this event enabled",
     "last_reviewed":  "2026-07-13",
-    "definition":  "Sysmon Event ID 23 records FileDelete (archived).",
-    "trigger_scenarios":  "The event is emitted when the configured Sysmon operation occurs.",
+    "definition":  "Sysmon Event ID 23 records file deletion and archives the deleted file.",
+    "trigger_scenarios":  "Sysmon emits this event when a file is deleted and copy-on-delete archival is configured. Microsoft documents that deleted files are saved under ArchiveDirectory, which defaults to C:\\\\Sysmon.",
     "key_fields":  [
                        {
-                           "field":  "Event-specific field",
-                           "explanation":  "TargetFilename under C:\\\\Users\\\\ or C:\\\\ProgramData\\\\ combined with ArchiveDirectory C:\\\\Sysmon provides recoverable evidence of deletion; event 23 archives the deleted file."
+                           "field":  "TargetFilename",
+                           "explanation":  "The deleted file path. User-writable paths such as C:\\\\Users\\\\, C:\\\\ProgramData\\\\, C:\\\\Windows\\\\Temp, and AppData are common places where staged tools and scripts are removed."
                        },
                        {
                            "field":  "Image / ProcessGuid",
-                           "explanation":  "Use the initiating image and ProcessGuid to join Event ID 1 command-line context."
+                           "explanation":  "Identifies the deleting process and provides a stable join key to Sysmon Event ID 1 for command-line and parent-process context."
                        },
                        {
-                           "field":  "UtcTime",
-                           "explanation":  "Use the timestamp to correlate with related activity."
+                           "field":  "ArchiveDirectory",
+                           "explanation":  "Microsoft documents the default archive location as C:\\\\Sysmon. Retrieve the archived copy before response actions or retention cleanup remove it."
                        }
                    ],
     "false_positives":  [
@@ -35,9 +35,9 @@
                               "technique_name":  "Indicator Removal: File Deletion"
                           }
                       ],
-    "detection_notes":  "TargetFilename under C:\\\\Users\\\\ or C:\\\\ProgramData\\\\ combined with ArchiveDirectory C:\\\\Sysmon provides recoverable evidence of deletion; event 23 archives the deleted file. This is a T1070.004 Indicator Removal: File Deletion signal; preserve the concrete value and correlate the initiating Image, ProcessGuid, and logon context before closing.",
+    "detection_notes":  "Alert when TargetFilename under C:\\\\Users\\\\, C:\\\\ProgramData\\\\, C:\\\\Windows\\\\Temp, or AppData is deleted by a scripting or command process shortly after tool execution. Microsoft documents Event 23 as FileDelete with an archived copy saved under ArchiveDirectory, defaulting to C:\\\\Sysmon; that archived copy is the immediate evidence to preserve. This maps to T1070.004 File Deletion when the file is a dropped tool, script, or intrusion artifact; correlate ProcessGuid to Event 1 and retrieve the archived file before containment changes the host.",
     "kql_snippet":  "Sysmon\n| where EventID == 23\n| project TimeGenerated, Computer, Image, ProcessGuid",
     "spl_snippet":  "index=sysmon EventCode=23 | table _time, host, Image, ProcessGuid",
-    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nImage: C:\\\\Windows\\\\System32\\\\example.exe\nProcessGuid: {REDACTED}",
+    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nTargetFilename: C:\\\\Users\\\\Public\\\\stage.exe\nImage: C:\\\\Windows\\\\System32\\\\cmd.exe\nProcessGuid: {REDACTED}\nArchiveDirectory: C:\\\\Sysmon",
     "source_url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
 }

@@ -6,20 +6,20 @@
     "priority":  "P2",
     "applicable_version":  "Sysmon with this event enabled",
     "last_reviewed":  "2026-07-13",
-    "definition":  "Sysmon Event ID 19 records WmiEvent - WmiEventFilter activity detected.",
-    "trigger_scenarios":  "The event is emitted when the configured Sysmon operation occurs.",
+    "definition":  "Sysmon Event ID 19 records WMI event filter registration activity.",
+    "trigger_scenarios":  "Sysmon emits this event when a WMI event filter is registered. Microsoft documents that the event records the WMI namespace, filter name, and filter expression.",
     "key_fields":  [
                        {
-                           "field":  "Event-specific field",
-                           "explanation":  "EventNamespace root\\\\subscription with a new Name and Query such as SELECT * FROM __InstanceCreationEvent is WMI event-filter persistence."
+                           "field":  "EventNamespace",
+                           "explanation":  "The namespace where the filter is registered. root\\\\subscription is the standard namespace for permanent WMI event subscriptions and should be tightly baselined."
                        },
                        {
-                           "field":  "Image / ProcessGuid",
-                           "explanation":  "Use the initiating image and ProcessGuid to join Event ID 1 command-line context."
+                           "field":  "Name",
+                           "explanation":  "The WMI filter name recorded by Sysmon. New or randomized names outside the approved management baseline can identify persistence setup."
                        },
                        {
-                           "field":  "UtcTime",
-                           "explanation":  "Use the timestamp to correlate with related activity."
+                           "field":  "Query",
+                           "explanation":  "The filter expression recorded by Sysmon. Queries such as SELECT * FROM __InstanceCreationEvent define the trigger that can later execute a bound consumer."
                        }
                    ],
     "false_positives":  [
@@ -35,9 +35,9 @@
                               "technique_name":  "Event Triggered Execution: Windows Management Instrumentation Event Subscription"
                           }
                       ],
-    "detection_notes":  "EventNamespace root\\\\subscription with a new Name and Query such as SELECT * FROM __InstanceCreationEvent is WMI event-filter persistence. This is a T1546.003 Event Triggered Execution: Windows Management Instrumentation Event Subscription signal; preserve the concrete value and correlate the initiating Image, ProcessGuid, and logon context before closing.  Correlate new filters and consumers in a window=60 minute interval.",
+    "detection_notes":  "Alert when EventNamespace=root\\\\subscription and Query contains SELECT * FROM __InstanceCreationEvent, __InstanceModificationEvent, or __TimerEvent with a WQL polling window=60 seconds or another short WITHIN value outside the approved management baseline. Microsoft documents Event 19 as recording the WMI namespace, filter name, and filter expression; MITRE T1546.003 describes WMI event subscriptions as filters, consumers, and bindings that execute code when an event occurs. Correlate the filter Name with Sysmon Events 20 and 21 to prove the subscription chain before containment.",
     "kql_snippet":  "Sysmon\n| where EventID == 19\n| project TimeGenerated, Computer, Image, ProcessGuid",
     "spl_snippet":  "index=sysmon EventCode=19 | table _time, host, Image, ProcessGuid",
-    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nImage: C:\\\\Windows\\\\System32\\\\example.exe\nProcessGuid: {REDACTED}",
+    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nEventNamespace: root\\\\subscription\nName: UpdaterFilter\nQuery: SELECT * FROM __InstanceCreationEvent WITHIN 60 WHERE TargetInstance ISA 'Win32_Process'",
     "source_url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
 }

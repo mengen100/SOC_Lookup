@@ -6,20 +6,20 @@
     "priority":  "P2",
     "applicable_version":  "Sysmon with this event enabled",
     "last_reviewed":  "2026-07-13",
-    "definition":  "Sysmon Event ID 13 records RegistryEvent (Value Set).",
-    "trigger_scenarios":  "The event is emitted when the configured Sysmon operation occurs.",
+    "definition":  "Sysmon Event ID 13 records registry value modifications.",
+    "trigger_scenarios":  "Sysmon emits this event when a configured RegistryEvent rule observes a registry value being set. Microsoft documents that the event records the written value for DWORD and QWORD registry value types.",
     "key_fields":  [
                        {
-                           "field":  "Event-specific field",
-                           "explanation":  "TargetObject under HKCU\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run with Details pointing to C:\\\\Users\\\\ or C:\\\\ProgramData\\\\ is an autorun change."
+                           "field":  "TargetObject",
+                           "explanation":  "The registry value path uses Sysmon's abbreviated root names such as HKLM and HKU. Autorun, Office security, and Defender policy locations are high-value targets for persistence and defense evasion."
+                       },
+                       {
+                           "field":  "Details",
+                           "explanation":  "Contains the value written for DWORD and QWORD registry value types according to Microsoft. A written path under C:\\\\Users\\\\, C:\\\\ProgramData\\\\, or C:\\\\Windows\\\\Temp can reveal a user-writable payload location."
                        },
                        {
                            "field":  "Image / ProcessGuid",
-                           "explanation":  "Use the initiating image and ProcessGuid to join Event ID 1 command-line context."
-                       },
-                       {
-                           "field":  "UtcTime",
-                           "explanation":  "Use the timestamp to correlate with related activity."
+                           "explanation":  "Identifies the process that set the value and provides a stable join key to Sysmon Event ID 1 for command-line context."
                        }
                    ],
     "false_positives":  [
@@ -35,9 +35,9 @@
                               "technique_name":  "Modify Registry"
                           }
                       ],
-    "detection_notes":  "TargetObject under HKCU\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run with Details pointing to C:\\\\Users\\\\ or C:\\\\ProgramData\\\\ is an autorun change. This is a T1112 Modify Registry signal; preserve the concrete value and correlate the initiating Image, ProcessGuid, and logon context before closing.",
+    "detection_notes":  "Alert when TargetObject is HKCU\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run or HKLM\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run and Details points to C:\\\\Users\\\\, C:\\\\ProgramData\\\\, C:\\\\Windows\\\\Temp, or another user-writable path. Microsoft documents Event 13 as registry value modification telemetry and notes that DWORD/QWORD written values are captured, so the TargetObject plus Details pair can directly show an autorun payload or a defense-evasion value change. This supports T1112 Modify Registry; correlate ProcessGuid to Event 1 and verify whether the Image is an approved installer or management agent.",
     "kql_snippet":  "Sysmon\n| where EventID == 13\n| project TimeGenerated, Computer, Image, ProcessGuid",
     "spl_snippet":  "index=sysmon EventCode=13 | table _time, host, Image, ProcessGuid",
-    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nImage: C:\\\\Windows\\\\System32\\\\example.exe\nProcessGuid: {REDACTED}",
+    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nEventType: SetValue\nTargetObject: HKCU\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run\\\\Updater\nDetails: C:\\\\ProgramData\\\\updater.exe\nImage: C:\\\\Users\\\\Public\\\\updater.exe\nProcessGuid: {REDACTED}",
     "source_url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
 }

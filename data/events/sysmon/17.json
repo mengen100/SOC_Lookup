@@ -6,20 +6,20 @@
     "priority":  "P2",
     "applicable_version":  "Sysmon with this event enabled",
     "last_reviewed":  "2026-07-13",
-    "definition":  "Sysmon Event ID 17 records PipeEvent - Pipe Created.",
-    "trigger_scenarios":  "The event is emitted when the configured Sysmon operation occurs.",
+    "definition":  "Sysmon Event ID 17 records named pipe creation.",
+    "trigger_scenarios":  "Sysmon emits this event when a named pipe is created. Microsoft documents that malware often uses named pipes for interprocess communication.",
     "key_fields":  [
                        {
-                           "field":  "Event-specific field",
-                           "explanation":  "PipeName \\\\pipe\\\\wkssvc, \\\\pipe\\\\svcctl, or a rare custom pipe created by a process under C:\\\\Users\\\\ can support remote service or C2 investigation."
+                           "field":  "PipeName",
+                           "explanation":  "The created named pipe. MITRE's IPC detection strategy uses anomalous PipeName patterns, including examples such as \\\\.\\\\pipe\\\\svcctl, as an environment-specific detection element."
                        },
                        {
                            "field":  "Image / ProcessGuid",
-                           "explanation":  "Use the initiating image and ProcessGuid to join Event ID 1 command-line context."
+                           "explanation":  "Identifies the process that created the named pipe and provides a stable join key to Sysmon Event ID 1 for command-line and parent-process context."
                        },
                        {
-                           "field":  "UtcTime",
-                           "explanation":  "Use the timestamp to correlate with related activity."
+                           "field":  "RuleName",
+                           "explanation":  "Shows the Sysmon rule that matched, if rule names are configured, and helps explain why this pipe was captured."
                        }
                    ],
     "false_positives":  [
@@ -35,9 +35,9 @@
                               "technique_name":  "Inter-Process Communication"
                           }
                       ],
-    "detection_notes":  "PipeName \\\\pipe\\\\wkssvc, \\\\pipe\\\\svcctl, or a rare custom pipe created by a process under C:\\\\Users\\\\ can support remote service or C2 investigation. This is a T1559 Inter-Process Communication signal; preserve the concrete value and correlate the initiating Image, ProcessGuid, and logon context before closing.",
+    "detection_notes":  "Alert when PipeName matches a rare or high-risk environment-specific pattern such as \\\\.\\\\pipe\\\\svcctl and the creating Image is a user-writable path like C:\\\\Users\\\\ or C:\\\\ProgramData\\\\ rather than an approved service binary. Microsoft documents Event 17 as named pipe creation and notes that malware often uses named pipes for IPC; MITRE DET0493 explicitly calls PipeNamePattern a mutable detection element for T1559 Inter-Process Communication. Correlate ProcessGuid to Event 1 and compare the parent/child chain with the local named-pipe baseline before suppressing.",
     "kql_snippet":  "Sysmon\n| where EventID == 17\n| project TimeGenerated, Computer, Image, ProcessGuid",
     "spl_snippet":  "index=sysmon EventCode=17 | table _time, host, Image, ProcessGuid",
-    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nImage: C:\\\\Windows\\\\System32\\\\example.exe\nProcessGuid: {REDACTED}",
+    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nPipeName: \\\\.\\\\pipe\\\\svcctl\nImage: C:\\\\Users\\\\Public\\\\svc.exe\nProcessGuid: {REDACTED}\nRuleName: suspicious_pipe",
     "source_url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
 }
