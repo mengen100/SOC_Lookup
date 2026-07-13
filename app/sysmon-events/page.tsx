@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 
 import { EventBrowser } from "../../components/EventBrowser";
-import { getCategoriesForSource, getCompletedEventKeys, getSkeletonEvents } from "../../lib/events";
+import { getCategoriesForSource, getCompleteEvents, getSkeletonEvents } from "../../lib/events";
+import { buildEventSearchDocuments } from "../../lib/search";
 
 export const metadata: Metadata = {
   title: "Sysmon Event IDs",
@@ -10,7 +11,8 @@ export const metadata: Metadata = {
 };
 
 export default function SysmonEventsPage() {
-  const events = getSkeletonEvents().filter((event) => event.source === "sysmon");
+  const events = buildEventSearchDocuments(getSkeletonEvents(), getCompleteEvents())
+    .filter((event) => event.source === "sysmon");
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -20,7 +22,7 @@ export default function SysmonEventsPage() {
           Browse Sysmon telemetry events by category. Completed entries link to full investigation guides; unfinished entries stay visible without dead links.
         </p>
       </header>
-      <EventBrowser events={events} categories={getCategoriesForSource("sysmon")} completedKeys={Array.from(getCompletedEventKeys())} />
+      <EventBrowser events={events} categories={getCategoriesForSource("sysmon")} />
     </div>
   );
 }

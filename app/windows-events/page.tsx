@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 
 import { EventBrowser } from "../../components/EventBrowser";
-import { getCategoriesForSource, getCompletedEventKeys, getSkeletonEvents } from "../../lib/events";
+import { getCategoriesForSource, getCompleteEvents, getSkeletonEvents } from "../../lib/events";
+import { buildEventSearchDocuments } from "../../lib/search";
 
 export const metadata: Metadata = {
   title: "Windows Security Event IDs",
@@ -10,7 +11,8 @@ export const metadata: Metadata = {
 };
 
 export default function WindowsEventsPage() {
-  const events = getSkeletonEvents().filter((event) => event.source === "windows_security");
+  const events = buildEventSearchDocuments(getSkeletonEvents(), getCompleteEvents())
+    .filter((event) => event.source === "windows_security");
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
@@ -20,7 +22,7 @@ export default function WindowsEventsPage() {
           Browse Windows Security audit events by category. Completed entries link to full investigation guides; unfinished entries remain visible as content pipeline items.
         </p>
       </header>
-      <EventBrowser events={events} categories={getCategoriesForSource("windows_security")} completedKeys={Array.from(getCompletedEventKeys())} />
+      <EventBrowser events={events} categories={getCategoriesForSource("windows_security")} />
     </div>
   );
 }

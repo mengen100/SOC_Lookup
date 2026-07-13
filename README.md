@@ -7,6 +7,8 @@ Static Windows Security / Sysmon event ID reference for SOC analysts.
 - Next.js App Router static site with local JSON data.
 - `/windows-events/4625/` and `/sysmon-events/1/` render complete sample event records.
 - `/windows-events/` and `/sysmon-events/` list all 108 skeleton entries with category filters.
+- Static full-text search covers event IDs, names, categories, key fields, ATT&CK techniques, and detection guidance.
+- Search queries persist in the `?q=` URL parameter so filtered views can be shared.
 - Unfinished skeleton entries are visible but not linked, avoiding empty detail pages.
 - Detail pages include canonical metadata, TechArticle JSON-LD, related event pivots, source links, KQL, SPL, and sample log blocks.
 - Completed event records are exported as machine-readable static JSON under `/api/events/`.

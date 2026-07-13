@@ -1,10 +1,13 @@
 import Link from "next/link";
 
+import { HomeEventSearch } from "../components/HomeEventSearch";
 import { getCompleteEvents, getSkeletonEvents } from "../lib/events";
+import { buildEventSearchDocuments } from "../lib/search";
 
 export default function HomePage() {
   const skeleton = getSkeletonEvents();
   const complete = getCompleteEvents();
+  const searchDocuments = buildEventSearchDocuments(skeleton, complete);
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-12">
@@ -17,6 +20,7 @@ export default function HomePage() {
           <p className="mt-5 max-w-2xl text-lg leading-8 text-steel">
             Look up event definitions, trigger scenarios, false-positive notes, key fields, related events, official sources, and SIEM starter queries.
           </p>
+          <HomeEventSearch documents={searchDocuments} />
           <div className="mt-7 flex flex-wrap gap-3">
             <Link className="rounded bg-accent px-4 py-2 text-sm font-semibold text-white" href="/windows-events/">
               Browse Windows Events

@@ -3,21 +3,34 @@
 import { useMemo, useState } from "react";
 
 import { EventCard } from "./EventCard";
-import type { SkeletonEvent } from "../lib/events";
+import { EventSearchField } from "./EventSearchField";
+import { useEventQuery } from "./useEventQuery";
+import { searchEventDocuments, type EventSearchDocument } from "../lib/search";
 
 interface EventBrowserProps {
-  events: SkeletonEvent[];
+  events: EventSearchDocument[];
   categories: string[];
-  completedKeys: string[];
 }
 
-export function EventBrowser({ events, categories, completedKeys }: EventBrowserProps) {
+export function EventBrowser({ events, categories }: EventBrowserProps) {
   const [activeCategory, setActiveCategory] = useState<string>("All");
-  const completed = useMemo(() => new Set(completedKeys), [completedKeys]);
-  const filtered = activeCategory === "All" ? events : events.filter((event) => event.category === activeCategory);
+  const { query, setQuery } = useEventQuery();
+  const filtered = useMemo(() => {
+    const categoryEvents = activeCategory === "All" ? events : events.filter((event) => event.category === activeCategory);
+    return searchEventDocuments(categoryEvents, query);
+  }, [activeCategory, events, query]);
 
   return (
     <>
+      <div className="mt-7 max-w-2xl">
+        <EventSearchField
+          id="collection-event-search"
+          label="Search this collection"
+          onQueryChange={setQuery}
+          placeholder="Search by ID, name, field, status code, or ATT&CK technique"
+          query={query}
+        />
+      </div>
       <div className="mt-6 flex flex-wrap gap-2">
         {["All", ...categories].map((category) => (
           <button
@@ -30,11 +43,20 @@ export function EventBrowser({ events, categories, completedKeys }: EventBrowser
           </button>
         ))}
       </div>
+      <p className="mt-5 text-sm text-steel" aria-live="polite">
+        {filtered.length} {filtered.length === 1 ? "event" : "events"} found
+      </p>
       <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {filtered.map((event) => (
-          <EventCard key={`${event.source}:${event.id}`} event={event} isComplete={completed.has(`${event.source}:${event.id}`)} />
+          <EventCard key={`${event.source}:${event.id}`} event={event} isComplete={event.isComplete} />
         ))}
       </div>
+      {filtered.length === 0 ? (
+        <div className="mt-8 border-y border-line py-10 text-center">
+          <h2 className="text-lg font-semibold text-ink">No matching events</h2>
+          <p className="mt-2 text-sm text-steel">Try an event ID, a shorter keyword, or another category.</p>
+        </div>
+      ) : null}
     </>
   );
 }
