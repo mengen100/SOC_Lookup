@@ -1,0 +1,45 @@
+{
+  "source": "windows_security",
+  "last_reviewed": "2026-07-13",
+  "id": "4714",
+  "category": "Policy",
+  "name": "Encrypted data recovery policy was changed",
+  "priority": "P3",
+  "applicable_version": "Windows Server 2008 and later; Windows Vista and later",
+  "definition": "Windows Security Event ID 4714 records that the Encrypting File System data recovery agent policy changed.",
+  "trigger_scenarios": "The event is generated when an EFS Data Recovery Agent certificate or policy changes for the computer or device, including during Group Policy update.",
+  "key_fields": [
+    {
+      "field": "EFS policy registry value",
+      "explanation": "Microsoft states the event is generated in the background when HKLM\\Software\\Policies\\Microsoft\\SystemCertificates\\EFS\\EfsBlob changes during Group Policy update."
+    },
+    {
+      "field": "Computer",
+      "explanation": "The system receiving the EFS recovery-policy change. Prioritize servers storing sensitive encrypted files."
+    },
+    {
+      "field": "TimeCreated",
+      "explanation": "The time of policy application. Use it to locate the GPO update or certificate change that introduced the recovery policy."
+    }
+  ],
+  "false_positives": [
+    "Planned EFS recovery-agent certificate rotation or Group Policy maintenance can generate this event.",
+    "Baseline application on newly built hosts can apply the same recovery policy repeatedly."
+  ],
+  "related_event_ids": [
+    "4657",
+    "4719",
+    "6145"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1484.001",
+      "technique_name": "Domain or Tenant Policy Modification: Group Policy Modification"
+    }
+  ],
+  "detection_notes": "Treat unexpected 4714 as T1484.001 when it coincides with an unapproved change to HKLM\\Software\\Policies\\Microsoft\\SystemCertificates\\EFS\\EfsBlob, the Microsoft-documented registry value behind EFS recovery policy application. An attacker-controlled recovery agent can make future EFS-protected file recovery possible through policy rather than file-by-file access. Correlate with 4657 on the same HKLM path, GPO change records, and 6145 errors that may indicate policy processing anomalies.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4714\n| project TimeGenerated, Computer, EventData",
+  "spl_snippet": "index=wineventlog EventCode=4714\n| table _time, host, Message",
+  "sample_log": "Encrypted data recovery policy was changed.\nComputer: FILE01\nRegistry value: HKLM\\Software\\Policies\\Microsoft\\SystemCertificates\\EFS\\EfsBlob",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4714"
+}

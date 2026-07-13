@@ -1,0 +1,45 @@
+{
+  "source": "windows_security",
+  "last_reviewed": "2026-07-13",
+  "id": "4610",
+  "category": "LSA",
+  "name": "An authentication package has been loaded by the LSA",
+  "priority": "P3",
+  "applicable_version": "Windows Server 2008 and later; Windows Vista and later",
+  "definition": "Windows Security Event ID 4610 records that the Local Security Authority loaded an authentication package DLL.",
+  "trigger_scenarios": "The event is generated each time the LSA loads authentication package DLLs during system startup from the Authentication Packages registry value.",
+  "key_fields": [
+    {
+      "field": "Authentication Package Name",
+      "explanation": "The loaded package in DLL_PATH_AND_NAME: AUTHENTICATION_PACKAGE_NAME format. Microsoft documents C:\\Windows\\system32\\msv1_0.DLL : MICROSOFT_AUTHENTICATION_PACKAGE_V1_0 as the only default Windows 10 package, so any other value must be baselined and justified."
+    },
+    {
+      "field": "Registry source",
+      "explanation": "The packages are loaded from HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa\\Authentication Packages. A new package in this value is the concrete persistence path behind ATT&CK T1547.002."
+    },
+    {
+      "field": "Computer",
+      "explanation": "The host where LSASS loaded the package. A domain controller loading a non-baseline package has higher risk because it handles domain authentication."
+    }
+  ],
+  "false_positives": [
+    "Credential provider, MFA, smart-card, or security software installation can legitimately register an authentication package.",
+    "Operating-system upgrades may reload or reinitialize default packages during boot."
+  ],
+  "related_event_ids": [
+    "4657",
+    "4688",
+    "4611"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1547.002",
+      "technique_name": "Boot or Logon Autostart Execution: Authentication Package"
+    }
+  ],
+  "detection_notes": "Treat Authentication Package Name values other than C:\\Windows\\system32\\msv1_0.DLL : MICROSOFT_AUTHENTICATION_PACKAGE_V1_0 as T1547.002 candidates because Microsoft documents that value as the default Windows 10 authentication package. Correlate the 4610 with registry auditing on HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa\\Authentication Packages and file creation or signing telemetry for the referenced DLL; a non-Microsoft DLL loaded by LSASS at boot gives persistence before user logon.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4610\n| where AuthenticationPackageName !contains \"MICROSOFT_AUTHENTICATION_PACKAGE_V1_0\"\n| project TimeGenerated, Computer, AuthenticationPackageName",
+  "spl_snippet": "index=wineventlog EventCode=4610 NOT AuthenticationPackageName=\"*MICROSOFT_AUTHENTICATION_PACKAGE_V1_0*\"\n| table _time, host, AuthenticationPackageName",
+  "sample_log": "Authentication Package Name: C:\\Windows\\System32\\evilap.dll : EVIL_AUTH_PACKAGE\nComputer: DC01",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4610"
+}

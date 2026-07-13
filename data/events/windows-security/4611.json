@@ -1,0 +1,45 @@
+{
+  "source": "windows_security",
+  "last_reviewed": "2026-07-13",
+  "id": "4611",
+  "category": "LSA",
+  "name": "A trusted logon process has been registered with the LSA",
+  "priority": "P3",
+  "applicable_version": "Windows Server 2008 and later; Windows Vista and later",
+  "definition": "Windows Security Event ID 4611 records that a logon process has been confirmed as trusted by the Local Security Authority and can submit logon requests.",
+  "trigger_scenarios": "The event typically appears during operating-system startup or authentication activity when trusted logon processes register with LSA.",
+  "key_fields": [
+    {
+      "field": "Subject\\Security ID",
+      "explanation": "Microsoft recommends reporting this event when the subject is not SYSTEM. SYSTEM registrations commonly appear with Logon ID 0x3e7; any user or service SID outside that baseline requires review."
+    },
+    {
+      "field": "Logon Process Name",
+      "explanation": "The registered logon process name. Microsoft examples include Winlogon; an unapproved value means LSA will accept logon requests from a new source."
+    },
+    {
+      "field": "Subject\\Logon ID",
+      "explanation": "Hexadecimal correlation value. Use 0x3e7 as the common SYSTEM logon session baseline, and pivot to 4624 events with the same value if the registering account is unexpected."
+    }
+  ],
+  "false_positives": [
+    "Normal boot and interactive logon activity registers expected trusted logon processes.",
+    "Endpoint security, credential provider, or remote-access products may register approved logon components."
+  ],
+  "related_event_ids": [
+    "4624",
+    "4610",
+    "4614"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1556",
+      "technique_name": "Modify Authentication Process"
+    }
+  ],
+  "detection_notes": "Microsoft recommends reporting 4611 when Subject\\Security ID is not SYSTEM; use the SYSTEM Logon ID 0x3e7 and known Logon Process Name values such as Winlogon as the baseline. A non-SYSTEM subject registering a new logon process is a T1556 signal because LSA will accept authentication requests from that process, so correlate by Subject\\Logon ID to 4624 and by host to recent 4610 or 4614 package loads.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4611\n| where SubjectUserSid != \"S-1-5-18\"\n| project TimeGenerated, Computer, SubjectUserName, SubjectUserSid, SubjectLogonId, LogonProcessName",
+  "spl_snippet": "index=wineventlog EventCode=4611 NOT SubjectUserSid=\"S-1-5-18\"\n| table _time, host, SubjectUserName, SubjectUserSid, SubjectLogonId, LogonProcessName",
+  "sample_log": "Subject:\n  Security ID: CORP\\svc-auth\n  Account Name: svc-auth\n  Logon ID: 0x45ab1\nLogon Process Name: CustomAuth",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4611"
+}

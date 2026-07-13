@@ -1,0 +1,45 @@
+{
+  "source": "windows_security",
+  "last_reviewed": "2026-07-13",
+  "id": "4692",
+  "category": "DPAPI",
+  "name": "Backup of data protection master key was attempted",
+  "priority": "P3",
+  "applicable_version": "Windows Server 2008 and later; Windows Vista and later",
+  "definition": "Windows Security Event ID 4692 records an attempted backup of a DPAPI master key.",
+  "trigger_scenarios": "DPAPI backs up user master keys to a domain controller so protected data can be recovered after password reset; the event is generated on domain controllers, member servers, and workstations.",
+  "key_fields": [
+    {
+      "field": "MasterKeyId",
+      "explanation": "Unique identifier of the master key being backed up. Microsoft states user master keys are stored under the user profile AppData roaming Protect folder named by SID."
+    },
+    {
+      "field": "RecoveryServer",
+      "explanation": "Usually the domain controller contacted by a domain-joined machine to back up the key. Empty values can occur depending on capture conditions."
+    },
+    {
+      "field": "FailureReason",
+      "explanation": "Hex status for the operation. Microsoft documents 0x0 as the typical success value for this event."
+    }
+  ],
+  "false_positives": [
+    "Normal DPAPI master-key creation and domain backup can generate this event for domain-joined users.",
+    "Password reset and recovery workflows can trigger legitimate DPAPI backup operations."
+  ],
+  "related_event_ids": [
+    "4693",
+    "5376",
+    "4624"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1555",
+      "technique_name": "Credentials from Password Stores"
+    }
+  ],
+  "detection_notes": "Do not treat every 4692 as malicious: Microsoft says it is typically informational and tied to DPAPI master-key backup. Escalate T1555 only when the Subject account, RecoveryServer, or FailureReason departs from baseline, such as FailureReason not equal to 0x0 or a privileged account backing up many MasterKeyId values. Because Microsoft places user master-key files under %APPDATA%\\Roaming\\Microsoft\\Windows\\Protect\\%SID%, correlate suspicious 4692 with file access to that AppData Protect path and Credential Manager events 5376 or 5377.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4692\n| project TimeGenerated, Computer, SubjectUserName, SubjectLogonId, MasterKeyId, RecoveryServer, FailureReason",
+  "spl_snippet": "index=wineventlog EventCode=4692\n| table _time, host, SubjectUserName, SubjectLogonId, MasterKeyId, RecoveryServer, FailureReason",
+  "sample_log": "Subject: CORP\\svc-backup\nLogon ID: 0x30c08\nMasterKeyId: 16cfaea0-dbe3-4d92-9523-d494edb546bc\nRecoveryServer: DC01.contoso.local\nFailureReason: 0x0",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4692"
+}

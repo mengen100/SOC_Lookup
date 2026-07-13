@@ -1,0 +1,45 @@
+{
+  "source": "windows_security",
+  "last_reviewed": "2026-07-13",
+  "id": "5027",
+  "category": "Firewall",
+  "name": "Windows Firewall Service unable to retrieve security policy",
+  "priority": "P3",
+  "applicable_version": "Windows Server 2008 and later; Windows Vista and later",
+  "definition": "Windows Security Event ID 5027 records that the Windows Firewall Service could not retrieve security policy from local storage and continued enforcing the current policy.",
+  "trigger_scenarios": "Microsoft states the event indicates low memory resources or Windows Firewall group policy registry corruption and often appears with Event ID 5028.",
+  "key_fields": [
+    {
+      "field": "ErrorCode",
+      "explanation": "The UInt32 error code for the retrieval failure. Microsoft examples show ErrorCode 2147942413."
+    },
+    {
+      "field": "Computer",
+      "explanation": "The host whose firewall service could not read local policy. Internet-facing and remote-access systems should be prioritized."
+    },
+    {
+      "field": "Related Event 5028",
+      "explanation": "Microsoft states 5027 typically occurs with 5028 when the service cannot parse the new security policy."
+    }
+  ],
+  "false_positives": [
+    "Low memory, registry corruption, or Group Policy misconfiguration can cause the error without malicious activity.",
+    "Broken firewall policy deployments may generate 5027 across many hosts at the same time."
+  ],
+  "related_event_ids": [
+    "5028",
+    "5030",
+    "5035"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1686.003",
+      "technique_name": "Disable or Modify System Firewall: Windows Host Firewall"
+    }
+  ],
+  "detection_notes": "Microsoft says 5027 is usually configuration-related, so escalate to T1686.003 when threshold=1 occurrence is paired with firewall policy changes, 5028 parse failures, or 5030/5035 service-start failures on the same host. ErrorCode 2147942413 is the Microsoft example and should be retained for troubleshooting; the attack signal is that the Windows Firewall Service cannot retrieve local policy, potentially leaving an older or attacker-favorable policy enforced while remote access rules are changed elsewhere.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 5027\n| project TimeGenerated, Computer, ErrorCode",
+  "spl_snippet": "index=wineventlog EventCode=5027\n| table _time, host, ErrorCode",
+  "sample_log": "The Windows Firewall Service was unable to retrieve the security policy from the local storage.\nErrorCode: 2147942413\nComputer: WEB01",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-5027"
+}

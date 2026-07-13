@@ -1,0 +1,45 @@
+{
+  "source": "windows_security",
+  "last_reviewed": "2026-07-13",
+  "id": "4675",
+  "category": "Kerberos",
+  "name": "SIDs were filtered",
+  "priority": "P3",
+  "applicable_version": "Windows Server 2008 and later",
+  "definition": "Windows Security Event ID 4675 records that SIDs were filtered for an Active Directory trust.",
+  "trigger_scenarios": "The event is generated on a domain controller when SID filtering is applied for a specific trust and SIDs are removed from the authorization data.",
+  "key_fields": [
+    {
+      "field": "Filtered SIDs",
+      "explanation": "The SIDs removed by trust filtering. Unexpected privileged-domain SIDs in this field show that the trust boundary blocked attempted privilege projection."
+    },
+    {
+      "field": "Trust Direction / Trust Attributes / Trust Type",
+      "explanation": "Trust metadata that identifies which relationship performed the filtering. Use it to determine whether the event belongs to an external, forest, or other configured trust."
+    },
+    {
+      "field": "TDO Domain SID",
+      "explanation": "The trusted-domain object domain SID. It anchors the filtered SID list to the trust relationship being evaluated."
+    }
+  ],
+  "false_positives": [
+    "Normal SID filtering can occur on configured external or forest trusts and may simply confirm the trust boundary is working.",
+    "Trust migrations and domain consolidation projects can produce expected filtering events."
+  ],
+  "related_event_ids": [
+    "4765",
+    "4766",
+    "4716"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1134.005",
+      "technique_name": "Access Token Manipulation: SID-History Injection"
+    }
+  ],
+  "detection_notes": "Use threshold=1 for 4675 on high-value trusts because the event is already the domain controller reporting that SIDs were filtered. It supports T1134.005 triage when Filtered SIDs contains privileged or foreign-domain SIDHistory values, since SID-History Injection attempts to project extra SIDs into the token and trust SID filtering removes them. Correlate the same trust to recent 4765 or 4766 SID History changes and 4716 trust modifications before treating the event as malicious rather than expected boundary enforcement.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4675\n| project TimeGenerated, Computer, TargetUserName, TargetDomainName, TrustDirection, TrustAttributes, TrustType, FilteredSids",
+  "spl_snippet": "index=wineventlog EventCode=4675\n| table _time, host, TargetUserName, TargetDomainName, TrustDirection, TrustAttributes, TrustType, FilteredSids",
+  "sample_log": "Target Account:\n  Account Name: alice\nTrust Information:\n  Trust Direction: Inbound\n  Trust Attributes: FOREST_TRANSITIVE\n  Trust Type: Forest\n  TDO Domain SID: S-1-5-21-1000-2000-3000\n  Filtered SIDs: S-1-5-21-4000-5000-6000-512",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4675"
+}

@@ -52,18 +52,18 @@ Status values: `done`, `needs-rework`, `pending`.
 - [done] windows_security:4104 - PowerShell Script Block Logging
 - [done] windows_security:4608 - Windows is starting up
 - [done] windows_security:4609 - Windows is shutting down
-- [pending] windows_security:4610 - An authentication package has been loaded by the LSA
-- [pending] windows_security:4611 - A trusted logon process has been registered with the LSA
-- [pending] windows_security:4612 - Internal audit queue resources exhausted
-- [pending] windows_security:4614 - A notification package has been loaded by the SAM
-- [pending] windows_security:4621 - Administrator recovered system from CrashOnAuditFail
+- [done] windows_security:4610 - An authentication package has been loaded by the LSA
+- [done] windows_security:4611 - A trusted logon process has been registered with the LSA
+- [done] windows_security:4612 - Internal audit queue resources exhausted
+- [done] windows_security:4614 - A notification package has been loaded by the SAM
+- [done] windows_security:4621 - Administrator recovered system from CrashOnAuditFail
 - [done] windows_security:4649 - A replay attack was detected
-- [pending] windows_security:4675 - SIDs were filtered
-- [pending] windows_security:4692 - Backup of data protection master key was attempted
-- [pending] windows_security:4693 - Recovery of data protection master key was attempted
+- [done] windows_security:4675 - SIDs were filtered
+- [done] windows_security:4692 - Backup of data protection master key was attempted
+- [done] windows_security:4693 - Recovery of data protection master key was attempted
 - [done] windows_security:4706 - A new trust was created to a domain
-- [pending] windows_security:4713 - Kerberos policy was changed
-- [pending] windows_security:4714 - Encrypted data recovery policy was changed
+- [done] windows_security:4713 - Kerberos policy was changed
+- [done] windows_security:4714 - Encrypted data recovery policy was changed
 - [done] windows_security:4715 - The audit policy (SACL) on an object was changed
 - [done] windows_security:4716 - Trusted domain information was modified
 - [done] windows_security:4765 - SID History was added to an account
@@ -71,8 +71,8 @@ Status values: `done`, `needs-rework`, `pending`.
 - [done] windows_security:4780 - ACL was set on accounts in administrators groups
 - [done] windows_security:4794 - An attempt was made to set the Directory Services Restore Mode
 - [done] windows_security:4964 - Special groups have been assigned to a new logon
-- [pending] windows_security:5027 - Windows Firewall Service unable to retrieve security policy
-- [pending] windows_security:5028 - Windows Firewall Service unable to parse new security policy
+- [done] windows_security:5027 - Windows Firewall Service unable to retrieve security policy
+- [done] windows_security:5028 - Windows Firewall Service unable to parse new security policy
 - [done] windows_security:5030 - The Windows Firewall Service failed to start
 - [done] windows_security:5035 - The Windows Firewall Driver failed to start
 - [done] windows_security:5038 - Code integrity determined image hash is not valid
@@ -80,7 +80,7 @@ Status values: `done`, `needs-rework`, `pending`.
 - [done] windows_security:5377 - Credential Manager credentials were restored from backup
 - [done] windows_security:5827 - Netlogon denied a vulnerable secure channel connection (machine)
 - [done] windows_security:5828 - Netlogon denied a vulnerable secure channel connection (trust)
-- [pending] windows_security:6145 - Errors occurred while processing security policy in GPOs
+- [done] windows_security:6145 - Errors occurred while processing security policy in GPOs
 
 ## sysmon
 - [done] sysmon:1 - Process creation

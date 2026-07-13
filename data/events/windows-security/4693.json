@@ -1,0 +1,45 @@
+{
+  "source": "windows_security",
+  "last_reviewed": "2026-07-13",
+  "id": "4693",
+  "category": "DPAPI",
+  "name": "Recovery of data protection master key was attempted",
+  "priority": "P3",
+  "applicable_version": "Windows Server 2008 and later; Windows Vista and later",
+  "definition": "Windows Security Event ID 4693 records an attempted recovery of a DPAPI master key.",
+  "trigger_scenarios": "When DPAPI cannot unprotect data with the user password-protected master key, it can send the backup master key to a domain controller for recovery by protected RPC.",
+  "key_fields": [
+    {
+      "field": "MasterKeyId",
+      "explanation": "Unique identifier of the recovered master key. Microsoft documents that the master-key file name is the ID under the user Protect folder."
+    },
+    {
+      "field": "RecoveryReason",
+      "explanation": "Hex code for the recovery reason. Microsoft examples show RecoveryReason 0x5c005c and note that this field can contain Recovery Server information."
+    },
+    {
+      "field": "FailureId",
+      "explanation": "Hex status for the operation. Microsoft documents 0x380000 as the typical success value."
+    }
+  ],
+  "false_positives": [
+    "Legitimate DPAPI recovery can occur after password reset, domain recovery operations, or troubleshooting.",
+    "Recovery Server field behavior can be confusing because Microsoft notes it can contain Recovery Reason information in this event."
+  ],
+  "related_event_ids": [
+    "4692",
+    "5377",
+    "4624"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1555",
+      "technique_name": "Credentials from Password Stores"
+    }
+  ],
+  "detection_notes": "Microsoft says 4693 is mainly DPAPI troubleshooting, so escalate T1555 only when the actor and reason are unusual. FailureId 0x380000 is the documented success value and RecoveryReason is a HexInt32; a successful recovery by an unexpected admin or service account means a DPAPI master key was recovered and could unlock secrets protected under %APPDATA%\\Roaming\\Microsoft\\Windows\\Protect\\%SID%. Correlate MasterKeyId to the user profile path and review 4624, 4692, 5377, and file-access telemetry around the same logon session.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4693\n| project TimeGenerated, Computer, SubjectUserName, SubjectLogonId, MasterKeyId, RecoveryReason, RecoveryServer, FailureId",
+  "spl_snippet": "index=wineventlog EventCode=4693\n| table _time, host, SubjectUserName, SubjectLogonId, MasterKeyId, RecoveryReason, RecoveryServer, FailureId",
+  "sample_log": "Subject: CORP\\dadmin\nLogon ID: 0x30d7c\nMasterKeyId: 0445c766-75f0-4de7-82ad-d9d97aad59f6\nRecoveryReason: 0x5c005c\nRecoveryServer: DC01.contoso.local\nFailureId: 0x380000",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4693"
+}

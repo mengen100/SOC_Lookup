@@ -1,0 +1,45 @@
+{
+  "source": "windows_security",
+  "last_reviewed": "2026-07-13",
+  "id": "5028",
+  "category": "Firewall",
+  "name": "Windows Firewall Service unable to parse new security policy",
+  "priority": "P3",
+  "applicable_version": "Windows Server 2008 and later; Windows Vista and later",
+  "definition": "Windows Security Event ID 5028 records that the Windows Firewall Service could not parse a new security policy and continued with the currently enforced policy.",
+  "trigger_scenarios": "Microsoft states the event can indicate low memory or Windows Firewall group policy registry corruption, and it typically occurs with Event ID 5027.",
+  "key_fields": [
+    {
+      "field": "ErrorCode",
+      "explanation": "The UInt32 error code for the parse failure. Microsoft examples show ErrorCode 2147942413."
+    },
+    {
+      "field": "Computer",
+      "explanation": "The host that failed to parse firewall policy. Investigate exposure changes if the host provides remote services."
+    },
+    {
+      "field": "Policy state",
+      "explanation": "The event explicitly says the service continues with currently enforced policy; determine whether the intended new policy was supposed to restrict inbound or outbound access."
+    }
+  ],
+  "false_positives": [
+    "Malformed firewall GPOs or registry corruption can produce the event during normal administration.",
+    "Low-memory conditions can make policy parsing fail without a deliberate firewall change."
+  ],
+  "related_event_ids": [
+    "5027",
+    "5030",
+    "5035"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1686.003",
+      "technique_name": "Disable or Modify System Firewall: Windows Host Firewall"
+    }
+  ],
+  "detection_notes": "Escalate 5028 to T1686.003 when threshold=1 failure coincides with netsh, PowerShell firewall cmdlets, registry policy changes, or 5027 on the same host. ErrorCode 2147942413 is Microsoft’s documented example for the policy parse failure; the security question is whether a new restrictive firewall policy failed to apply, leaving remote-service ports exposed under the previously enforced policy.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 5028\n| project TimeGenerated, Computer, ErrorCode",
+  "spl_snippet": "index=wineventlog EventCode=5028\n| table _time, host, ErrorCode",
+  "sample_log": "The Windows Firewall Service was unable to parse the new security policy.\nErrorCode: 2147942413\nComputer: WEB01",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-5028"
+}

@@ -14,7 +14,7 @@ test("exports deterministic machine-readable event JSON files", () => {
   const windowsPath = path.join(outputDir, "api", "events", "windows-security", "4625.json");
   const sysmonPath = path.join(outputDir, "api", "events", "sysmon", "1.json");
 
-  assert.equal(result.eventCount, 95);
+  assert.equal(result.eventCount, 108);
   assert.equal(fs.existsSync(indexPath), true);
   assert.equal(fs.existsSync(windowsPath), true);
   assert.equal(fs.existsSync(sysmonPath), true);
@@ -33,7 +33,7 @@ test("exports deterministic machine-readable event JSON files", () => {
   };
 
   assert.equal(index.schema_version, 1);
-  assert.equal(index.event_count, 95);
+  assert.equal(index.event_count, 108);
   assert.equal(index.events.some((event) => event.id === "4625" && event.json_url === "/api/events/windows-security/4625.json"), true);
   assert.equal(index.events.some((event) => event.id === "1" && event.route === "/sysmon-events/1/"), true);
   assert.equal(sysmon.name, "Process creation");

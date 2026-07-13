@@ -125,6 +125,19 @@ test("discovers complete event records from data/events", () => {
     "windows_security:4907",
     "windows_security:4608",
     "windows_security:4609",
+    "windows_security:4610",
+    "windows_security:4611",
+    "windows_security:4612",
+    "windows_security:4614",
+    "windows_security:4621",
+    "windows_security:4675",
+    "windows_security:4692",
+    "windows_security:4693",
+    "windows_security:4713",
+    "windows_security:4714",
+    "windows_security:5027",
+    "windows_security:5028",
+    "windows_security:6145",
   ];
 
   assert.equal(completeEvents.length, expectedEvents.length);

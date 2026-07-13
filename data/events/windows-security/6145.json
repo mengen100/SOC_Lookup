@@ -1,0 +1,45 @@
+{
+  "source": "windows_security",
+  "last_reviewed": "2026-07-13",
+  "id": "6145",
+  "category": "GroupPolicy",
+  "name": "Errors occurred while processing security policy in GPOs",
+  "priority": "P3",
+  "applicable_version": "Windows Server 2008 and later; Windows Vista and later",
+  "definition": "Windows Security Event ID 6145 records that Security Settings from one or more Group Policy Objects were applied to a computer with errors.",
+  "trigger_scenarios": "The event is generated on the target computer during Group Policy processing, for example when a security principal SID in policy cannot be resolved to an account name.",
+  "key_fields": [
+    {
+      "field": "ErrorCode",
+      "explanation": "The specific Group Policy processing error. Microsoft examples show ErrorCode 1332, meaning no mapping between account names and SIDs was done."
+    },
+    {
+      "field": "GPOList",
+      "explanation": "The list of GPO GUID and name pairs applied with errors, in GROUP_POLICY_GUID GROUP_POLICY_NAME format."
+    },
+    {
+      "field": "Computer",
+      "explanation": "The target computer that failed to apply Security Settings. Compare affected hosts against the intended scope of the listed GPOs."
+    }
+  ],
+  "false_positives": [
+    "Deleted accounts, stale SIDs, or administrative mistakes in GPO Security Settings can cause 6145 without adversary activity.",
+    "Large GPO migrations or domain cleanups can temporarily produce unresolved SID errors."
+  ],
+  "related_event_ids": [
+    "4714",
+    "4719",
+    "4739"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1484.001",
+      "technique_name": "Domain or Tenant Policy Modification: Group Policy Modification"
+    }
+  ],
+  "detection_notes": "Use threshold=1 for 6145 on critical servers because ErrorCode 1332 is Microsoft’s example for unresolved account/SID mappings and GPOList names the policies that failed. In T1484.001 triage, a malformed or tampered GPO Security Settings section can prevent intended controls from applying; inspect each GROUP_POLICY_GUID in GPOList, compare SYSVOL policy files to change history, and correlate with recent GPO edits or 4719 audit-policy changes.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 6145\n| project TimeGenerated, Computer, ErrorCode, GPOList",
+  "spl_snippet": "index=wineventlog EventCode=6145\n| table _time, host, ErrorCode, GPOList",
+  "sample_log": "ErrorCode: 1332\nGPOList: {6AC1786C-016F-11D2-945F-00C04fB984F9} Default Domain Controllers Policy {31B2F340-016D-11D2-945F-00C04FB984F9} Default Domain Policy\nComputer: DC01",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-6145"
+}

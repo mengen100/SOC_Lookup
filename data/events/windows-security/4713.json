@@ -1,0 +1,45 @@
+{
+  "source": "windows_security",
+  "last_reviewed": "2026-07-13",
+  "id": "4713",
+  "category": "Policy",
+  "name": "Kerberos policy was changed",
+  "priority": "P3",
+  "applicable_version": "Windows Server 2008 and later",
+  "definition": "Windows Security Event ID 4713 records a Kerberos policy change on a domain controller.",
+  "trigger_scenarios": "The event is generated only on domain controllers when Kerberos policy values are changed through domain policy.",
+  "key_fields": [
+    {
+      "field": "KerberosPolicyChange",
+      "explanation": "The field lists changed parameters as Parameter_Name: new_value (old_value). Microsoft documents KerMaxT, KerMaxR, KerMinT, KerProxy, and KerOpts."
+    },
+    {
+      "field": "KerOpts",
+      "explanation": "Enforce user logon restrictions. Microsoft documents 0x80 as Enabled and 0x0 as Disabled; disabling it weakens Kerberos logon restriction enforcement."
+    },
+    {
+      "field": "Subject",
+      "explanation": "The account that made the change. Validate whether it is an approved domain-policy administrator and whether the change was scheduled."
+    }
+  ],
+  "false_positives": [
+    "Planned domain hardening, Kerberos lifetime tuning, or Group Policy maintenance can legitimately generate 4713.",
+    "Domain controller promotion or baseline rebuilds may reapply Kerberos policy values."
+  ],
+  "related_event_ids": [
+    "4719",
+    "4768",
+    "4769"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1484.001",
+      "technique_name": "Domain or Tenant Policy Modification: Group Policy Modification"
+    }
+  ],
+  "detection_notes": "Alert on unplanned 4713 where KerberosPolicyChange sets KerOpts to 0x0, because Microsoft documents 0x80 as Enforce user logon restrictions enabled and 0x0 as disabled. That is a concrete T1484.001 signal: a domain Kerberos policy change weakens centrally managed authentication behavior. Also review large KerMaxT or KerMaxR increases because Microsoft documents the conversion formulas for ticket and renewal lifetime; correlate the Subject Logon ID to 4624 and administrative change tickets.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4713\n| project TimeGenerated, Computer, SubjectUserName, SubjectLogonId, KerberosPolicyChange",
+  "spl_snippet": "index=wineventlog EventCode=4713\n| table _time, host, SubjectUserName, SubjectLogonId, KerberosPolicyChange",
+  "sample_log": "Subject: CORP\\admin.ops\nLogon ID: 0x3e7\nKerberosPolicyChange: KerOpts: 0x0 (0x80); KerMaxT: 0x10c388d000 (0x861c46800);",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4713"
+}

@@ -1,0 +1,45 @@
+{
+  "source": "windows_security",
+  "last_reviewed": "2026-07-13",
+  "id": "4614",
+  "category": "LSA",
+  "name": "A notification package has been loaded by the SAM",
+  "priority": "P3",
+  "applicable_version": "Windows Server 2008 and later; Windows Vista and later",
+  "definition": "Windows Security Event ID 4614 records that the Security Account Manager loaded a notification package, which Microsoft describes as a password filter on modern Windows versions.",
+  "trigger_scenarios": "The event is generated when SAM loads password-filter DLLs during system startup from the Notification Packages registry value.",
+  "key_fields": [
+    {
+      "field": "Notification Package Name",
+      "explanation": "The loaded notification package name. Microsoft shows WDIGEST as an example; any newly observed package must match an approved password-filter inventory."
+    },
+    {
+      "field": "Registry source",
+      "explanation": "Microsoft documents HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa\\Notification Packages as the value used to load these DLLs. This is the persistence location behind malicious password filters."
+    },
+    {
+      "field": "Computer",
+      "explanation": "The affected host. Domain controllers deserve priority because password filters are invoked when domain passwords are set or changed."
+    }
+  ],
+  "false_positives": [
+    "Approved password-policy or identity-management software can install legitimate password filters.",
+    "Operating-system or security-product updates may reload existing packages at startup."
+  ],
+  "related_event_ids": [
+    "4657",
+    "4723",
+    "4724"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1556.002",
+      "technique_name": "Modify Authentication Process: Password Filter DLL"
+    }
+  ],
+  "detection_notes": "T1556.002 is concrete when 4614 reports a Notification Package Name that was newly added to HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa\\Notification Packages. Microsoft states these packages are password filters loaded or called when passwords are set or changed, so a malicious package can observe password-change material; correlate with 4657 for the registry value write and with file telemetry for the corresponding DLL under C:\\Windows\\System32.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4614\n| project TimeGenerated, Computer, NotificationPackageName",
+  "spl_snippet": "index=wineventlog EventCode=4614\n| table _time, host, NotificationPackageName",
+  "sample_log": "Notification Package Name: pfilter\nComputer: DC01",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4614"
+}

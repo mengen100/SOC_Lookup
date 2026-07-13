@@ -1,0 +1,45 @@
+{
+  "source": "windows_security",
+  "last_reviewed": "2026-07-13",
+  "id": "4612",
+  "category": "System",
+  "name": "Internal audit queue resources exhausted",
+  "priority": "P3",
+  "applicable_version": "Windows Server 2008 and later; Windows Vista and later",
+  "definition": "Windows Security Event ID 4612 records that audit queues were exhausted and some audit events were discarded.",
+  "trigger_scenarios": "The event is generated when security events are produced faster than they can be written to disk, or when the auditing system loses connectivity to event logging.",
+  "key_fields": [
+    {
+      "field": "Number of audit messages discarded",
+      "explanation": "The count of Security audit records lost. Any value greater than 0 means the log stream has a confirmed visibility gap."
+    },
+    {
+      "field": "Computer",
+      "explanation": "The host where audit loss occurred. Loss on a domain controller or high-value server creates more investigative risk than a kiosk or test workstation."
+    },
+    {
+      "field": "TimeCreated",
+      "explanation": "The start of the visibility gap. Use the timestamp to bound follow-up review in surrounding EDR, Sysmon, and infrastructure logs."
+    }
+  ],
+  "false_positives": [
+    "Resource exhaustion, disk latency, RAM pressure, and event-log service issues can cause audit loss without adversary activity.",
+    "Large administrative changes can temporarily generate security events faster than the host can write them."
+  ],
+  "related_event_ids": [
+    "1102",
+    "4719",
+    "4621"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1685.001",
+      "technique_name": "Disable or Modify Tools: Disable or Modify Windows Event Log"
+    }
+  ],
+  "detection_notes": "Alert at threshold=1 for 4612 because the event schema reports discarded audit messages and Microsoft states that events must be discarded when the audit queue is filled. In a T1685.001 investigation, the count greater than 0 is the concrete evidence of lost Windows Event Log coverage; correlate the same host and time range with 4719 audit-policy changes, 1102 log clears, 4621 CrashOnAuditFail recovery, and EDR telemetry to reconstruct activity missing from Security logs.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4612\n| project TimeGenerated, Computer, EventData",
+  "spl_snippet": "index=wineventlog EventCode=4612\n| table _time, host, Message",
+  "sample_log": "Internal resources allocated for the queuing of audit messages have been exhausted.\nNumber of audit messages discarded: 37\nComputer: FS01",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4612"
+}

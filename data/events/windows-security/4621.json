@@ -1,0 +1,45 @@
+{
+  "source": "windows_security",
+  "last_reviewed": "2026-07-13",
+  "id": "4621",
+  "category": "System",
+  "name": "Administrator recovered system from CrashOnAuditFail",
+  "priority": "P3",
+  "applicable_version": "Windows Server 2008 and later; Windows Vista and later",
+  "definition": "Windows Security Event ID 4621 records that an administrator recovered a system after CrashOnAuditFail halted it because auditable activity could not be recorded.",
+  "trigger_scenarios": "The event is logged after reboot when CrashOnAuditFail equals 2 and users who are not administrators are allowed to log on again.",
+  "key_fields": [
+    {
+      "field": "Value of CrashOnAuditFail",
+      "explanation": "The reported value. Microsoft states the event generates when CrashOnAuditFail = 2, meaning the system had halted after failing to record an auditable event."
+    },
+    {
+      "field": "Computer",
+      "explanation": "The recovered host. Prioritize domain controllers, jump servers, and systems where losing Security log coverage affects incident reconstruction."
+    },
+    {
+      "field": "TimeCreated",
+      "explanation": "The reboot/recovery time. Use it to define the period where audit records may be incomplete."
+    }
+  ],
+  "false_positives": [
+    "Disk-full, log-service, or operating-system failures can trigger CrashOnAuditFail without malicious activity.",
+    "Recovery after planned maintenance may create this event if the host previously exhausted audit logging."
+  ],
+  "related_event_ids": [
+    "4612",
+    "1102",
+    "4719"
+  ],
+  "attck_mapping": [
+    {
+      "technique_id": "T1685.001",
+      "technique_name": "Disable or Modify Tools: Disable or Modify Windows Event Log"
+    }
+  ],
+  "detection_notes": "Microsoft recommends alerting on any 4621; use threshold=1 because CrashOnAuditFail = 2 means the host halted after it could not record an auditable event. In T1685.001 triage, that value proves Security Log coverage was disrupted before recovery, so review 4612 audit-discard events, disk/log health, and any 4719 or 1102 events before the reboot to distinguish resource failure from intentional logging impairment.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4621\n| project TimeGenerated, Computer, EventData",
+  "spl_snippet": "index=wineventlog EventCode=4621\n| table _time, host, Message",
+  "sample_log": "Administrator recovered system from CrashOnAuditFail.\nValue of CrashOnAuditFail: 2\nComputer: DC01",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4621"
+}
