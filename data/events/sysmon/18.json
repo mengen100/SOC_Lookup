@@ -1,0 +1,43 @@
+{
+    "id":  "18",
+    "source":  "sysmon",
+    "category":  "Pipe",
+    "name":  "PipeEvent - Pipe Connected",
+    "priority":  "P2",
+    "applicable_version":  "Sysmon with this event enabled",
+    "last_reviewed":  "2026-07-13",
+    "definition":  "Sysmon Event ID 18 records PipeEvent - Pipe Connected.",
+    "trigger_scenarios":  "The event is emitted when the configured Sysmon operation occurs.",
+    "key_fields":  [
+                       {
+                           "field":  "Event-specific field",
+                           "explanation":  "PipeName \\\\pipe\\\\svcctl or \\\\pipe\\\\samr accessed by a non-admin process under C:\\\\Temp\\\\ can identify suspicious IPC; correlate ProcessGuid with Event 1."
+                       },
+                       {
+                           "field":  "Image / ProcessGuid",
+                           "explanation":  "Use the initiating image and ProcessGuid to join Event ID 1 command-line context."
+                       },
+                       {
+                           "field":  "UtcTime",
+                           "explanation":  "Use the timestamp to correlate with related activity."
+                       }
+                   ],
+    "false_positives":  [
+                            "Approved administration, management agents, and deployment tools can generate this telemetry.",
+                            "Baseline expected hosts, signed binaries, and change windows before suppression."
+                        ],
+    "related_event_ids":  [
+                              "1"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1559",
+                              "technique_name":  "Inter-Process Communication"
+                          }
+                      ],
+    "detection_notes":  "PipeName \\\\pipe\\\\svcctl or \\\\pipe\\\\samr accessed by a non-admin process under C:\\\\Temp\\\\ can identify suspicious IPC; correlate ProcessGuid with Event 1. This is a T1559 Inter-Process Communication signal; preserve the concrete value and correlate the initiating Image, ProcessGuid, and logon context before closing.",
+    "kql_snippet":  "Sysmon\n| where EventID == 18\n| project TimeGenerated, Computer, Image, ProcessGuid",
+    "spl_snippet":  "index=sysmon EventCode=18 | table _time, host, Image, ProcessGuid",
+    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nImage: C:\\\\Windows\\\\System32\\\\example.exe\nProcessGuid: {REDACTED}",
+    "source_url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+}

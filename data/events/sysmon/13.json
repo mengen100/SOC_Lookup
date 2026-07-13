@@ -1,0 +1,43 @@
+{
+    "id":  "13",
+    "source":  "sysmon",
+    "category":  "Registry",
+    "name":  "RegistryEvent (Value Set)",
+    "priority":  "P2",
+    "applicable_version":  "Sysmon with this event enabled",
+    "last_reviewed":  "2026-07-13",
+    "definition":  "Sysmon Event ID 13 records RegistryEvent (Value Set).",
+    "trigger_scenarios":  "The event is emitted when the configured Sysmon operation occurs.",
+    "key_fields":  [
+                       {
+                           "field":  "Event-specific field",
+                           "explanation":  "TargetObject under HKCU\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run with Details pointing to C:\\\\Users\\\\ or C:\\\\ProgramData\\\\ is an autorun change."
+                       },
+                       {
+                           "field":  "Image / ProcessGuid",
+                           "explanation":  "Use the initiating image and ProcessGuid to join Event ID 1 command-line context."
+                       },
+                       {
+                           "field":  "UtcTime",
+                           "explanation":  "Use the timestamp to correlate with related activity."
+                       }
+                   ],
+    "false_positives":  [
+                            "Approved administration, management agents, and deployment tools can generate this telemetry.",
+                            "Baseline expected hosts, signed binaries, and change windows before suppression."
+                        ],
+    "related_event_ids":  [
+                              "1"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1112",
+                              "technique_name":  "Modify Registry"
+                          }
+                      ],
+    "detection_notes":  "TargetObject under HKCU\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run with Details pointing to C:\\\\Users\\\\ or C:\\\\ProgramData\\\\ is an autorun change. This is a T1112 Modify Registry signal; preserve the concrete value and correlate the initiating Image, ProcessGuid, and logon context before closing.",
+    "kql_snippet":  "Sysmon\n| where EventID == 13\n| project TimeGenerated, Computer, Image, ProcessGuid",
+    "spl_snippet":  "index=sysmon EventCode=13 | table _time, host, Image, ProcessGuid",
+    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nImage: C:\\\\Windows\\\\System32\\\\example.exe\nProcessGuid: {REDACTED}",
+    "source_url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+}

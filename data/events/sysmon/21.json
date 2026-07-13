@@ -1,0 +1,43 @@
+{
+    "id":  "21",
+    "source":  "sysmon",
+    "category":  "WMI",
+    "name":  "WmiEvent - WmiEventConsumerToFilter activity detected",
+    "priority":  "P2",
+    "applicable_version":  "Sysmon with this event enabled",
+    "last_reviewed":  "2026-07-13",
+    "definition":  "Sysmon Event ID 21 records WmiEvent - WmiEventConsumerToFilter activity detected.",
+    "trigger_scenarios":  "The event is emitted when the configured Sysmon operation occurs.",
+    "key_fields":  [
+                       {
+                           "field":  "Event-specific field",
+                           "explanation":  "Filter and Consumer names joined in root\\\\subscription complete the permanent WMI subscription; correlate IDs 19, 20, and 21 in a 60-minute window."
+                       },
+                       {
+                           "field":  "Image / ProcessGuid",
+                           "explanation":  "Use the initiating image and ProcessGuid to join Event ID 1 command-line context."
+                       },
+                       {
+                           "field":  "UtcTime",
+                           "explanation":  "Use the timestamp to correlate with related activity."
+                       }
+                   ],
+    "false_positives":  [
+                            "Approved administration, management agents, and deployment tools can generate this telemetry.",
+                            "Baseline expected hosts, signed binaries, and change windows before suppression."
+                        ],
+    "related_event_ids":  [
+                              "1"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1546.003",
+                              "technique_name":  "Event Triggered Execution: Windows Management Instrumentation Event Subscription"
+                          }
+                      ],
+    "detection_notes":  "Filter and Consumer names joined in root\\\\subscription complete the permanent WMI subscription; correlate IDs 19, 20, and 21 in a 60-minute window. This is a T1546.003 Event Triggered Execution: Windows Management Instrumentation Event Subscription signal; preserve the concrete value and correlate the initiating Image, ProcessGuid, and logon context before closing.  Correlate the subscription chain in a window=60 minute interval.",
+    "kql_snippet":  "Sysmon\n| where EventID == 21\n| project TimeGenerated, Computer, Image, ProcessGuid",
+    "spl_snippet":  "index=sysmon EventCode=21 | table _time, host, Image, ProcessGuid",
+    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nImage: C:\\\\Windows\\\\System32\\\\example.exe\nProcessGuid: {REDACTED}",
+    "source_url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+}

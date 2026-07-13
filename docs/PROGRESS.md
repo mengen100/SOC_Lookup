@@ -94,22 +94,22 @@ Status values: `done`, `needs-rework`, `pending`.
 - [pending] sysmon:9 - RawAccessRead
 - [done] sysmon:10 - ProcessAccess
 - [done] sysmon:11 - FileCreate
-- [pending] sysmon:12 - RegistryEvent (Object create/delete)
-- [pending] sysmon:13 - RegistryEvent (Value Set)
+- [done] sysmon:12 - RegistryEvent (Object create/delete)
+- [done] sysmon:13 - RegistryEvent (Value Set)
 - [pending] sysmon:14 - RegistryEvent (Key/Value Rename)
 - [pending] sysmon:15 - FileCreateStreamHash
-- [pending] sysmon:16 - ServiceConfigurationChange (Sysmon config change)
-- [pending] sysmon:17 - PipeEvent - Pipe Created
-- [pending] sysmon:18 - PipeEvent - Pipe Connected
-- [pending] sysmon:19 - WmiEvent - WmiEventFilter activity detected
-- [pending] sysmon:20 - WmiEvent - WmiEventConsumer activity detected
-- [pending] sysmon:21 - WmiEvent - WmiEventConsumerToFilter activity detected
+- [done] sysmon:16 - ServiceConfigurationChange (Sysmon config change)
+- [done] sysmon:17 - PipeEvent - Pipe Created
+- [done] sysmon:18 - PipeEvent - Pipe Connected
+- [done] sysmon:19 - WmiEvent - WmiEventFilter activity detected
+- [done] sysmon:20 - WmiEvent - WmiEventConsumer activity detected
+- [done] sysmon:21 - WmiEvent - WmiEventConsumerToFilter activity detected
 - [done] sysmon:22 - DNSEvent (DNS query)
-- [pending] sysmon:23 - FileDelete (archived)
+- [done] sysmon:23 - FileDelete (archived)
 - [pending] sysmon:24 - ClipboardChange
 - [done] sysmon:25 - ProcessTampering
 - [pending] sysmon:26 - FileDeleteDetected
 - [pending] sysmon:27 - FileBlockExecutable
 - [pending] sysmon:28 - FileBlockShredding
-- [pending] sysmon:29 - FileExecutableDetected
+- [done] sysmon:29 - FileExecutableDetected
 - [pending] sysmon:255 - Sysmon service error report

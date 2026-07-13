@@ -1,0 +1,43 @@
+{
+    "id":  "23",
+    "source":  "sysmon",
+    "category":  "File",
+    "name":  "FileDelete (archived)",
+    "priority":  "P2",
+    "applicable_version":  "Sysmon with this event enabled",
+    "last_reviewed":  "2026-07-13",
+    "definition":  "Sysmon Event ID 23 records FileDelete (archived).",
+    "trigger_scenarios":  "The event is emitted when the configured Sysmon operation occurs.",
+    "key_fields":  [
+                       {
+                           "field":  "Event-specific field",
+                           "explanation":  "TargetFilename under C:\\\\Users\\\\ or C:\\\\ProgramData\\\\ combined with ArchiveDirectory C:\\\\Sysmon provides recoverable evidence of deletion; event 23 archives the deleted file."
+                       },
+                       {
+                           "field":  "Image / ProcessGuid",
+                           "explanation":  "Use the initiating image and ProcessGuid to join Event ID 1 command-line context."
+                       },
+                       {
+                           "field":  "UtcTime",
+                           "explanation":  "Use the timestamp to correlate with related activity."
+                       }
+                   ],
+    "false_positives":  [
+                            "Approved administration, management agents, and deployment tools can generate this telemetry.",
+                            "Baseline expected hosts, signed binaries, and change windows before suppression."
+                        ],
+    "related_event_ids":  [
+                              "1"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1070.004",
+                              "technique_name":  "Indicator Removal: File Deletion"
+                          }
+                      ],
+    "detection_notes":  "TargetFilename under C:\\\\Users\\\\ or C:\\\\ProgramData\\\\ combined with ArchiveDirectory C:\\\\Sysmon provides recoverable evidence of deletion; event 23 archives the deleted file. This is a T1070.004 Indicator Removal: File Deletion signal; preserve the concrete value and correlate the initiating Image, ProcessGuid, and logon context before closing.",
+    "kql_snippet":  "Sysmon\n| where EventID == 23\n| project TimeGenerated, Computer, Image, ProcessGuid",
+    "spl_snippet":  "index=sysmon EventCode=23 | table _time, host, Image, ProcessGuid",
+    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nImage: C:\\\\Windows\\\\System32\\\\example.exe\nProcessGuid: {REDACTED}",
+    "source_url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+}
