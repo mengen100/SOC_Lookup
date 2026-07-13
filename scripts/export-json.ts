@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 import { getCompleteEvents, getEventHref, sourceToRouteSlug, type EventPageRecord } from "../lib/events";
-import { absoluteUrl } from "../lib/schema-org";
+import { absoluteUrl } from "../lib/site";
 
 const DEFAULT_OUTPUT_DIR = path.join(process.cwd(), "public");
 

@@ -1,11 +1,6 @@
 import type { EventPageRecord } from "./events";
 import { getEventHref } from "./events";
-
-const SITE_URL = "https://soc-event-lookup.vercel.app";
-
-export function absoluteUrl(path: string): string {
-  return new URL(path, SITE_URL).toString();
-}
+import { absoluteUrl } from "./site";
 
 export function eventDescription(event: EventPageRecord, maxLength = 155): string {
   if (event.definition.length <= maxLength) {
