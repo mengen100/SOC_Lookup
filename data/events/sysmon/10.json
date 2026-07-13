@@ -46,7 +46,7 @@
                               "technique_name":  "Process Injection"
                           }
                       ],
-    "detection_notes":  "Prioritize non-security processes accessing lsass.exe, unusual GrantedAccess masks, executables from writable paths, and access that follows suspicious process creation. Tune collection around lsass.exe and other sensitive processes, and maintain an allowlist for trusted security agents based on publisher, path, and version. Mapped ATT\u0026CK techniques: T1003, T1055.",
+    "detection_notes":  "T1003 credential dumping is concrete when TargetImage is lsass.exe and GrantedAccess includes 0x1010 or 0x1fffff from a source outside approved EDR paths. Join SourceProcessGuid to Event ID 1 for command-line and signer context.",
     "kql_snippet":  "Sysmon\n| where EventID == 10\n| where TargetImage endswith @\"\\lsass.exe\"\n| project TimeGenerated, Computer, SourceImage, TargetImage, GrantedAccess, CallTrace, SourceProcessGuid\n| order by TimeGenerated desc",
     "spl_snippet":  "index=sysmon EventCode=10 TargetImage=\"*\\\\lsass.exe\"\n| table _time, host, SourceImage, TargetImage, GrantedAccess, CallTrace, SourceProcessGuid",
     "sample_log":  "UtcTime: 2026-07-10 03:20:22.000\nSourceImage: C:\\Users\\jsmith\\AppData\\Local\\Temp\\diagnostic.exe\nTargetImage: C:\\Windows\\System32\\lsass.exe\nGrantedAccess: 0x1010\nCallTrace: C:\\Windows\\SYSTEM32\\ntdll.dll+9d4c|UNKNOWN(000001F4A1230000)",

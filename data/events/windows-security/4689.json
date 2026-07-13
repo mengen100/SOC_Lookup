@@ -35,7 +35,7 @@
                               "technique_name":  "Indicator Removal: File Deletion"
                           }
                       ],
-    "detection_notes":  "Use 4689 to investigate T1070.004 cleanup only when a suspicious 4688 process exits immediately after deletion, log clearing, or artifact creation. The value is its duration and sequence, not the termination alone.",
+    "detection_notes":  "For T1070.004, use the 4688/4689 Process ID pair and a short lifetime such as under 60 seconds after wevtutil.exe, del.exe, or cipher.exe execution. PID reuse means the process name and close timestamp must match; termination alone is not evidence of cleanup.  Use timeout=60 seconds as an initial short-lifetime triage value.",
     "kql_snippet":  "SecurityEvent\n| where EventID == 4689\n| project TimeGenerated, Computer, Account, Process, ProcessId",
     "spl_snippet":  "index=wineventlog EventCode=4689 | table _time, host, Process_Name, Process_ID",
     "sample_log":  "Process Name: C:\\Users\\Public\\tool.exe\nProcess ID: 4242",

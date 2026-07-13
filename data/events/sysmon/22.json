@@ -40,7 +40,7 @@
                               "technique_name":  "Dynamic Resolution"
                           }
                       ],
-    "detection_notes":  "Prioritize rare domains queried by unusual processes, high-entropy or algorithmically generated names, script interpreters querying external domains, and query patterns that precede network connections. Enrich with DNS reputation, registration age, proxy logs, and Event ID 3. Mapped ATT\u0026CK techniques: T1071.004, T1568.",
+    "detection_notes":  "T1071.004 DNS C2 is concrete when Image is powershell.exe or wscript.exe and QueryName is followed by Event ID 3 to DestinationPort 443 or 53. High-entropy subdomains or repeated QueryStatus failures should be correlated with ProcessGuid, not treated as a standalone verdict. A repeated timeout=60 second DNS-to-network correlation window is a practical starting point.",
     "kql_snippet":  "Sysmon\n| where EventID == 22\n| where Image has_any (\"\\\\powershell.exe\", \"\\\\wscript.exe\", \"\\\\mshta.exe\")\n| project TimeGenerated, Computer, Image, QueryName, QueryStatus, QueryResults, ProcessGuid",
     "spl_snippet":  "index=sysmon EventCode=22\n| search Image IN (\"*\\\\powershell.exe\", \"*\\\\wscript.exe\", \"*\\\\mshta.exe\")\n| table _time, host, Image, QueryName, QueryStatus, QueryResults, ProcessGuid",
     "sample_log":  "UtcTime: 2026-07-10 03:20:13.000\nImage: C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\nQueryName: example.invalid\nQueryStatus: 0\nQueryResults: 203.0.113.10\nProcessGuid: {11111111-2222-3333-4444-555555555555}",

@@ -42,7 +42,7 @@
                               "technique_name":  "Process Injection"
                           }
                       ],
-    "detection_notes":  "Focus on uncommon source-target pairs, unsigned or user-writable source binaries, injection into security-sensitive processes, and remote thread events followed by network activity or credential access. Build allowlists for known EDR and developer tooling by signed publisher and path, not only by filename. Mapped ATT\u0026CK techniques: T1055.",
+    "detection_notes":  "T1055 injection is concrete when TargetImage is lsass.exe or explorer.exe and StartModule is empty while SourceImage runs from C:\\\\Users\\\\ or C:\\\\Temp\\\\. An empty StartModule with a remote StartAddress supports shellcode rather than a normal exported function.",
     "kql_snippet":  "Sysmon\n| where EventID == 8\n| where TargetImage has_any (\"\\\\lsass.exe\", \"\\\\explorer.exe\", \"\\\\chrome.exe\", \"\\\\msedge.exe\")\n| project TimeGenerated, Computer, SourceImage, TargetImage, StartAddress, StartModule, StartFunction\n| order by TimeGenerated desc",
     "spl_snippet":  "index=sysmon EventCode=8\n| search TargetImage IN (\"*\\\\lsass.exe\", \"*\\\\explorer.exe\", \"*\\\\chrome.exe\", \"*\\\\msedge.exe\")\n| table _time, host, SourceImage, TargetImage, StartAddress, StartModule, StartFunction",
     "sample_log":  "UtcTime: 2026-07-10 03:20:18.000\nSourceImage: C:\\Users\\jsmith\\AppData\\Local\\Temp\\updater.exe\nTargetImage: C:\\Windows\\explorer.exe\nStartAddress: 0x000001F4A1230000\nStartModule: \nStartFunction: ",

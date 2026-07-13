@@ -46,7 +46,7 @@
                               "technique_name":  "Indicator Removal: File Deletion"
                           }
                       ],
-    "detection_notes":  "Prioritize access to administrative shares from workstations, rare source-to-server relationships, use by newly created or privileged accounts, and share access that follows remote authentication or precedes service creation. Use 5145 where available to determine the specific relative file path and requested access mask. Mapped ATT\u0026CK techniques: T1021.002, T1070.004.",
+    "detection_notes":  "T1021.002 lateral movement is concrete when Share Name is ADMIN$ or C$ after a Type 3 4624 from a workstation, especially when Source Port is nonzero and 5145 shows Access Mask 0x2 write or 0x10000 delete. ADMIN$ staging followed by 4697 service creation is a remote-execution chain.",
     "kql_snippet":  "SecurityEvent\n| where EventID == 5140\n| where ShareName has_any (\"ADMIN$\", \"C$\", \"IPC$\")\n| project TimeGenerated, Computer, Account, IpAddress, ShareName, ShareLocalPath\n| order by TimeGenerated desc",
     "spl_snippet":  "index=wineventlog EventCode=5140 Share_Name IN (\"*ADMIN$\", \"*C$\", \"*IPC$\")\n| table _time, host, SubjectUserName, Source_Address, Share_Name, Share_Local_Path",
     "sample_log":  "Subject: Account Name: CORP\\jsmith\nShare Information: Share Name: \\\\*\\ADMIN$\nShare Local Path: C:\\Windows\nNetwork Information: Source Address: 10.x.x.x\nSource Port: 52133",

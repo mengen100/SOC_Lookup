@@ -45,7 +45,7 @@
                               "technique_name":  "Ingress Tool Transfer"
                           }
                       ],
-    "detection_notes":  "Prioritize rare process-to-destination pairs, unsigned or user-directory executables connecting externally, script interpreters making network connections, and periodic beacon-like patterns. Join Event ID 3 to Event ID 1 using ProcessGuid, then enrich destinations with DNS, proxy, reputation, and asset-role context. Mapped ATT\u0026CK techniques: T1071, T1105.",
+    "detection_notes":  "T1071/T1105 is concrete when Initiated is true, DestinationPort is 443 or 80, and Image is powershell.exe, mshta.exe, or a binary under C:\\\\Users\\\\. Join ProcessGuid to Event ID 1; periodic connections to one DestinationIp are beacon candidates.",
     "kql_snippet":  "Sysmon\n| where EventID == 3 and Initiated == \"true\"\n| where Image has_any (\"\\\\powershell.exe\", \"\\\\rundll32.exe\", \"\\\\mshta.exe\")\n| project TimeGenerated, Computer, User, Image, DestinationIp, DestinationHostname, DestinationPort, ProcessGuid\n| order by TimeGenerated desc",
     "spl_snippet":  "index=sysmon EventCode=3 Initiated=true\n| search Image IN (\"*\\\\powershell.exe\", \"*\\\\rundll32.exe\", \"*\\\\mshta.exe\")\n| table _time, host, User, Image, DestinationIp, DestinationHostname, DestinationPort, ProcessGuid",
     "sample_log":  "UtcTime: 2026-07-10 03:20:14.000\nProcessGuid: {11111111-2222-3333-4444-555555555555}\nImage: C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\nUser: CORP\\jsmith\nProtocol: tcp\nInitiated: true\nDestinationHostname: example.invalid\nDestinationIp: 203.0.113.10\nDestinationPort: 443",

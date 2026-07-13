@@ -46,7 +46,7 @@
                               "technique_name":  "Remote Services"
                           }
                       ],
-    "detection_notes":  "Look for a source requesting an unusual number of distinct SPNs, service tickets for accounts rarely used by that source, or RC4-encrypted tickets where AES is the norm. Maintain per-account and per-host baselines, then pivot from the Client Address to endpoint process telemetry and interactive logons. Mapped ATT\u0026CK techniques: T1558.003, T1021.",
+    "detection_notes":  "T1558.003 Kerberoasting is indicated when Ticket Encryption Type is 0x17 (RC4-HMAC) for a service SPN in an AES-only domain, especially when one Client Address requests more than 20 distinct Service Name values in one hour. RC4 service tickets are cheaper to crack offline.",
     "kql_snippet":  "SecurityEvent\n| where EventID == 4769\n| summarize ServiceCount = dcount(ServiceName), Requests = count() by IpAddress, TargetAccount, bin(TimeGenerated, 1h)\n| where ServiceCount \u003e 20\n| order by ServiceCount desc",
     "spl_snippet":  "index=wineventlog EventCode=4769\n| bucket _time span=1h\n| stats dc(Service_Name) as service_count count by _time, Client_Address, Account_Name\n| where service_count \u003e 20",
     "sample_log":  "Account Name: jsmith@CORP.EXAMPLE\nService Name: MSSQLSvc/sql01.corp.example:1433\nClient Address: 10.x.x.x\nTicket Encryption Type: 0x12\nFailure Code: 0x0",

@@ -1,54 +1,58 @@
 {
-  "id": "7",
-  "source": "sysmon",
-  "category": "Image",
-  "name": "Image loaded",
-  "priority": "P2",
-  "applicable_version": "Sysmon 1.0 and later (ImageLoad must be enabled in Sysmon config)",
-  "last_reviewed": "2026-07-12",
-  "definition": "Sysmon Event ID 7 records every DLL or executable image loaded into a process's address space, capturing the loading process, the loaded file path, its hashes, and its Authenticode signature status.",
-  "trigger_scenarios": "Sysmon generates Event ID 7 on every LoadLibrary-family call when ImageLoad monitoring is enabled. Volume is extremely high on active systems; Sysmon configurations almost always filter this event down to high-value targets such as lsass.exe, security tools, or untrusted load paths.",
-  "key_fields": [
-    {
-      "field": "ImageLoaded",
-      "explanation": "Full path of the DLL or image being loaded. A load from %TEMP%, %APPDATA%, %USERPROFILE%, or a UNC path into a privileged process is the central indicator of DLL hijacking or side-loading."
-    },
-    {
-      "field": "SignatureStatus / Signed",
-      "explanation": "Authenticode validation result. Signed=false or SignatureStatus other than \"Valid\" for a DLL loaded into a security-sensitive process (lsass.exe, svchost.exe, explorer.exe) means an unsigned image entered a high-privilege address space."
-    },
-    {
-      "field": "Image",
-      "explanation": "The process loading the DLL. lsass.exe loading a non-system DLL, or a signed Windows binary loading from an unexpected path, are the archetypal patterns for credential-access tooling and defense-evasion via DLL side-loading."
-    },
-    {
-      "field": "OriginalFileName",
-      "explanation": "The filename embedded in the DLL's version resource. A mismatch between OriginalFileName and the on-disk filename (e.g., a file named version.dll whose OriginalFileName is calc.dll) reveals a renamed masquerading DLL."
-    },
-    {
-      "field": "Hashes",
-      "explanation": "SHA256/IMPHASH of the loaded image. Cross-reference against threat-intelligence blocklists and LOLBins lists to identify known-malicious or abusable libraries."
-    }
-  ],
-  "false_positives": [
-    "Software installers temporarily extract DLLs to %TEMP% before loading them; short-lived loads during installation are generally benign.",
-    "Some legitimate applications load DLLs from user profile directories by design (e.g., browser plugins, certain Java JREs).",
-    "Developer tools and debuggers load unsigned DLLs for legitimate instrumentation purposes."
-  ],
-  "related_event_ids": ["1", "6", "10"],
-  "attck_mapping": [
-    {
-      "technique_id": "T1574.001",
-      "technique_name": "Hijack Execution Flow: DLL Search Order Hijacking"
-    },
-    {
-      "technique_id": "T1055.001",
-      "technique_name": "Process Injection: Dynamic-link Library Injection"
-    }
-  ],
-  "detection_notes": "A Signed=false or SignatureStatus not equal to \"Valid\" DLL loaded into lsass.exe is the strongest single-event signal in this log: legitimate DLLs in lsass.exe are system-signed components, so any unsigned image entering that process merits immediate investigation as a T1055.001 DLL injection or T1574.001 side-loading attempt. The credential-dumping tool Mimikatz loads mimilib.dll or dbghelp.dll into lsass.exe, which is the canonical example. Outside lsass.exe, an ImageLoaded path under %TEMP%, %APPDATA%, or a network share loaded by a signed Windows binary (e.g., explorer.exe or svchost.exe) indicates DLL search-order or side-loading abuse. In both cases, follow up with the same ProcessGuid in Event ID 10 (ProcessAccess) to check whether the loading process subsequently accessed another process's memory, and in Event ID 1 to confirm the parent chain.",
-  "kql_snippet": "Sysmon\n| where EventID == 7\n| where Image endswith \"\\\\lsass.exe\" and SignatureStatus != \"Valid\"\n| project TimeGenerated, Computer, Image, ImageLoaded, Signed, SignatureStatus, Hashes",
-  "spl_snippet": "index=sysmon EventCode=7 Image=\"*\\lsass.exe\" SignatureStatus!=Valid\n| table _time, host, Image, ImageLoaded, Signed, SignatureStatus, Hashes",
-  "sample_log": "UtcTime: 2026-07-12 11:03:45.882\nProcessGuid: {11111111-2222-3333-4444-555555555555}\nProcessId: 812\nImage: C:\\Windows\\System32\\lsass.exe\nImageLoaded: C:\\Windows\\Temp\\dbghelp.dll\nHashes: SHA256=REDACTED\nSigned: false\nSignature: -\nSignatureStatus: Unsigned\nUser: NT AUTHORITY\\SYSTEM\nOriginalFileName: dbghelp.dll",
-  "source_url": "https://github.com/trustedsec/SysmonCommunityGuide"
+    "id":  "7",
+    "source":  "sysmon",
+    "category":  "Image",
+    "name":  "Image loaded",
+    "priority":  "P2",
+    "applicable_version":  "Sysmon 1.0 and later (ImageLoad must be enabled in Sysmon config)",
+    "last_reviewed":  "2026-07-12",
+    "definition":  "Sysmon Event ID 7 records every DLL or executable image loaded into a process\u0027s address space, capturing the loading process, the loaded file path, its hashes, and its Authenticode signature status.",
+    "trigger_scenarios":  "Sysmon generates Event ID 7 on every LoadLibrary-family call when ImageLoad monitoring is enabled. Volume is extremely high on active systems; Sysmon configurations almost always filter this event down to high-value targets such as lsass.exe, security tools, or untrusted load paths.",
+    "key_fields":  [
+                       {
+                           "field":  "ImageLoaded",
+                           "explanation":  "Full path of the DLL or image being loaded. A load from %TEMP%, %APPDATA%, %USERPROFILE%, or a UNC path into a privileged process is the central indicator of DLL hijacking or side-loading."
+                       },
+                       {
+                           "field":  "SignatureStatus / Signed",
+                           "explanation":  "Authenticode validation result. Signed=false or SignatureStatus other than \"Valid\" for a DLL loaded into a security-sensitive process (lsass.exe, svchost.exe, explorer.exe) means an unsigned image entered a high-privilege address space."
+                       },
+                       {
+                           "field":  "Image",
+                           "explanation":  "The process loading the DLL. lsass.exe loading a non-system DLL, or a signed Windows binary loading from an unexpected path, are the archetypal patterns for credential-access tooling and defense-evasion via DLL side-loading."
+                       },
+                       {
+                           "field":  "OriginalFileName",
+                           "explanation":  "The filename embedded in the DLL\u0027s version resource. A mismatch between OriginalFileName and the on-disk filename (e.g., a file named version.dll whose OriginalFileName is calc.dll) reveals a renamed masquerading DLL."
+                       },
+                       {
+                           "field":  "Hashes",
+                           "explanation":  "SHA256/IMPHASH of the loaded image. Cross-reference against threat-intelligence blocklists and LOLBins lists to identify known-malicious or abusable libraries."
+                       }
+                   ],
+    "false_positives":  [
+                            "Software installers temporarily extract DLLs to %TEMP% before loading them; short-lived loads during installation are generally benign.",
+                            "Some legitimate applications load DLLs from user profile directories by design (e.g., browser plugins, certain Java JREs).",
+                            "Developer tools and debuggers load unsigned DLLs for legitimate instrumentation purposes."
+                        ],
+    "related_event_ids":  [
+                              "1",
+                              "6",
+                              "10"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1574.001",
+                              "technique_name":  "Hijack Execution Flow: DLL Search Order Hijacking"
+                          },
+                          {
+                              "technique_id":  "T1055.001",
+                              "technique_name":  "Process Injection: Dynamic-link Library Injection"
+                          }
+                      ],
+    "detection_notes":  "T1574.001 DLL hijacking is concrete when Image is a signed system binary but ImageLoaded is an unsigned DLL from C:\\\\Users\\\\, C:\\\\ProgramData\\\\, or C:\\\\Temp\\\\. Sysmon Event 7 is disabled by default, so collection scope must be explicit.",
+    "kql_snippet":  "Sysmon\n| where EventID == 7\n| where Image endswith \"\\\\lsass.exe\" and SignatureStatus != \"Valid\"\n| project TimeGenerated, Computer, Image, ImageLoaded, Signed, SignatureStatus, Hashes",
+    "spl_snippet":  "index=sysmon EventCode=7 Image=\"*\\lsass.exe\" SignatureStatus!=Valid\n| table _time, host, Image, ImageLoaded, Signed, SignatureStatus, Hashes",
+    "sample_log":  "UtcTime: 2026-07-12 11:03:45.882\nProcessGuid: {11111111-2222-3333-4444-555555555555}\nProcessId: 812\nImage: C:\\Windows\\System32\\lsass.exe\nImageLoaded: C:\\Windows\\Temp\\dbghelp.dll\nHashes: SHA256=REDACTED\nSigned: false\nSignature: -\nSignatureStatus: Unsigned\nUser: NT AUTHORITY\\SYSTEM\nOriginalFileName: dbghelp.dll",
+    "source_url":  "https://github.com/trustedsec/SysmonCommunityGuide"
 }

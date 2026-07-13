@@ -37,7 +37,7 @@
                               "technique_name":  "Account Manipulation"
                           }
                       ],
-    "detection_notes":  "T1098 is more strongly indicated by 4724 than 4723, but investigate a successful 4723 when Subject and Target Account differ or it follows an unusual 4624 session. Preserve Status and the session Logon ID before treating a rapid password change and remote access sequence as benign.",
+    "detection_notes":  "A successful Status 0x0 4723 with a Subject/Target Account mismatch, followed by Type 10 4624 within 60 minutes, supports T1098 account manipulation. The normal self-service case has identical Subject and Target Account.",
     "kql_snippet":  "SecurityEvent\n| where EventID == 4723\n| project TimeGenerated, Computer, Account, TargetAccount, Status",
     "spl_snippet":  "index=wineventlog EventCode=4723 | table _time, host, SubjectUserName, TargetUserName, Status",
     "sample_log":  "Subject: CORP\\jsmith\nTarget Account: CORP\\jsmith\nStatus: 0x0",

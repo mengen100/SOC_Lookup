@@ -41,7 +41,7 @@
                               "technique_name":  "Boot or Logon Autostart Execution"
                           }
                       ],
-    "detection_notes":  "Focus on executable or script files created in user-writable and persistence paths, files dropped by network-facing or script processes, and rare process-to-path combinations. Correlate file creation with hash, signing, Event ID 1, and subsequent execution. Mapped ATT\u0026CK techniques: T1105, T1547.",
+    "detection_notes":  "T1105 staging is concrete when TargetFilename is an executable or script under C:\\\\Users\\\\, C:\\\\ProgramData\\\\, or Startup, and Image is a browser, PowerShell, or script host. Join ProcessGuid to Event ID 1 and execution of the same file.",
     "kql_snippet":  "Sysmon\n| where EventID == 11\n| where TargetFilename has_any (\"\\\\AppData\\\\Roaming\\\\Microsoft\\\\Windows\\\\Start Menu\\\\Programs\\\\Startup\", \"\\\\Users\\\\Public\")\n| project TimeGenerated, Computer, Image, TargetFilename, ProcessGuid",
     "spl_snippet":  "index=sysmon EventCode=11\n| search TargetFilename IN (\"*\\\\Startup\\\\*\", \"*\\\\Users\\\\Public\\\\*\")\n| table _time, host, Image, TargetFilename, ProcessGuid",
     "sample_log":  "UtcTime: 2026-07-10 03:21:00.000\nImage: C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\nTargetFilename: C:\\Users\\Public\\update.ps1\nProcessGuid: {11111111-2222-3333-4444-555555555555}",

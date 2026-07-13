@@ -37,7 +37,7 @@
                               "technique_name":  "Indicator Removal: File Deletion"
                           }
                       ],
-    "detection_notes":  "An attacker may use T1070.004 to remove a task created for T1053.005 persistence after execution. Escalate a 4699 deletion when the same Task Name was created or updated recently, particularly if Task Content launched PowerShell or a user-writable binary.",
+    "detection_notes":  "T1070.004 cleanup is indicated when a Task Name deleted by 4699 was created by 4698 or changed by 4702 within a short 60-minute window, especially when its captured Task Content references C:\\\\Users\\\\ or powershell.exe. Preserve prior Task Content before deletion.",
     "kql_snippet":  "SecurityEvent\n| where EventID == 4699\n| project TimeGenerated, Computer, Account, TaskName",
     "spl_snippet":  "index=wineventlog EventCode=4699 | table _time, host, SubjectUserName, TaskName",
     "sample_log":  "Task Name: \\Microsoft\\Windows\\Update\\CacheRefresh\nSubject: CORP\\admin.ops",

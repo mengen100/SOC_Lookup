@@ -1,45 +1,50 @@
 {
-  "id": "4728",
-  "source": "windows_security",
-  "category": "GroupMgmt",
-  "name": "A member was added to a security-enabled global group",
-  "priority": "P2",
-  "applicable_version": "Windows Server 2008 R2 and later",
-  "last_reviewed": "2026-07-12",
-  "definition": "Windows Security Event ID 4728 records that a user or computer account was added to a security-enabled global group in Active Directory, logging the Subject performing the change, the Member added, and the target Group.",
-  "trigger_scenarios": "Any domain-level group membership addition for a security-enabled global group generates this event on a domain controller. It covers high-value targets such as Domain Admins, Enterprise Admins, Schema Admins, and other privileged role groups.",
-  "key_fields": [
-    {
-      "field": "Group\\Group Name / Group Domain",
-      "explanation": "The group receiving the new member. Additions to Domain Admins, Enterprise Admins, or Schema Admins in the expected domain are the highest-priority signals. Any group whose name ends in Admins or contains a privileged role keyword also warrants review."
-    },
-    {
-      "field": "Member\\Security ID / Account Name",
-      "explanation": "The account being added. Account Name is recorded as an LDAP distinguished name (e.g., CN=jsmith,OU=Users,DC=corp,DC=example). A member account that is newly created, dormant, or sourced from an external domain in a sensitive group is a T1098 Account Manipulation indicator."
-    },
-    {
-      "field": "Subject\\Account Name / Logon ID",
-      "explanation": "The identity that made the change. Correlate the Logon ID with the 4624 logon record to find the originating workstation and session type (Type 10 remote interactive from an unexpected source is particularly suspicious)."
-    }
-  ],
-  "false_positives": [
-    "Authorized provisioning workflows and help-desk processes regularly add accounts to groups as part of onboarding or role changes.",
-    "Automated identity management systems may perform bulk group assignments during role migrations."
-  ],
-  "related_event_ids": ["4729", "4732", "4672", "4624"],
-  "attck_mapping": [
-    {
-      "technique_id": "T1098",
-      "technique_name": "Account Manipulation"
-    },
-    {
-      "technique_id": "T1078",
-      "technique_name": "Valid Accounts"
-    }
-  ],
-  "detection_notes": "T1098 Account Manipulation is indicated when Group Name is Domain Admins, Enterprise Admins, or Schema Admins and the Member Security ID belongs to an account with no prior privileged-group membership. The concrete correlation chain is: 4728 (group add) → same Subject Logon ID in 4624 (logon) → 4672 (special privileges assigned) shortly after. That sequence means the Subject used their own elevated session to silently add themselves or a secondary account to a domain admin group. A Member distinguished name containing OU values inconsistent with the production identity structure (e.g., a newly-created account in a staging OU) is an additional signal. Alert on any addition to Domain Admins, Enterprise Admins, or Schema Admins and require a matching change-management ticket before closing.",
-  "kql_snippet": "SecurityEvent\n| where EventID == 4728\n| where TargetUserName in (\"Domain Admins\", \"Enterprise Admins\", \"Schema Admins\")\n| project TimeGenerated, Computer, SubjectUserName, MemberName, TargetUserName",
-  "spl_snippet": "index=wineventlog EventCode=4728\n| search TargetUserName IN (\"Domain Admins\", \"Enterprise Admins\", \"Schema Admins\")\n| table _time, host, SubjectUserName, MemberName, TargetUserName",
-  "sample_log": "Subject:\n  Security ID: CORP\\attacker\n  Account Name: attacker\n  Account Domain: CORP\n  Logon ID: 0x2F4A10\nMember:\n  Security ID: CORP\\backdoor\n  Account Name: CN=backdoor,OU=Users,DC=corp,DC=example\nGroup:\n  Security ID: CORP\\Domain Admins\n  Group Name: Domain Admins\n  Group Domain: CORP",
-  "source_url": "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4728"
+    "id":  "4728",
+    "source":  "windows_security",
+    "category":  "GroupMgmt",
+    "name":  "A member was added to a security-enabled global group",
+    "priority":  "P2",
+    "applicable_version":  "Windows Server 2008 R2 and later",
+    "last_reviewed":  "2026-07-12",
+    "definition":  "Windows Security Event ID 4728 records that a user or computer account was added to a security-enabled global group in Active Directory, logging the Subject performing the change, the Member added, and the target Group.",
+    "trigger_scenarios":  "Any domain-level group membership addition for a security-enabled global group generates this event on a domain controller. It covers high-value targets such as Domain Admins, Enterprise Admins, Schema Admins, and other privileged role groups.",
+    "key_fields":  [
+                       {
+                           "field":  "Group\\Group Name / Group Domain",
+                           "explanation":  "The group receiving the new member. Additions to Domain Admins, Enterprise Admins, or Schema Admins in the expected domain are the highest-priority signals. Any group whose name ends in Admins or contains a privileged role keyword also warrants review."
+                       },
+                       {
+                           "field":  "Member\\Security ID / Account Name",
+                           "explanation":  "The account being added. Account Name is recorded as an LDAP distinguished name (e.g., CN=jsmith,OU=Users,DC=corp,DC=example). A member account that is newly created, dormant, or sourced from an external domain in a sensitive group is a T1098 Account Manipulation indicator."
+                       },
+                       {
+                           "field":  "Subject\\Account Name / Logon ID",
+                           "explanation":  "The identity that made the change. Correlate the Logon ID with the 4624 logon record to find the originating workstation and session type (Type 10 remote interactive from an unexpected source is particularly suspicious)."
+                       }
+                   ],
+    "false_positives":  [
+                            "Authorized provisioning workflows and help-desk processes regularly add accounts to groups as part of onboarding or role changes.",
+                            "Automated identity management systems may perform bulk group assignments during role migrations."
+                        ],
+    "related_event_ids":  [
+                              "4729",
+                              "4732",
+                              "4672",
+                              "4624"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1098",
+                              "technique_name":  "Account Manipulation"
+                          },
+                          {
+                              "technique_id":  "T1078",
+                              "technique_name":  "Valid Accounts"
+                          }
+                      ],
+    "detection_notes":  "T1098 is concrete when Group Name equals Domain Admins, Enterprise Admins, or Schema Admins and the same Subject Logon ID produces 4672 after a Type 10 4624. That sequence assigns privileged access rather than a routine role change.",
+    "kql_snippet":  "SecurityEvent\n| where EventID == 4728\n| where TargetUserName in (\"Domain Admins\", \"Enterprise Admins\", \"Schema Admins\")\n| project TimeGenerated, Computer, SubjectUserName, MemberName, TargetUserName",
+    "spl_snippet":  "index=wineventlog EventCode=4728\n| search TargetUserName IN (\"Domain Admins\", \"Enterprise Admins\", \"Schema Admins\")\n| table _time, host, SubjectUserName, MemberName, TargetUserName",
+    "sample_log":  "Subject:\n  Security ID: CORP\\attacker\n  Account Name: attacker\n  Account Domain: CORP\n  Logon ID: 0x2F4A10\nMember:\n  Security ID: CORP\\backdoor\n  Account Name: CN=backdoor,OU=Users,DC=corp,DC=example\nGroup:\n  Security ID: CORP\\Domain Admins\n  Group Name: Domain Admins\n  Group Domain: CORP",
+    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4728"
 }

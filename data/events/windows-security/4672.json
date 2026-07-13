@@ -41,7 +41,7 @@
                               "technique_name":  "Exploitation for Privilege Escalation"
                           }
                       ],
-    "detection_notes":  "T1078 or privilege-escalation investigation should prioritize Privilege List values SeDebugPrivilege, SeTcbPrivilege, SeBackupPrivilege, or SeTakeOwnershipPrivilege on a newly observed Logon ID. SeDebugPrivilege paired with 4688 access to lsass.exe is stronger evidence than an ordinary administrator logon.",
+    "detection_notes":  "Treat SeDebugPrivilege on a new Logon ID as T1078/T1068 triage, especially when 4688 shows procdump.exe or rundll32.exe accessing lsass.exe. Logon ID 0x3e7 is the standard LocalSystem session and is normally noisy; an interactive Type 10 session with SeDebugPrivilege is a stronger deviation.",
     "kql_snippet":  "SecurityEvent\n| where EventID == 4672\n| project TimeGenerated, Computer, Account, SubjectLogonId, PrivilegeList\n| order by TimeGenerated desc",
     "spl_snippet":  "index=wineventlog EventCode=4672\n| table _time, host, SubjectUserName, SubjectLogonId, PrivilegeList",
     "sample_log":  "Subject: Account Name: CORP\\admin.ops\nLogon ID: 0x3e7\nPrivileges: SeSecurityPrivilege SeTakeOwnershipPrivilege SeDebugPrivilege",

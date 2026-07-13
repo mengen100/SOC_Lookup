@@ -37,7 +37,7 @@
                               "technique_name":  "Account Access Removal"
                           }
                       ],
-    "detection_notes":  "T1531 Account Access Removal is a destructive technique when an attacker disables many accounts or disables administrators and recovery accounts. Alert on high fan-out from one Subject, especially when Target Account is privileged or the disablement follows suspicious logons or audit-policy changes.",
+    "detection_notes":  "T1531 destruction is indicated by more than five unique Target Accounts disabled by one Subject in a 15-minute window, particularly if the targets include backup or administrator accounts. Preserve the Subject Logon ID and correlate 4719/1102 defense changes.  Use window=15 minutes for the high-fan-out disablement correlation.",
     "kql_snippet":  "SecurityEvent\n| where EventID == 4725\n| summarize Disabled=count() by Account, bin(TimeGenerated, 15m)\n| where Disabled \u003e 5",
     "spl_snippet":  "index=wineventlog EventCode=4725 | stats count by SubjectUserName, TargetUserName",
     "sample_log":  "Subject: CORP\\admin.ops\nTarget Account: CORP\\backup.admin\nTarget SID: S-1-5-21-REDACTED",

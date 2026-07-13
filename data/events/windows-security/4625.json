@@ -50,7 +50,7 @@
                               "technique_name":  "Valid Accounts"
                           }
                       ],
-    "detection_notes":  "A single failure is rarely actionable; analyze aggregation and sequence. High-value patterns include one account failing from many source addresses, one source trying many accounts, bursts against RDP or SMB, and a successful 4624 shortly after repeated failures. Establish baselines for service accounts and noisy applications before applying fixed thresholds. Mapped ATT\u0026CK techniques: T1110.001, T1110.003, T1078.",
+    "detection_notes":  "T1110.001/T1110.003 detection should separate Sub Status 0xC000006A (valid account, bad password) from 0xC0000064 (unknown account). More than 10 failures in a 5-minute window from one Source Network Address against many accounts is a starting spray threshold, while Logon Type 10 isolates RDP and Type 3 isolates SMB. Correlate a following 4624 success.",
     "kql_snippet":  "SecurityEvent\n| where EventID == 4625\n| summarize FailedCount = count() by TargetAccount = Account, IpAddress, bin(TimeGenerated, 5m)\n| where FailedCount \u003e 10\n| order by FailedCount desc",
     "spl_snippet":  "index=wineventlog EventCode=4625\n| bucket _time span=5m\n| stats count as FailedCount by _time, Account_Name, Source_Network_Address\n| where FailedCount \u003e 10",
     "sample_log":  "Account For Which Logon Failed: CORP\\jsmith\nFailure Reason: Unknown user name or bad password\nStatus: 0xC000006D\nSub Status: 0xC000006A\nLogon Type: 3\nSource Network Address: 10.x.x.x\nSource Port: 51422",

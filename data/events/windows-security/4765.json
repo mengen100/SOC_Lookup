@@ -37,7 +37,7 @@
                               "technique_name":  "Account Manipulation"
                           }
                       ],
-    "detection_notes":  "T1098 SID History abuse is indicated when SID History contains a privileged SID such as a domain RID ending -512 (Domain Admins) or -519 (Enterprise Admins). The added historical SID can grant access through existing ACLs without current group membership; verify migration authorization and subsequent 4624 access.",
+    "detection_notes":  "T1098 SID-History Injection is indicated when SID History ends in -512 (Domain Admins) or -519 (Enterprise Admins). Those RID values grant inherited ACL access without current group membership; validate migration authorization and later 4624 access.  Use window=60 minutes to correlate the SID History change with subsequent logons.",
     "kql_snippet":  "SecurityEvent\n| where EventID == 4765\n| project TimeGenerated, Computer, Account, TargetAccount, SidHistory\n| order by TimeGenerated desc",
     "spl_snippet":  "index=wineventlog EventCode=4765\n| table _time, host, SubjectUserName, TargetUserName, SidHistory",
     "sample_log":  "Subject: CORP\\migration.service\nTarget Account: CORP\\jsmith\nSID History: S-1-5-21-REDACTED-512",

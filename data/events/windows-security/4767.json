@@ -1,37 +1,41 @@
 {
-  "id": "4767",
-  "source": "windows_security",
-  "category": "AccountMgmt",
-  "name": "A user account was unlocked",
-  "priority": "P2",
-  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
-  "last_reviewed": "2026-07-12",
-  "definition": "Windows Security Event ID 4767 records that a locked-out user account was unlocked, logging the Subject who performed the unlock and the Target Account that was unlocked.",
-  "trigger_scenarios": "A domain admin or help-desk operator unlocks an account through the ADUC console, PowerShell, or a self-service portal after a lockout. In an attack context, an adversary who has triggered a lockout on their own account or a captured account may unlock it themselves using separately obtained admin credentials to restore operational access.",
-  "key_fields": [
-    {
-      "field": "Target Account\\Account Name / Security ID",
-      "explanation": "The account that was unlocked. Unlocking a domain admin or service account outside a help-desk ticket is the primary T1098 Account Manipulation signal; compare with the 4740 lockout record for the same account to confirm the unlock follows the lockout immediately."
-    },
-    {
-      "field": "Subject\\Account Name / Logon ID",
-      "explanation": "The identity that performed the unlock. Per the Microsoft Security Monitoring Recommendation, every 4767 for a local account should be reviewed. For domain accounts, an unlock performed by an account that is not in the authorized help-desk group or that originates from an unusual workstation warrants investigation."
-    }
-  ],
-  "false_positives": [
-    "Help-desk operations routinely unlock accounts after user-initiated lockouts from stale passwords on mobile devices or mapped drives.",
-    "Automated self-service portals produce 4767 events with a service-account Subject when users reset their own passwords."
-  ],
-  "related_event_ids": ["4740", "4625", "4624"],
-  "attck_mapping": [
-    {
-      "technique_id": "T1098",
-      "technique_name": "Account Manipulation"
-    }
-  ],
-  "detection_notes": "The Microsoft Security Monitoring Recommendation for 4767 is to monitor all events where Target Account is a local account, without exception. For domain accounts, the useful correlation is: a 4740 lockout on a specific Target Account followed within a short window by a 4767 unlock where Subject\\Account Name does not belong to the authorized help-desk group is a T1098 Account Manipulation pattern — the adversary locked out the account deliberately (to force a reset or test credentials), then used a separately-held admin account to restore it. The Subject\\Logon ID field links to the specific 4624 session that performed the unlock; cross-reference that session's workstation name and logon type to identify whether an admin tool or interactive session was used from an unexpected source.",
-  "kql_snippet": "SecurityEvent\n| where EventID == 4767\n| project TimeGenerated, Computer, SubjectUserName, TargetUserName, SubjectLogonId",
-  "spl_snippet": "index=wineventlog EventCode=4767\n| table _time, host, SubjectUserName, TargetUserName, SubjectLogonId",
-  "sample_log": "Subject:\n  Security ID: CORP\\attacker-admin\n  Account Name: attacker-admin\n  Account Domain: CORP\n  Logon ID: 0x7C3E10\nTarget Account:\n  Security ID: CORP\\da-account\n  Account Name: da-account\n  Account Domain: CORP",
-  "source_url": "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4767"
+    "id":  "4767",
+    "source":  "windows_security",
+    "category":  "AccountMgmt",
+    "name":  "A user account was unlocked",
+    "priority":  "P2",
+    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
+    "last_reviewed":  "2026-07-12",
+    "definition":  "Windows Security Event ID 4767 records that a locked-out user account was unlocked, logging the Subject who performed the unlock and the Target Account that was unlocked.",
+    "trigger_scenarios":  "A domain admin or help-desk operator unlocks an account through the ADUC console, PowerShell, or a self-service portal after a lockout. In an attack context, an adversary who has triggered a lockout on their own account or a captured account may unlock it themselves using separately obtained admin credentials to restore operational access.",
+    "key_fields":  [
+                       {
+                           "field":  "Target Account\\Account Name / Security ID",
+                           "explanation":  "The account that was unlocked. Unlocking a domain admin or service account outside a help-desk ticket is the primary T1098 Account Manipulation signal; compare with the 4740 lockout record for the same account to confirm the unlock follows the lockout immediately."
+                       },
+                       {
+                           "field":  "Subject\\Account Name / Logon ID",
+                           "explanation":  "The identity that performed the unlock. Per the Microsoft Security Monitoring Recommendation, every 4767 for a local account should be reviewed. For domain accounts, an unlock performed by an account that is not in the authorized help-desk group or that originates from an unusual workstation warrants investigation."
+                       }
+                   ],
+    "false_positives":  [
+                            "Help-desk operations routinely unlock accounts after user-initiated lockouts from stale passwords on mobile devices or mapped drives.",
+                            "Automated self-service portals produce 4767 events with a service-account Subject when users reset their own passwords."
+                        ],
+    "related_event_ids":  [
+                              "4740",
+                              "4625",
+                              "4624"
+                          ],
+    "attck_mapping":  [
+                          {
+                              "technique_id":  "T1098",
+                              "technique_name":  "Account Manipulation"
+                          }
+                      ],
+    "detection_notes":  "Event 4767 has no status or failure-code field. For T1098, flag a 4740 lockout followed by 4767 within 60 minutes where Subject is outside the help-desk group, then join Subject Logon ID to a Type 10 4624; this is an identity-based exception to the numeric-value rule.",
+    "kql_snippet":  "SecurityEvent\n| where EventID == 4767\n| project TimeGenerated, Computer, SubjectUserName, TargetUserName, SubjectLogonId",
+    "spl_snippet":  "index=wineventlog EventCode=4767\n| table _time, host, SubjectUserName, TargetUserName, SubjectLogonId",
+    "sample_log":  "Subject:\n  Security ID: CORP\\attacker-admin\n  Account Name: attacker-admin\n  Account Domain: CORP\n  Logon ID: 0x7C3E10\nTarget Account:\n  Security ID: CORP\\da-account\n  Account Name: da-account\n  Account Domain: CORP",
+    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4767"
 }
