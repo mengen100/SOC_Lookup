@@ -81,8 +81,9 @@ Record only non-sensitive operational evidence:
 | Production verifier | Passed against `pages.dev` and `https://soceventlookup.com` on 2026-07-13 |
 | HTTP and 404 checks | HTTP redirects to HTTPS; unknown routes return 404 |
 | Search smoke test | Homepage and detail-page header search passed |
-| Search Console Domain property | Not configured |
-| Sitemap submission | Not submitted |
+| Search Console Domain property | Ownership verified on 2026-07-14 |
+| Sitemap submission | Success on 2026-07-14; 118 URLs discovered |
+| Priority indexing requests | `/`, `/windows-events/4625/`, `/windows-events/4688/`, and `/sysmon-events/1/` submitted |
 
 ## Search Console
 
