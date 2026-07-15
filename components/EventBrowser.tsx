@@ -36,7 +36,7 @@ export function EventBrowser({ events, categories }: EventBrowserProps) {
           <button
             key={category}
             type="button"
-            className={`rounded border px-3 py-1.5 text-sm ${activeCategory === category ? "border-accent bg-accent text-white" : "border-line bg-white text-steel"}`}
+            className={`whitespace-nowrap rounded border px-3 py-1.5 text-sm ${activeCategory === category ? "border-accent bg-accent text-white" : "border-line bg-white text-steel"}`}
             onClick={() => setActiveCategory(category)}
           >
             {category}

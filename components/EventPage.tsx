@@ -21,7 +21,7 @@ export function EventPage({ event }: EventPageProps) {
           <span className="rounded border border-line bg-white px-2 py-1">{event.category}</span>
           <span className="rounded border border-line bg-white px-2 py-1">{event.priority}</span>
         </div>
-        <h1 className="mt-4 max-w-4xl text-3xl font-semibold text-ink sm:text-4xl">{eventPageTitle(event)}</h1>
+        <h1 className="mt-4 max-w-4xl break-words text-3xl font-semibold text-ink sm:text-4xl">{eventPageTitle(event)}</h1>
         <p className="mt-4 max-w-3xl text-lg leading-8 text-steel">{event.definition}</p>
         <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-2">
           <div>
@@ -43,8 +43,8 @@ export function EventPage({ event }: EventPageProps) {
         <Section title="Key Fields">
           <div className="grid gap-3">
             {event.key_fields.map((field) => (
-              <div key={field.field} className="rounded border border-line bg-white p-4">
-                <h3 className="font-semibold text-ink">{field.field}</h3>
+              <div key={field.field} className="min-w-0 rounded border border-line bg-white p-4">
+                <h3 className="break-words font-semibold text-ink">{field.field}</h3>
                 <p className="mt-2 text-sm leading-6 text-steel">{field.explanation}</p>
               </div>
             ))}

@@ -10,12 +10,12 @@ interface EventCardProps {
 export function EventCard({ event, isComplete }: EventCardProps) {
   const content = (
     <article className="h-full rounded border border-line bg-white p-4 transition hover:border-accent">
-      <div className="flex items-start justify-between gap-3">
-        <div>
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <div className="min-w-0">
           <p className="text-xs font-semibold uppercase text-accent">Event ID {event.id}</p>
-          <h2 className="mt-1 text-base font-semibold text-ink">{event.name}</h2>
+          <h2 className="mt-1 break-words text-base font-semibold text-ink">{event.name}</h2>
         </div>
-        <span className="rounded border border-line px-2 py-1 text-xs font-semibold text-steel">{event.priority}</span>
+        <span className="shrink-0 rounded border border-line px-2 py-1 text-xs font-semibold text-steel">{event.priority}</span>
       </div>
       <div className="mt-3 flex flex-wrap gap-2 text-xs text-steel">
         <span className="rounded bg-panel px-2 py-1">{event.category}</span>

@@ -39,11 +39,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className="min-h-screen font-sans antialiased">
         <header className="border-b border-line bg-[#fbfcf8]/95">
           <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 lg:flex-row lg:items-center">
-            <Link href="/" className="shrink-0 text-lg font-semibold tracking-normal text-ink">
+            <Link href="/" className="shrink-0 self-start whitespace-nowrap text-lg font-semibold tracking-normal text-ink">
               SOC Event Lookup
             </Link>
             <HeaderSearch />
-            <nav className="flex flex-wrap items-center gap-1 text-sm text-steel lg:ml-auto">
+            <nav className="flex min-w-0 flex-wrap items-center gap-x-1 gap-y-1 border-t border-line pt-2 text-sm text-steel lg:ml-auto lg:border-t-0 lg:pt-0">
               {navItems.map((item) => (
                 <Link
                   key={item.href}

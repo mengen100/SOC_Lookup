@@ -13,7 +13,12 @@ interface HomeEventSearchProps {
 
 export function HomeEventSearch({ documents }: HomeEventSearchProps) {
   const { query, setQuery } = useEventQuery();
-  const results = useMemo(() => query.trim() ? searchEventDocuments(documents, query).slice(0, 8) : [], [documents, query]);
+  const results = useMemo(
+    () => query.trim()
+      ? searchEventDocuments(documents, query).filter((event) => event.isComplete).slice(0, 8)
+      : [],
+    [documents, query],
+  );
 
   return (
     <section className="mt-8 max-w-3xl" aria-label="Event search">
@@ -21,7 +26,7 @@ export function HomeEventSearch({ documents }: HomeEventSearchProps) {
         id="home-event-search"
         label="Search the knowledge base"
         onQueryChange={setQuery}
-        placeholder="Try 4625, failed logon, LogonType, or T1110"
+        placeholder="Try 4625, failed logon, or T1110"
         query={query}
       />
       {query.trim() ? (

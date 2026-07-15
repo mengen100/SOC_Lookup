@@ -19,7 +19,7 @@ export default function ToolsPage() {
       <h1 className="text-3xl font-semibold text-ink">SOC Tools</h1>
       <div className="mt-8 grid gap-4 md:grid-cols-3">
         {tools.map((tool) => (
-          <Link key={tool.href} href={tool.href} className="rounded border border-line bg-white p-5 hover:border-accent">
+          <Link key={tool.href} href={tool.href} className="rounded border border-line bg-white p-5 hover:border-accent focus-visible:outline-accent">
             <h2 className="font-semibold text-ink">{tool.title}</h2>
             <p className="mt-2 text-sm leading-6 text-steel">{tool.body}</p>
           </Link>
