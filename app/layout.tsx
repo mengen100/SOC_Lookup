@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { HeaderSearch } from "../components/HeaderSearch";
+import { NavLink } from "../components/NavLink";
 import { ToolsMenu } from "../components/ToolsMenu";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "../lib/site";
 import "./globals.css";
@@ -37,29 +38,25 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en">
       <body className="min-h-screen font-sans antialiased">
-        <header className="border-b border-line bg-[#fbfcf8]/95">
-          <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 lg:flex-row lg:items-center">
-            <Link href="/" className="shrink-0 self-start whitespace-nowrap text-lg font-semibold tracking-normal text-ink">
+        <header className="sticky top-0 z-40 border-b border-line bg-[#fbfcf8]/95 backdrop-blur-sm">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-3 px-4 py-3 lg:flex-nowrap">
+            <Link
+              className="shrink-0 whitespace-nowrap text-lg font-semibold tracking-normal text-ink"
+              href="/"
+            >
               SOC Event Lookup
             </Link>
-            <HeaderSearch />
-            <nav className="flex min-w-0 flex-wrap items-center gap-x-1 gap-y-1 border-t border-line pt-2 text-sm text-steel lg:ml-auto lg:border-t-0 lg:pt-0">
+            <div className="order-3 w-full lg:order-none lg:w-auto lg:max-w-sm lg:flex-1">
+              <HeaderSearch />
+            </div>
+            <nav className="flex min-w-0 flex-wrap items-center gap-x-1 gap-y-1 text-sm lg:ml-auto lg:shrink-0">
               {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="rounded border border-transparent px-2.5 py-1.5 hover:border-line hover:bg-white"
-                >
+                <NavLink href={item.href} key={item.href}>
                   {item.label}
-                </Link>
+                </NavLink>
               ))}
               <ToolsMenu />
-              <Link
-                className="rounded border border-transparent px-2.5 py-1.5 hover:border-line hover:bg-white"
-                href="/about/"
-              >
-                About
-              </Link>
+              <NavLink href="/about/">About</NavLink>
             </nav>
           </div>
         </header>
