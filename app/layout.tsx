@@ -37,7 +37,7 @@ const navItems = [
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className="min-h-screen font-sans antialiased">
+      <body className="flex min-h-screen flex-col font-sans antialiased">
         <header className="sticky top-0 z-40 border-b border-line bg-[#fbfcf8]/95 backdrop-blur-sm">
           <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-3 px-4 py-3 lg:flex-nowrap">
             <Link
@@ -60,7 +60,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             </nav>
           </div>
         </header>
-        <main>{children}</main>
+        <main className="flex-1">{children}</main>
         <footer className="mt-16 border-t border-line bg-panel">
           <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 text-sm text-steel sm:flex-row sm:justify-between">
             <p>Structured event knowledge for human review and machine reuse.</p>
