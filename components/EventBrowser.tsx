@@ -31,22 +31,28 @@ export function EventBrowser({ events, categories }: EventBrowserProps) {
           query={query}
         />
       </div>
-      <div className="mt-6 flex flex-wrap gap-2">
-        {["All", ...categories].map((category) => (
-          <button
-            key={category}
-            type="button"
-            className={`whitespace-nowrap rounded border px-3 py-1.5 text-sm ${activeCategory === category ? "border-accent bg-accent text-white" : "border-line bg-white text-steel"}`}
-            onClick={() => setActiveCategory(category)}
-          >
-            {category}
-          </button>
-        ))}
+      <div className="mt-6 border-t border-line pt-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-steel/80">Filter by category</p>
+        <div className="mt-2.5 flex flex-wrap gap-2">
+          {["All", ...categories].map((category) => (
+            <button
+              key={category}
+              type="button"
+              aria-pressed={activeCategory === category}
+              className={`whitespace-nowrap rounded border px-3.5 py-2 text-sm font-medium transition ${activeCategory === category ? "border-accent bg-accent text-white" : "border-line bg-white text-steel hover:border-accent hover:text-ink"}`}
+              onClick={() => setActiveCategory(category)}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
       </div>
-      <p className="mt-5 text-sm text-steel" aria-live="polite">
-        {filtered.length} {filtered.length === 1 ? "event" : "events"} found
-      </p>
-      <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-5 border-t border-line pt-3">
+        <p className="text-sm text-steel" aria-live="polite">
+          {filtered.length} {filtered.length === 1 ? "event" : "events"} found
+        </p>
+      </div>
+      <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {filtered.map((event) => (
           <EventCard key={`${event.source}:${event.id}`} event={event} isComplete={event.isComplete} />
         ))}

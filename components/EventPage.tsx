@@ -114,7 +114,7 @@ function Section({ title, children }: Readonly<{ title: string; children: React.
   return (
     <section>
       <h2 className="text-xl font-semibold text-ink">{title}</h2>
-      <div className="mt-3 text-base leading-7 text-steel">{children}</div>
+      <div className="mt-3 break-words text-base leading-7 text-steel">{children}</div>
     </section>
   );
 }
