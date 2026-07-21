@@ -5,7 +5,7 @@
   "name": "A network share object was checked for access",
   "priority": "P2",
   "applicable_version": "Windows Server 2008 R2 and later",
-  "last_reviewed": "2026-07-12",
+  "last_reviewed": "2026-07-21",
   "definition": "Windows Security Event ID 5145 records that Windows evaluated a client's access request against a network share object, logging the share name, relative target path, client identity, source IP, and the access mask requested or denied.",
   "trigger_scenarios": "This event fires for every SMB file or directory access check on audited shares. It is extremely high-volume on file servers and is usually filtered in production to administrative shares (ADMIN$, C$, IPC$), failure events, or specific high-value share paths. Attack-relevant scenarios include lateral movement via PsExec or Impacket, ransomware staging, and credential-file access via SYSVOL.",
   "key_fields": [
@@ -31,16 +31,129 @@
     "DFS replication and Windows Update processes access specific share paths under ADMIN$.",
     "Help-desk remote support tools that use ADMIN$ for file staging during troubleshooting."
   ],
-  "related_event_ids": ["4624", "5140"],
+  "related_event_ids": [
+    "4624",
+    "5140"
+  ],
   "attck_mapping": [
     {
+      "tactic_id": "TA0008",
+      "tactic_name": "Lateral Movement",
       "technique_id": "T1021.002",
-      "technique_name": "Remote Services: SMB/Windows Admin Shares"
+      "technique_name": "SMB/Windows Admin Shares",
+      "source_url": "https://attack.mitre.org/techniques/T1021/002/"
     }
   ],
-  "detection_notes": "Access Mask 0x2 (WriteData) against Share Name containing ADMIN$ and a Relative Target Name ending in .exe or .dll is the binary-staging pattern for T1021.002 lateral movement: PsExec uploads a service binary to ADMIN$ before creating a service on the target. Impacket's psexec.py additionally writes named pipes with predictable RelativeTargetName values (Remcom_Communication, RemCom_stderrt, RemCom_stdoutt) under IPC$ — alert on those strings regardless of Access Mask. For failure events, Microsoft recommends monitoring any 5145 failure involving Access Mask bits 0x2 (WriteData), 0x4 (AppendData), 0x10 (WriteEA), 0x40 (DeleteChild), 0x100 (WriteAttributes), 0x10000 (DELETE), 0x40000 (WRITE_DAC), or 0x80000 (WRITE_OWNER) — these operations on a denied share indicate an account probing access boundaries rather than routine reads. Correlate the Source Address and Subject Logon ID with the originating 4624 Type 3 logon for the same session.",
+  "detection_notes": "T1021.002 SMB/Windows Admin Shares activity is supported when AccessMask includes 0x2 (WriteData/AddFile) and ShareName is ADMIN$ or C$ while RelativeTargetName identifies an executable or DLL. Microsoft also identifies 0x4 (AppendData), 0x10 (WriteEA), 0x40 (DeleteChild), 0x100 (WriteAttributes), 0x10000 (DELETE), 0x40000 (WRITE_DAC), and 0x80000 (WRITE_OWNER) as write, delete, or permission-changing access worth monitoring on failures. Correlate SourceAddress and SubjectLogonId with Event 4624 LogonType=3, then verify whether the source host and account are approved for remote administration.",
   "kql_snippet": "SecurityEvent\n| where EventID == 5145\n| where ShareName has_any (\"ADMIN$\", \"C$\", \"IPC$\")\n| where AccessMask has_any (\"0x2\", \"0x10000\")\n| project TimeGenerated, Computer, SubjectUserName, IpAddress, ShareName, RelativeTargetName, AccessMask, Keywords",
   "spl_snippet": "index=wineventlog EventCode=5145\n| search ShareName IN (\"*ADMIN$*\", \"*C$*\", \"*IPC$*\") AccessMask IN (\"0x2\", \"0x10000\")\n| table _time, host, SubjectUserName, IpAddress, ShareName, RelativeTargetName, AccessMask",
   "sample_log": "Subject:\n  Security ID: CORP\\jsmith\n  Account Name: jsmith\n  Account Domain: CORP\n  Logon ID: 0x5BE120\nNetwork Information:\n  Source Address: 10.10.20.55\n  Source Port: 49155\nShare Information:\n  Share Name: \\\\DC01\\ADMIN$\n  Share Path: C:\\Windows\n  Relative Target Name: PSEXESVC.exe\nAccess Information:\n  Access Mask: 0x2\n  Accesses: WriteData (or AddFile)",
-  "source_url": "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-5145"
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-5145",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success or Audit Failure"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Security Event ID 5145",
+      "query": "SecurityEvent\n| where EventID == 5145\n| project TimeGenerated, Computer, EventID, RenderedDescription\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Map raw XML fields to the event-specific fields described on this page."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Security Event ID 5145",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=5145\n| table _time, host, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and parsed field names vary by deployment.",
+        "Apply the event-specific field conditions after validating local field extraction."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Security Event ID 5145",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 5145",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security or applicable Windows event channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 5145",
+      "query": "title: Windows Security Event ID 5145\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 5145\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the documented field conditions and correlations in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "AccessMask",
+      "value": "0x2",
+      "meaning": "WriteData/AddFile access to the share object.",
+      "security_relevance": "Use AccessMask together with the other documented event fields and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-5145"
+    },
+    {
+      "field": "AccessMask",
+      "value": "0x40000",
+      "meaning": "WRITE_DAC permission to modify the object's DACL.",
+      "security_relevance": "Use AccessMask together with the other documented event fields and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-5145"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 5145 mean?",
+      "answer": "Windows evaluated access to a file or folder through a network share."
+    },
+    {
+      "question": "Does Event ID 5145 always indicate malicious activity?",
+      "answer": "No. File-server and administrative activity can generate it; evaluate share, path, access mask, account, and source address."
+    },
+    {
+      "question": "How should Event ID 5145 be investigated?",
+      "answer": "Correlate SubjectLogonId with Event 4624 Logon Type 3 and inspect writes to ADMIN$, C$, and unusual share paths."
+    }
+  ],
+  "sources": [
+    {
+      "title": "5145: A network share object was checked for access",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-5145",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "SMB/Windows Admin Shares (T1021.002)",
+      "url": "https://attack.mitre.org/techniques/T1021/002/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

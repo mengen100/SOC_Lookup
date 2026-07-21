@@ -5,7 +5,7 @@
   "name": "Netlogon denied a vulnerable secure channel connection (machine)",
   "priority": "P2",
   "applicable_version": "Windows Server 2008 R2 and later",
-  "last_reviewed": "2026-07-13",
+  "last_reviewed": "2026-07-21",
   "definition": "Netlogon Event ID 5827 records that a domain controller denied a vulnerable Netlogon secure channel connection from a machine account.",
   "trigger_scenarios": "Microsoft documents this event for CVE-2020-1472 Netlogon secure channel enforcement when a vulnerable machine-account connection is denied.",
   "key_fields": [
@@ -33,13 +33,122 @@
   ],
   "attck_mapping": [
     {
+      "tactic_id": "TA0008",
+      "tactic_name": "Lateral Movement",
       "technique_id": "T1210",
-      "technique_name": "Exploitation of Remote Services"
+      "technique_name": "Exploitation of Remote Services",
+      "source_url": "https://attack.mitre.org/techniques/T1210/"
     }
   ],
   "detection_notes": "Use threshold=1 denied vulnerable machine account connection on a domain controller. Microsoft documents Event 5827 as a denied vulnerable Netlogon secure channel connection from a machine account during CVE-2020-1472 enforcement; that condition is relevant to T1210 Exploitation of Remote Services because Zerologon abuses Netlogon secure channel behavior. Triage Machine SamAccountName, Domain, Account Type, Machine Operating System Build, and any corresponding 5830 allow-list events before deciding whether this is exploitation or an unpatched device.",
   "kql_snippet": "SecurityEvent\n| where EventID == 5827\n| project TimeGenerated, Computer, Account",
   "spl_snippet": "index=wineventlog EventCode=5827 | table _time, host",
   "sample_log": "EventID: 5827\nMachine SamAccountName: LEGACY-NAS$\nDomain: CORP\nAccount Type: Workstation Trust\nMachine Operating System Build: 7601",
-  "source_url": "https://support.microsoft.com/en-us/topic/how-to-manage-the-changes-in-netlogon-secure-channel-connections-associated-with-cve-2020-1472-f7e8cc17-0309-1d6a-304e-5ba73cd1a11e"
+  "source_url": "https://support.microsoft.com/en-us/topic/how-to-manage-the-changes-in-netlogon-secure-channel-connections-associated-with-cve-2020-1472-f7e8cc17-0309-1d6a-304e-5ba73cd1a11e",
+  "technical_metadata": {
+    "provider": "NETLOGON",
+    "channel": "System",
+    "level": "Error"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Security Event ID 5827",
+      "query": "SecurityEvent\n| where EventID == 5827\n| project TimeGenerated, Computer, EventID, RenderedDescription\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Map raw XML fields to the event-specific fields described on this page."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Security Event ID 5827",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=5827\n| table _time, host, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and parsed field names vary by deployment.",
+        "Apply the event-specific field conditions after validating local field extraction."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Security Event ID 5827",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 5827",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security or applicable Windows event channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 5827",
+      "query": "title: Windows Security Event ID 5827\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 5827\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the documented field conditions and correlations in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "EventID",
+      "value": "5827",
+      "meaning": "A vulnerable Netlogon secure-channel connection from a machine account was denied.",
+      "security_relevance": "Use EventID together with the other documented event fields and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://support.microsoft.com/en-us/topic/how-to-manage-the-changes-in-netlogon-secure-channel-connections-associated-with-cve-2020-1472-f7e8cc17-0309-1d6a-304e-5ba73cd1a11e"
+    },
+    {
+      "field": "Account Type",
+      "value": "Machine Account",
+      "meaning": "Distinguishes the denied endpoint machine-account connection from a trust-account event.",
+      "security_relevance": "Use Account Type together with the other documented event fields and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://support.microsoft.com/en-us/topic/how-to-manage-the-changes-in-netlogon-secure-channel-connections-associated-with-cve-2020-1472-f7e8cc17-0309-1d6a-304e-5ba73cd1a11e"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 5827 mean?",
+      "answer": "A domain controller denied a vulnerable Netlogon secure-channel connection from a machine account."
+    },
+    {
+      "question": "Does Event ID 5827 always indicate malicious activity?",
+      "answer": "No. It commonly identifies an unpatched or incompatible device; exploit activity requires corroborating evidence."
+    },
+    {
+      "question": "How should Event ID 5827 be investigated?",
+      "answer": "Identify the machine, operating-system build, domain, source network context, patch state, and related 5830 allow-list events."
+    }
+  ],
+  "sources": [
+    {
+      "title": "5827: Netlogon denied a vulnerable secure channel connection (machine)",
+      "url": "https://support.microsoft.com/en-us/topic/how-to-manage-the-changes-in-netlogon-secure-channel-connections-associated-with-cve-2020-1472-f7e8cc17-0309-1d6a-304e-5ba73cd1a11e",
+      "publisher": "Microsoft Support",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Exploitation of Remote Services (T1210)",
+      "url": "https://attack.mitre.org/techniques/T1210/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

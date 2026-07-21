@@ -1,43 +1,152 @@
 {
-    "id":  "12",
-    "source":  "sysmon",
-    "category":  "Registry",
-    "name":  "RegistryEvent (Object create/delete)",
-    "priority":  "P2",
-    "applicable_version":  "Sysmon with this event enabled",
-    "last_reviewed":  "2026-07-13",
-    "definition":  "Sysmon Event ID 12 records registry key and value create or delete operations.",
-    "trigger_scenarios":  "Sysmon emits this event when a configured RegistryEvent rule observes a registry object being created or deleted. Microsoft documents this event as useful for monitoring autostart locations and specific malware registry changes.",
-    "key_fields":  [
-                       {
-                           "field":  "EventType",
-                           "explanation":  "Identifies the registry object operation, such as CreateKey or DeleteKey, so analysts can distinguish new persistence material from cleanup activity."
-                       },
-                       {
-                           "field":  "TargetObject",
-                           "explanation":  "The registry path uses Sysmon's abbreviated root names such as HKLM, HKU, and HKCR. Paths under HKLM\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run or HKLM\\\\System\\\\CurrentControlSet\\\\Services are high-value persistence and service-control locations."
-                       },
-                       {
-                           "field":  "Image / ProcessGuid",
-                           "explanation":  "Identifies the process that created or deleted the registry object and provides a stable join key to Sysmon Event ID 1 for the original command line."
-                       }
-                   ],
-    "false_positives":  [
-                            "Approved administration, management agents, and deployment tools can generate this telemetry.",
-                            "Baseline expected hosts, signed binaries, and change windows before suppression."
-                        ],
-    "related_event_ids":  [
-                              "1"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1112",
-                              "technique_name":  "Modify Registry"
-                          }
-                      ],
-    "detection_notes":  "Alert when EventType=CreateKey or EventType=DeleteKey touches HKLM\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run, HKCU\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run, or HKLM\\\\System\\\\CurrentControlSet\\\\Services from an Image outside the approved software deployment baseline. Sysinternals documents Event 12 for registry object create/delete activity and uses HKLM/HKU/HKCR abbreviations, so these TargetObject values are directly observable. Creation in Run or Services can establish persistence, while deletion can remove forensic or defensive configuration; map this to T1112 Modify Registry and correlate ProcessGuid to Event 1 for the full command line.",
-    "kql_snippet":  "Sysmon\n| where EventID == 12\n| project TimeGenerated, Computer, Image, ProcessGuid",
-    "spl_snippet":  "index=sysmon EventCode=12 | table _time, host, Image, ProcessGuid",
-    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nEventType: CreateKey\nTargetObject: HKLM\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run\\\\Updater\nImage: C:\\\\Users\\\\Public\\\\updater.exe\nProcessGuid: {REDACTED}",
-    "source_url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+  "id": "12",
+  "source": "sysmon",
+  "category": "Registry",
+  "name": "RegistryEvent (Object create/delete)",
+  "priority": "P2",
+  "applicable_version": "Sysmon with this event enabled",
+  "last_reviewed": "2026-07-21",
+  "definition": "Sysmon Event ID 12 records registry key and value create or delete operations.",
+  "trigger_scenarios": "Sysmon emits this event when a configured RegistryEvent rule observes a registry object being created or deleted. Microsoft documents this event as useful for monitoring autostart locations and specific malware registry changes.",
+  "key_fields": [
+    {
+      "field": "EventType",
+      "explanation": "Identifies the registry object operation, such as CreateKey or DeleteKey, so analysts can distinguish new persistence material from cleanup activity."
+    },
+    {
+      "field": "TargetObject",
+      "explanation": "The registry path uses Sysmon's abbreviated root names such as HKLM, HKU, and HKCR. Paths under HKLM\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run or HKLM\\\\System\\\\CurrentControlSet\\\\Services are high-value persistence and service-control locations."
+    },
+    {
+      "field": "Image / ProcessGuid",
+      "explanation": "Identifies the process that created or deleted the registry object and provides a stable join key to Sysmon Event ID 1 for the original command line."
+    }
+  ],
+  "false_positives": [
+    "Approved administration, management agents, and deployment tools can generate this telemetry.",
+    "Baseline expected hosts, signed binaries, and change windows before suppression."
+  ],
+  "related_event_ids": [
+    "1"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0005",
+      "tactic_name": "Defense Evasion",
+      "technique_id": "T1112",
+      "technique_name": "Modify Registry",
+      "source_url": "https://attack.mitre.org/techniques/T1112/"
+    }
+  ],
+  "detection_notes": "Alert when EventType=CreateKey or EventType=DeleteKey touches HKLM\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run, HKCU\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run, or HKLM\\\\System\\\\CurrentControlSet\\\\Services from an Image outside the approved software deployment baseline. Sysinternals documents Event 12 for registry object create/delete activity and uses HKLM/HKU/HKCR abbreviations, so these TargetObject values are directly observable. Creation in Run or Services can establish persistence, while deletion can remove forensic or defensive configuration; map this to T1112 Modify Registry and correlate ProcessGuid to Event 1 for the full command line.",
+  "kql_snippet": "Sysmon\n| where EventID == 12\n| project TimeGenerated, Computer, Image, ProcessGuid",
+  "spl_snippet": "index=sysmon EventCode=12 | table _time, host, Image, ProcessGuid",
+  "sample_log": "UtcTime: 2026-07-13 01:00:00.000\nEventType: CreateKey\nTargetObject: HKLM\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run\\\\Updater\nImage: C:\\\\Users\\\\Public\\\\updater.exe\nProcessGuid: {REDACTED}",
+  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Sysmon",
+    "channel": "Microsoft-Windows-Sysmon/Operational",
+    "level": "Informational"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Sysmon Event ID 12",
+      "query": "Event\n| where EventLog == \"Microsoft-Windows-Sysmon/Operational\" and EventID == 12\n| project TimeGenerated, Computer, EventID, RenderedDescription\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel Event table",
+      "assumptions": [
+        "The Sysmon Operational channel is collected into Event.",
+        "Map raw XML fields to the event-specific fields described on this page."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/event"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Sysmon Event ID 12",
+      "query": "index=sysmon source=\"WinEventLog:Microsoft-Windows-Sysmon/Operational\" EventCode=12\n| table _time, host, EventCode, Message",
+      "data_source": "Splunk Sysmon event data",
+      "assumptions": [
+        "Index, source, and parsed field names vary by deployment.",
+        "Apply the event-specific field conditions after validating local field extraction."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Sysmon Event ID 12",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 12",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "Confirm Provider is Microsoft-Windows-Sysmon because event IDs are not globally unique.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Sysmon Event ID 12",
+      "query": "title: Sysmon Event ID 12\nstatus: experimental\nlogsource:\n    product: windows\n    service: sysmon\ndetection:\n    selection:\n        EventID: 12\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Sysmon log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the documented field conditions and correlations in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "EventType",
+      "value": "CreateKey",
+      "meaning": "A registry key or value object was created.",
+      "security_relevance": "Use EventType together with the other documented event fields and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+    },
+    {
+      "field": "EventType",
+      "value": "DeleteKey",
+      "meaning": "A registry key or value object was deleted.",
+      "security_relevance": "Use EventType together with the other documented event fields and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Sysmon Event ID 12 mean?",
+      "answer": "A process created or deleted a registry key or value object."
+    },
+    {
+      "question": "Does Event ID 12 always indicate malicious activity?",
+      "answer": "No. Installers, updates, policy clients, and applications routinely create and delete registry objects."
+    },
+    {
+      "question": "How should Event ID 12 be investigated?",
+      "answer": "Inspect EventType, TargetObject, Image, and ProcessGuid, focusing on autostart, service, and security-control paths."
+    }
+  ],
+  "sources": [
+    {
+      "title": "12: RegistryEvent (Object create/delete)",
+      "url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+      "publisher": "Microsoft Sysinternals",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Modify Registry (T1112)",
+      "url": "https://attack.mitre.org/techniques/T1112/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

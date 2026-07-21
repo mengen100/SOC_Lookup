@@ -5,7 +5,7 @@
   "name": "ACL was set on accounts in administrators groups",
   "priority": "P2",
   "applicable_version": "Windows Server 2008 R2 and later",
-  "last_reviewed": "2026-07-13",
+  "last_reviewed": "2026-07-21",
   "definition": "Windows Security Event ID 4780 records AdminSDHolder ACL reset activity for protected administrative accounts.",
   "trigger_scenarios": "On the PDC emulator, Windows compares protected security principals with AdminCount=1 against the AdminSDHolder ACL about every hour and resets differing ACLs, generating this event.",
   "key_fields": [
@@ -34,13 +34,108 @@
   ],
   "attck_mapping": [
     {
-      "technique_id": "T1098",
-      "technique_name": "Account Manipulation"
+      "tactic_id": "TA0004",
+      "tactic_name": "Privilege Escalation",
+      "technique_id": "T1098.007",
+      "technique_name": "Account Manipulation: Additional Local or Domain Groups",
+      "source_url": "https://attack.mitre.org/techniques/T1098/007/"
     }
   ],
-  "detection_notes": "Use threshold=1 unexpected Target Account newly showing AdminCount=1 or appearing after privileged group changes. Microsoft documents that the PDC compares protected accounts every hour and resets ACLs to AdminSDHolder; therefore 4780 after a new 4728/4732/4756 membership event can reveal T1098 Account Manipulation that placed an account into a protected administrative group. Do not look for Access Mask 0x40000 or 0x80000 here; those fields are not in the Microsoft 4780 schema.",
+  "detection_notes": "T1098.007 Additional Local or Domain Groups is supported when TargetUserName first appears in 4780 immediately after an unexpected 4728, 4732, or 4756 privileged-group addition. AdminSDHolder normally reapplies protected ACLs on a periodic schedule, so use a local threshold=1 only for newly protected or unauthorized targets and correlate SubjectLogonId; do not treat the ACL reset itself as malicious.",
   "kql_snippet": "SecurityEvent\n| where EventID == 4780\n| project TimeGenerated, Computer, Account",
   "spl_snippet": "index=wineventlog EventCode=4780 | table _time, host",
   "sample_log": "EventID: 4780\nTarget Account Name: svc-build\nTarget Account Domain: CORP\nSubject Account Name: DC01$\nLogon ID: 0x3e7\nPrivileges: -",
-  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4780"
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4780",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Event ID 4780",
+      "query": "SecurityEvent\n| where EventID == 4780\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Event ID 4780",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4780\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Event ID 4780",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4780",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4780",
+      "query": "title: Windows Security Event ID 4780\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4780\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4780 mean?",
+      "answer": "Event ID 4780 records that Active Directory set the ACL on an account belonging to a protected administrators group."
+    },
+    {
+      "question": "Is Event ID 4780 itself malicious?",
+      "answer": "No. AdminSDHolder protection periodically resets ACLs on protected accounts; the event becomes useful when a new or unexpected account entered protected-group scope."
+    },
+    {
+      "question": "Which events should be correlated with 4780?",
+      "answer": "Review preceding 4728, 4732, or 4756 group additions for the target account and validate the actor that changed privileged membership."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4780: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4780",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Account Manipulation: Additional Local or Domain Groups (T1098.007)",
+      "url": "https://attack.mitre.org/techniques/T1098/007/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

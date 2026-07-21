@@ -5,7 +5,7 @@
   "name": "The Windows Firewall Driver failed to start",
   "priority": "P2",
   "applicable_version": "Windows Server 2008 R2 and later",
-  "last_reviewed": "2026-07-13",
+  "last_reviewed": "2026-07-21",
   "definition": "Windows Security Event ID 5035 records that the Windows Firewall Driver failed to start or unexpectedly terminated.",
   "trigger_scenarios": "Windows logs this event when the Windows Firewall driver fails to start or unexpectedly terminates and includes an Error Code in the message text.",
   "key_fields": [
@@ -33,13 +33,108 @@
   ],
   "attck_mapping": [
     {
+      "tactic_id": "TA0005",
+      "tactic_name": "Defense Evasion",
       "technique_id": "T1562.004",
-      "technique_name": "Impair Defenses: Disable or Modify System Firewall"
+      "technique_name": "Impair Defenses: Disable or Modify System Firewall",
+      "source_url": "https://attack.mitre.org/techniques/T1562/004/"
     }
   ],
-  "detection_notes": "Use threshold=1 on high-value assets: Microsoft recommends monitoring 5035 because it can indicate malicious activity that corrupted the Windows Firewall Driver. Preserve the exact Error Code value from Error Code:%1 and correlate with 5030, boot-time service failures, driver integrity events, and recent firewall policy changes. If the driver was disabled or corrupted to reduce network filtering, map the chain to T1562.004 Disable or Modify System Firewall.",
+  "detection_notes": "T1562.004 Disable or Modify System Firewall is supported when threshold=1 Event 5035 follows unauthorized driver, service, or firewall-policy modification. Retain the rendered ErrorCode from Error Code:%1 and correlate 5030, 5038, boot-time driver telemetry, and change records; no universal numeric error code is defined by the event reference.",
   "kql_snippet": "SecurityEvent\n| where EventID == 5035\n| project TimeGenerated, Computer, Account",
   "spl_snippet": "index=wineventlog EventCode=5035 | table _time, host",
   "sample_log": "EventID: 5035\nComputer: HOST01\nError Code: 5",
-  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-5035"
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-5035",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Failure"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Event ID 5035",
+      "query": "SecurityEvent\n| where EventID == 5035\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Event ID 5035",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=5035\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Event ID 5035",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 5035",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 5035",
+      "query": "title: Windows Security Event ID 5035\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 5035\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 5035 mean?",
+      "answer": "Event ID 5035 records that the Windows Firewall driver failed to start and includes a rendered error code."
+    },
+    {
+      "question": "Why is a firewall-driver failure high impact?",
+      "answer": "The driver enforces network filtering below the service layer, so failure can reduce host firewall protection even when caused by a nonmalicious system problem."
+    },
+    {
+      "question": "Which telemetry should be correlated with 5035?",
+      "answer": "Review 5030, driver and code-integrity events, service configuration, boot diagnostics, and recent security-product or operating-system changes."
+    }
+  ],
+  "sources": [
+    {
+      "title": "5035: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-5035",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Impair Defenses: Disable or Modify System Firewall (T1562.004)",
+      "url": "https://attack.mitre.org/techniques/T1562/004/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

@@ -1,43 +1,138 @@
 {
-    "id":  "4766",
-    "source":  "windows_security",
-    "category":  "AccountMgmt",
-    "name":  "An attempt to add SID History to an account failed",
-    "priority":  "P2",
-    "applicable_version":  "Windows Server 2008 R2 and later",
-    "last_reviewed":  "2026-07-12",
-    "definition":  "Windows Security Event ID 4766 records a failed attempt to add a SID to the SID History attribute of an Active Directory account, logging the Subject who attempted the change, the Target Account to be modified, and the Source Account whose SID was to be injected.",
-    "trigger_scenarios":  "SID History additions are a specialized migration operation requiring domain-level privilege. A failed attempt is generated when an attacker lacks the necessary rights, when SID filtering blocks the attempted cross-forest SID, or when a deliberate probe tests whether the operation would succeed before attempting it with different credentials.",
-    "key_fields":  [
-                       {
-                           "field":  "Target Account\\Account Name / Security ID",
-                           "explanation":  "The account that was the intended recipient of the injected SID. Targeting a highly-privileged account (Domain Admins member, Krbtgt, or an admin service account) signals an attempt to grant that account the access rights of the Source Account\u0027s SID."
-                       },
-                       {
-                           "field":  "Source Account\\Account Name",
-                           "explanation":  "The account whose SID was to be injected into Target Account\u0027s SID History. If Source Account Name belongs to a domain admin, Enterprise Admin, or a privileged service account in another domain, the attacker intended to grant Target Account those cross-domain rights silently."
-                       },
-                       {
-                           "field":  "Subject\\Account Name / Security ID",
-                           "explanation":  "The identity that attempted the modification. This event fires because the attempt failed, so Subject may be a low-privilege account probing the operation; cross-reference with any 4765 (success) records nearby to check whether a subsequent attempt with elevated credentials succeeded."
-                       }
-                   ],
-    "false_positives":  [
-                            "Active Directory migration tools (Quest Migration Manager, ADMT) legitimately write SID History during planned forest migrations and will generate 4766 during configuration testing if privileges are not yet in place.",
-                            "Accidental permission misconfigurations during migration projects can cause expected failures from authorized tools."
-                        ],
-    "related_event_ids":  [
-                              "4765"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1134.005",
-                              "technique_name":  "Access Token Manipulation: SID-History Injection"
-                          }
-                      ],
-    "detection_notes":  "Event 4766 has no status or failure-code field. Treat a Source Account from a different domain or a privileged name such as Enterprise Admins, followed by a matching 4765 for the same Target Account within 60 minutes, as a T1134.005 SID-History Injection probe and retry sequence.  Use window=60 minutes to correlate a failed 4766 with a subsequent 4765.",
-    "kql_snippet":  "SecurityEvent\n| where EventID in (4766, 4765)\n| project TimeGenerated, Computer, EventID, SubjectUserName, TargetUserName, SubjectUserSid\n| order by TimeGenerated asc",
-    "spl_snippet":  "index=wineventlog EventCode IN (4766, 4765)\n| table _time, host, EventCode, SubjectUserName, TargetUserName",
-    "sample_log":  "Subject:\n  Security ID: CORP\\lowpriv\n  Account Name: lowpriv\n  Account Domain: CORP\n  Logon ID: 0x91A2F0\nTarget Account:\n  Security ID: CORP\\svc-ops\n  Account Name: svc-ops\n  Account Domain: CORP\nSource Account:\n  Account Name: Enterprise Admins\nAdditional Information:\n  Privileges: -",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4766"
+  "id": "4766",
+  "source": "windows_security",
+  "category": "AccountMgmt",
+  "name": "An attempt to add SID History to an account failed",
+  "priority": "P2",
+  "applicable_version": "Windows Server 2008 R2 and later",
+  "last_reviewed": "2026-07-21",
+  "definition": "Windows Security Event ID 4766 records a failed attempt to add a SID to the SID History attribute of an Active Directory account, logging the Subject who attempted the change, the Target Account to be modified, and the Source Account whose SID was to be injected.",
+  "trigger_scenarios": "SID History additions are a specialized migration operation requiring domain-level privilege. A failed attempt is generated when an attacker lacks the necessary rights, when SID filtering blocks the attempted cross-forest SID, or when a deliberate probe tests whether the operation would succeed before attempting it with different credentials.",
+  "key_fields": [
+    {
+      "field": "Target Account\\Account Name / Security ID",
+      "explanation": "The account that was the intended recipient of the injected SID. Targeting a highly-privileged account (Domain Admins member, Krbtgt, or an admin service account) signals an attempt to grant that account the access rights of the Source Account's SID."
+    },
+    {
+      "field": "Source Account\\Account Name",
+      "explanation": "The account whose SID was to be injected into Target Account's SID History. If Source Account Name belongs to a domain admin, Enterprise Admin, or a privileged service account in another domain, the attacker intended to grant Target Account those cross-domain rights silently."
+    },
+    {
+      "field": "Subject\\Account Name / Security ID",
+      "explanation": "The identity that attempted the modification. This event fires because the attempt failed, so Subject may be a low-privilege account probing the operation; cross-reference with any 4765 (success) records nearby to check whether a subsequent attempt with elevated credentials succeeded."
+    }
+  ],
+  "false_positives": [
+    "Active Directory migration tools (Quest Migration Manager, ADMT) legitimately write SID History during planned forest migrations and will generate 4766 during configuration testing if privileges are not yet in place.",
+    "Accidental permission misconfigurations during migration projects can cause expected failures from authorized tools."
+  ],
+  "related_event_ids": [
+    "4765"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0004",
+      "tactic_name": "Privilege Escalation",
+      "technique_id": "T1134.005",
+      "technique_name": "Access Token Manipulation: SID-History Injection",
+      "source_url": "https://attack.mitre.org/techniques/T1134/005/"
+    }
+  ],
+  "detection_notes": "T1134.005 SID-History Injection triage should compare SourceUserName and TargetUserName because Event 4766 has no Status or failure-code field. Use a local correlation window=15 minutes to identify a cross-domain or privileged SID migration failure followed by Event 4765 for the same target; tune that analyst-defined window to directory replication latency, and do not manufacture a numeric result code.",
+  "kql_snippet": "SecurityEvent\n| where EventID in (4766, 4765)\n| project TimeGenerated, Computer, EventID, SubjectUserName, TargetUserName, SubjectUserSid\n| order by TimeGenerated asc",
+  "spl_snippet": "index=wineventlog EventCode IN (4766, 4765)\n| table _time, host, EventCode, SubjectUserName, TargetUserName",
+  "sample_log": "Subject:\n  Security ID: CORP\\lowpriv\n  Account Name: lowpriv\n  Account Domain: CORP\n  Logon ID: 0x91A2F0\nTarget Account:\n  Security ID: CORP\\svc-ops\n  Account Name: svc-ops\n  Account Domain: CORP\nSource Account:\n  Account Name: Enterprise Admins\nAdditional Information:\n  Privileges: -",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4766",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Failure"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Event ID 4766",
+      "query": "SecurityEvent\n| where EventID == 4766\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Event ID 4766",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4766\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Event ID 4766",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4766",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4766",
+      "query": "title: Windows Security Event ID 4766\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4766\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4766 mean?",
+      "answer": "Event ID 4766 records a failed attempt to add SID History to an account and identifies the actor, target account, and source account."
+    },
+    {
+      "question": "Does 4766 contain a status code?",
+      "answer": "No. The documented event fields do not include a failure code, so analysts should not invent one or infer a reason from the event ID."
+    },
+    {
+      "question": "How should 4766 be investigated?",
+      "answer": "Validate the migration workflow, compare source and target domains, and correlate with any later 4765 success for the same target account."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4766: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4766",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Access Token Manipulation: SID-History Injection (T1134.005)",
+      "url": "https://attack.mitre.org/techniques/T1134/005/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

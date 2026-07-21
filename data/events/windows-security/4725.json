@@ -1,45 +1,140 @@
 {
-    "id":  "4725",
-    "source":  "windows_security",
-    "category":  "AccountMgmt",
-    "name":  "A user account was disabled",
-    "priority":  "P2",
-    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
-    "last_reviewed":  "2026-07-11",
-    "definition":  "Event ID 4725 records disabling of a user account.",
-    "trigger_scenarios":  "It is written when an administrator or identity workflow disables a local or domain user account.",
-    "key_fields":  [
-                       {
-                           "field":  "Target Account",
-                           "explanation":  "The disabled identity; privileged and service accounts have elevated operational impact."
-                       },
-                       {
-                           "field":  "Subject",
-                           "explanation":  "The actor performing the change."
-                       },
-                       {
-                           "field":  "Target SID",
-                           "explanation":  "The stable account identifier for correlating rename or deletion events."
-                       }
-                   ],
-    "false_positives":  [
-                            "Offboarding and automated lifecycle workflows legitimately disable accounts.",
-                            "Incident responders may disable compromised accounts as containment."
-                        ],
-    "related_event_ids":  [
-                              "4722",
-                              "4726",
-                              "4738"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1531",
-                              "technique_name":  "Account Access Removal"
-                          }
-                      ],
-    "detection_notes":  "T1531 destruction is indicated by more than five unique Target Accounts disabled by one Subject in a 15-minute window, particularly if the targets include backup or administrator accounts. Preserve the Subject Logon ID and correlate 4719/1102 defense changes.  Use window=15 minutes for the high-fan-out disablement correlation.",
-    "kql_snippet":  "SecurityEvent\n| where EventID == 4725\n| summarize Disabled=count() by Account, bin(TimeGenerated, 15m)\n| where Disabled \u003e 5",
-    "spl_snippet":  "index=wineventlog EventCode=4725 | stats count by SubjectUserName, TargetUserName",
-    "sample_log":  "Subject: CORP\\admin.ops\nTarget Account: CORP\\backup.admin\nTarget SID: S-1-5-21-REDACTED",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4725"
+  "id": "4725",
+  "source": "windows_security",
+  "category": "AccountMgmt",
+  "name": "A user account was disabled",
+  "priority": "P2",
+  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
+  "last_reviewed": "2026-07-21",
+  "definition": "Event ID 4725 records disabling of a user account.",
+  "trigger_scenarios": "It is written when an administrator or identity workflow disables a local or domain user account.",
+  "key_fields": [
+    {
+      "field": "Target Account",
+      "explanation": "The disabled identity; privileged and service accounts have elevated operational impact."
+    },
+    {
+      "field": "Subject",
+      "explanation": "The actor performing the change."
+    },
+    {
+      "field": "Target SID",
+      "explanation": "The stable account identifier for correlating rename or deletion events."
+    }
+  ],
+  "false_positives": [
+    "Offboarding and automated lifecycle workflows legitimately disable accounts.",
+    "Incident responders may disable compromised accounts as containment."
+  ],
+  "related_event_ids": [
+    "4722",
+    "4726",
+    "4738"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0040",
+      "tactic_name": "Impact",
+      "technique_id": "T1531",
+      "technique_name": "Account Access Removal",
+      "source_url": "https://attack.mitre.org/techniques/T1531/"
+    }
+  ],
+  "detection_notes": "T1531 Account Access Removal is actionable when one SubjectLogonId disables multiple privileged or operational TargetUserName values. Use a documented local threshold=1 for break-glass or Tier-0 accounts and an environment-tuned bulk threshold for ordinary accounts; correlate the subject to 4624 and check for nearby 4719 or 1102 defense changes.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4725\n| summarize Disabled=count() by Account, bin(TimeGenerated, 15m)\n| where Disabled > 5",
+  "spl_snippet": "index=wineventlog EventCode=4725 | stats count by SubjectUserName, TargetUserName",
+  "sample_log": "Subject: CORP\\admin.ops\nTarget Account: CORP\\backup.admin\nTarget SID: S-1-5-21-REDACTED",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4725",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Event ID 4725",
+      "query": "SecurityEvent\n| where EventID == 4725\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Event ID 4725",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4725\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Event ID 4725",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4725",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4725",
+      "query": "title: Windows Security Event ID 4725\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4725\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4725 mean?",
+      "answer": "Event ID 4725 records that a Windows user account was disabled and identifies the actor and target account."
+    },
+    {
+      "question": "Does one disabled account indicate an attack?",
+      "answer": "No. Offboarding and account containment are common; prioritize unexpected disabling of privileged, backup, service, or break-glass identities."
+    },
+    {
+      "question": "How should bulk account disabling be detected?",
+      "answer": "Aggregate unique TargetUserName values by SubjectLogonId using an environment-specific threshold, and correlate with audit-policy changes and log clearing."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4725: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4725",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Account Access Removal (T1531)",
+      "url": "https://attack.mitre.org/techniques/T1531/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }
