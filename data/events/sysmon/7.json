@@ -1,58 +1,163 @@
 {
-    "id":  "7",
-    "source":  "sysmon",
-    "category":  "Image",
-    "name":  "Image loaded",
-    "priority":  "P2",
-    "applicable_version":  "Sysmon 1.0 and later (ImageLoad must be enabled in Sysmon config)",
-    "last_reviewed":  "2026-07-12",
-    "definition":  "Sysmon Event ID 7 records every DLL or executable image loaded into a process\u0027s address space, capturing the loading process, the loaded file path, its hashes, and its Authenticode signature status.",
-    "trigger_scenarios":  "Sysmon generates Event ID 7 on every LoadLibrary-family call when ImageLoad monitoring is enabled. Volume is extremely high on active systems; Sysmon configurations almost always filter this event down to high-value targets such as lsass.exe, security tools, or untrusted load paths.",
-    "key_fields":  [
-                       {
-                           "field":  "ImageLoaded",
-                           "explanation":  "Full path of the DLL or image being loaded. A load from %TEMP%, %APPDATA%, %USERPROFILE%, or a UNC path into a privileged process is the central indicator of DLL hijacking or side-loading."
-                       },
-                       {
-                           "field":  "SignatureStatus / Signed",
-                           "explanation":  "Authenticode validation result. Signed=false or SignatureStatus other than \"Valid\" for a DLL loaded into a security-sensitive process (lsass.exe, svchost.exe, explorer.exe) means an unsigned image entered a high-privilege address space."
-                       },
-                       {
-                           "field":  "Image",
-                           "explanation":  "The process loading the DLL. lsass.exe loading a non-system DLL, or a signed Windows binary loading from an unexpected path, are the archetypal patterns for credential-access tooling and defense-evasion via DLL side-loading."
-                       },
-                       {
-                           "field":  "OriginalFileName",
-                           "explanation":  "The filename embedded in the DLL\u0027s version resource. A mismatch between OriginalFileName and the on-disk filename (e.g., a file named version.dll whose OriginalFileName is calc.dll) reveals a renamed masquerading DLL."
-                       },
-                       {
-                           "field":  "Hashes",
-                           "explanation":  "SHA256/IMPHASH of the loaded image. Cross-reference against threat-intelligence blocklists and LOLBins lists to identify known-malicious or abusable libraries."
-                       }
-                   ],
-    "false_positives":  [
-                            "Software installers temporarily extract DLLs to %TEMP% before loading them; short-lived loads during installation are generally benign.",
-                            "Some legitimate applications load DLLs from user profile directories by design (e.g., browser plugins, certain Java JREs).",
-                            "Developer tools and debuggers load unsigned DLLs for legitimate instrumentation purposes."
-                        ],
-    "related_event_ids":  [
-                              "1",
-                              "6",
-                              "10"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1574.001",
-                              "technique_name":  "Hijack Execution Flow: DLL Search Order Hijacking"
-                          },
-                          {
-                              "technique_id":  "T1055.001",
-                              "technique_name":  "Process Injection: Dynamic-link Library Injection"
-                          }
-                      ],
-    "detection_notes":  "T1574.001 DLL hijacking is concrete when Image is a signed system binary but ImageLoaded is an unsigned DLL from C:\\\\Users\\\\, C:\\\\ProgramData\\\\, or C:\\\\Temp\\\\. Sysmon Event 7 is disabled by default, so collection scope must be explicit.",
-    "kql_snippet":  "Sysmon\n| where EventID == 7\n| where Image endswith \"\\\\lsass.exe\" and SignatureStatus != \"Valid\"\n| project TimeGenerated, Computer, Image, ImageLoaded, Signed, SignatureStatus, Hashes",
-    "spl_snippet":  "index=sysmon EventCode=7 Image=\"*\\lsass.exe\" SignatureStatus!=Valid\n| table _time, host, Image, ImageLoaded, Signed, SignatureStatus, Hashes",
-    "sample_log":  "UtcTime: 2026-07-12 11:03:45.882\nProcessGuid: {11111111-2222-3333-4444-555555555555}\nProcessId: 812\nImage: C:\\Windows\\System32\\lsass.exe\nImageLoaded: C:\\Windows\\Temp\\dbghelp.dll\nHashes: SHA256=REDACTED\nSigned: false\nSignature: -\nSignatureStatus: Unsigned\nUser: NT AUTHORITY\\SYSTEM\nOriginalFileName: dbghelp.dll",
-    "source_url":  "https://github.com/trustedsec/SysmonCommunityGuide"
+  "id": "7",
+  "source": "sysmon",
+  "category": "Image",
+  "name": "Image loaded",
+  "priority": "P2",
+  "applicable_version": "Sysmon 1.0 and later (ImageLoad must be enabled in Sysmon config)",
+  "last_reviewed": "2026-07-21",
+  "definition": "Sysmon Event ID 7 records every DLL or executable image loaded into a process's address space, capturing the loading process, the loaded file path, its hashes, and its Authenticode signature status.",
+  "trigger_scenarios": "Sysmon generates Event ID 7 on every LoadLibrary-family call when ImageLoad monitoring is enabled. Volume is extremely high on active systems; Sysmon configurations almost always filter this event down to high-value targets such as lsass.exe, security tools, or untrusted load paths.",
+  "key_fields": [
+    {
+      "field": "ImageLoaded",
+      "explanation": "Full path of the DLL or image being loaded. A load from %TEMP%, %APPDATA%, %USERPROFILE%, or a UNC path into a privileged process is the central indicator of DLL hijacking or side-loading."
+    },
+    {
+      "field": "SignatureStatus / Signed",
+      "explanation": "Authenticode validation result. Signed=false or SignatureStatus other than \"Valid\" for a DLL loaded into a security-sensitive process (lsass.exe, svchost.exe, explorer.exe) means an unsigned image entered a high-privilege address space."
+    },
+    {
+      "field": "Image",
+      "explanation": "The process loading the DLL. lsass.exe loading a non-system DLL, or a signed Windows binary loading from an unexpected path, are the archetypal patterns for credential-access tooling and defense-evasion via DLL side-loading."
+    },
+    {
+      "field": "OriginalFileName",
+      "explanation": "The filename embedded in the DLL's version resource. A mismatch between OriginalFileName and the on-disk filename (e.g., a file named version.dll whose OriginalFileName is calc.dll) reveals a renamed masquerading DLL."
+    },
+    {
+      "field": "Hashes",
+      "explanation": "SHA256/IMPHASH of the loaded image. Cross-reference against threat-intelligence blocklists and LOLBins lists to identify known-malicious or abusable libraries."
+    }
+  ],
+  "false_positives": [
+    "Software installers temporarily extract DLLs to %TEMP% before loading them; short-lived loads during installation are generally benign.",
+    "Some legitimate applications load DLLs from user profile directories by design (e.g., browser plugins, certain Java JREs).",
+    "Developer tools and debuggers load unsigned DLLs for legitimate instrumentation purposes."
+  ],
+  "related_event_ids": [
+    "1",
+    "6",
+    "10"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0003",
+      "tactic_name": "Persistence",
+      "technique_id": "T1574.001",
+      "technique_name": "DLL Search Order Hijacking",
+      "source_url": "https://attack.mitre.org/techniques/T1574/001/"
+    }
+  ],
+  "detection_notes": "T1574.001 DLL hijacking is concrete when Image is a signed system binary but ImageLoaded is an unsigned DLL from C:\\\\Users\\\\, C:\\\\ProgramData\\\\, or C:\\\\Temp\\\\. Sysmon Event 7 is disabled by default, so collection scope must be explicit.",
+  "kql_snippet": "Sysmon\n| where EventID == 7\n| where Image endswith \"\\\\lsass.exe\" and SignatureStatus != \"Valid\"\n| project TimeGenerated, Computer, Image, ImageLoaded, Signed, SignatureStatus, Hashes",
+  "spl_snippet": "index=sysmon EventCode=7 Image=\"*\\lsass.exe\" SignatureStatus!=Valid\n| table _time, host, Image, ImageLoaded, Signed, SignatureStatus, Hashes",
+  "sample_log": "UtcTime: 2026-07-12 11:03:45.882\nProcessGuid: {11111111-2222-3333-4444-555555555555}\nProcessId: 812\nImage: C:\\Windows\\System32\\lsass.exe\nImageLoaded: C:\\Windows\\Temp\\dbghelp.dll\nHashes: SHA256=REDACTED\nSigned: false\nSignature: -\nSignatureStatus: Unsigned\nUser: NT AUTHORITY\\SYSTEM\nOriginalFileName: dbghelp.dll",
+  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Sysmon",
+    "channel": "Microsoft-Windows-Sysmon/Operational",
+    "level": "Informational"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Sysmon Event ID 7",
+      "query": "Event\n| where EventLog == \"Microsoft-Windows-Sysmon/Operational\" and EventID == 7\n| project TimeGenerated, Computer, EventID, RenderedDescription\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel Event table",
+      "assumptions": [
+        "The Sysmon Operational channel is collected into Event.",
+        "Map raw XML fields to the event-specific fields described on this page."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/event"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Sysmon Event ID 7",
+      "query": "index=sysmon source=\"WinEventLog:Microsoft-Windows-Sysmon/Operational\" EventCode=7\n| table _time, host, EventCode, Message",
+      "data_source": "Splunk Sysmon event data",
+      "assumptions": [
+        "Index, source, and parsed field names vary by deployment.",
+        "Apply the event-specific field conditions after validating local field extraction."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Sysmon Event ID 7",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 7",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "Confirm Provider is Microsoft-Windows-Sysmon because event IDs are not globally unique.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Sysmon Event ID 7",
+      "query": "title: Sysmon Event ID 7\nstatus: experimental\nlogsource:\n    product: windows\n    service: sysmon\ndetection:\n    selection:\n        EventID: 7\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Sysmon log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the documented field conditions and correlations in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "EventID",
+      "value": "7",
+      "meaning": "A module loaded into a process; this telemetry is disabled by default unless configured.",
+      "security_relevance": "Use EventID together with the other documented event fields and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+    },
+    {
+      "field": "Signed",
+      "value": "false",
+      "meaning": "Sysmon reports that the loaded image is not signed; this is context, not proof of maliciousness.",
+      "security_relevance": "Use Signed together with the other documented event fields and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Sysmon Event ID 7 mean?",
+      "answer": "A DLL or executable image loaded into a process address space."
+    },
+    {
+      "question": "Does Event ID 7 always indicate malicious activity?",
+      "answer": "It is disabled by default and can be high volume, so collection requires scoped ImageLoad filters."
+    },
+    {
+      "question": "How should Event ID 7 be investigated?",
+      "answer": "Compare Image with ImageLoaded, signature and hash data, expected module paths, and ProcessGuid-linked process creation."
+    }
+  ],
+  "sources": [
+    {
+      "title": "7: Image loaded",
+      "url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+      "publisher": "Microsoft Sysinternals",
+      "source_type": "vendor"
+    },
+    {
+      "title": "DLL Search Order Hijacking (T1574.001)",
+      "url": "https://attack.mitre.org/techniques/T1574/001/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

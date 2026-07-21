@@ -1,43 +1,152 @@
 {
-    "id":  "13",
-    "source":  "sysmon",
-    "category":  "Registry",
-    "name":  "RegistryEvent (Value Set)",
-    "priority":  "P2",
-    "applicable_version":  "Sysmon with this event enabled",
-    "last_reviewed":  "2026-07-13",
-    "definition":  "Sysmon Event ID 13 records registry value modifications.",
-    "trigger_scenarios":  "Sysmon emits this event when a configured RegistryEvent rule observes a registry value being set. Microsoft documents that the event records the written value for DWORD and QWORD registry value types.",
-    "key_fields":  [
-                       {
-                           "field":  "TargetObject",
-                           "explanation":  "The registry value path uses Sysmon's abbreviated root names such as HKLM and HKU. Autorun, Office security, and Defender policy locations are high-value targets for persistence and defense evasion."
-                       },
-                       {
-                           "field":  "Details",
-                           "explanation":  "Contains the value written for DWORD and QWORD registry value types according to Microsoft. A written path under C:\\\\Users\\\\, C:\\\\ProgramData\\\\, or C:\\\\Windows\\\\Temp can reveal a user-writable payload location."
-                       },
-                       {
-                           "field":  "Image / ProcessGuid",
-                           "explanation":  "Identifies the process that set the value and provides a stable join key to Sysmon Event ID 1 for command-line context."
-                       }
-                   ],
-    "false_positives":  [
-                            "Approved administration, management agents, and deployment tools can generate this telemetry.",
-                            "Baseline expected hosts, signed binaries, and change windows before suppression."
-                        ],
-    "related_event_ids":  [
-                              "1"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1112",
-                              "technique_name":  "Modify Registry"
-                          }
-                      ],
-    "detection_notes":  "Alert when TargetObject is HKCU\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run or HKLM\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run and Details points to C:\\\\Users\\\\, C:\\\\ProgramData\\\\, C:\\\\Windows\\\\Temp, or another user-writable path. Microsoft documents Event 13 as registry value modification telemetry and notes that DWORD/QWORD written values are captured, so the TargetObject plus Details pair can directly show an autorun payload or a defense-evasion value change. This supports T1112 Modify Registry; correlate ProcessGuid to Event 1 and verify whether the Image is an approved installer or management agent.",
-    "kql_snippet":  "Sysmon\n| where EventID == 13\n| project TimeGenerated, Computer, Image, ProcessGuid",
-    "spl_snippet":  "index=sysmon EventCode=13 | table _time, host, Image, ProcessGuid",
-    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nEventType: SetValue\nTargetObject: HKCU\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run\\\\Updater\nDetails: C:\\\\ProgramData\\\\updater.exe\nImage: C:\\\\Users\\\\Public\\\\updater.exe\nProcessGuid: {REDACTED}",
-    "source_url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+  "id": "13",
+  "source": "sysmon",
+  "category": "Registry",
+  "name": "RegistryEvent (Value Set)",
+  "priority": "P2",
+  "applicable_version": "Sysmon with this event enabled",
+  "last_reviewed": "2026-07-21",
+  "definition": "Sysmon Event ID 13 records registry value modifications.",
+  "trigger_scenarios": "Sysmon emits this event when a configured RegistryEvent rule observes a registry value being set. Microsoft documents that the event records the written value for DWORD and QWORD registry value types.",
+  "key_fields": [
+    {
+      "field": "TargetObject",
+      "explanation": "The registry value path uses Sysmon's abbreviated root names such as HKLM and HKU. Autorun, Office security, and Defender policy locations are high-value targets for persistence and defense evasion."
+    },
+    {
+      "field": "Details",
+      "explanation": "Contains the value written for DWORD and QWORD registry value types according to Microsoft. A written path under C:\\\\Users\\\\, C:\\\\ProgramData\\\\, or C:\\\\Windows\\\\Temp can reveal a user-writable payload location."
+    },
+    {
+      "field": "Image / ProcessGuid",
+      "explanation": "Identifies the process that set the value and provides a stable join key to Sysmon Event ID 1 for command-line context."
+    }
+  ],
+  "false_positives": [
+    "Approved administration, management agents, and deployment tools can generate this telemetry.",
+    "Baseline expected hosts, signed binaries, and change windows before suppression."
+  ],
+  "related_event_ids": [
+    "1"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0005",
+      "tactic_name": "Defense Evasion",
+      "technique_id": "T1112",
+      "technique_name": "Modify Registry",
+      "source_url": "https://attack.mitre.org/techniques/T1112/"
+    }
+  ],
+  "detection_notes": "Alert when TargetObject is HKCU\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run or HKLM\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run and Details points to C:\\\\Users\\\\, C:\\\\ProgramData\\\\, C:\\\\Windows\\\\Temp, or another user-writable path. Microsoft documents Event 13 as registry value modification telemetry and notes that DWORD/QWORD written values are captured, so the TargetObject plus Details pair can directly show an autorun payload or a defense-evasion value change. This supports T1112 Modify Registry; correlate ProcessGuid to Event 1 and verify whether the Image is an approved installer or management agent.",
+  "kql_snippet": "Sysmon\n| where EventID == 13\n| project TimeGenerated, Computer, Image, ProcessGuid",
+  "spl_snippet": "index=sysmon EventCode=13 | table _time, host, Image, ProcessGuid",
+  "sample_log": "UtcTime: 2026-07-13 01:00:00.000\nEventType: SetValue\nTargetObject: HKCU\\\\Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\Run\\\\Updater\nDetails: C:\\\\ProgramData\\\\updater.exe\nImage: C:\\\\Users\\\\Public\\\\updater.exe\nProcessGuid: {REDACTED}",
+  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Sysmon",
+    "channel": "Microsoft-Windows-Sysmon/Operational",
+    "level": "Informational"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Sysmon Event ID 13",
+      "query": "Event\n| where EventLog == \"Microsoft-Windows-Sysmon/Operational\" and EventID == 13\n| project TimeGenerated, Computer, EventID, RenderedDescription\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel Event table",
+      "assumptions": [
+        "The Sysmon Operational channel is collected into Event.",
+        "Map raw XML fields to the event-specific fields described on this page."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/event"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Sysmon Event ID 13",
+      "query": "index=sysmon source=\"WinEventLog:Microsoft-Windows-Sysmon/Operational\" EventCode=13\n| table _time, host, EventCode, Message",
+      "data_source": "Splunk Sysmon event data",
+      "assumptions": [
+        "Index, source, and parsed field names vary by deployment.",
+        "Apply the event-specific field conditions after validating local field extraction."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Sysmon Event ID 13",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 13",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "Confirm Provider is Microsoft-Windows-Sysmon because event IDs are not globally unique.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Sysmon Event ID 13",
+      "query": "title: Sysmon Event ID 13\nstatus: experimental\nlogsource:\n    product: windows\n    service: sysmon\ndetection:\n    selection:\n        EventID: 13\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Sysmon log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the documented field conditions and correlations in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "EventType",
+      "value": "SetValue",
+      "meaning": "A process modified a registry value.",
+      "security_relevance": "Use EventType together with the other documented event fields and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+    },
+    {
+      "field": "Details",
+      "value": "DWORD/QWORD value",
+      "meaning": "Sysmon records the written data for DWORD and QWORD registry value types.",
+      "security_relevance": "Use Details together with the other documented event fields and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Sysmon Event ID 13 mean?",
+      "answer": "A process set or modified a registry value."
+    },
+    {
+      "question": "Does Event ID 13 always indicate malicious activity?",
+      "answer": "No. Normal applications and management agents make frequent registry changes."
+    },
+    {
+      "question": "How should Event ID 13 be investigated?",
+      "answer": "Evaluate TargetObject and Details, then join ProcessGuid to Event 1 to identify the responsible command line."
+    }
+  ],
+  "sources": [
+    {
+      "title": "13: RegistryEvent (Value Set)",
+      "url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+      "publisher": "Microsoft Sysinternals",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Modify Registry (T1112)",
+      "url": "https://attack.mitre.org/techniques/T1112/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }
