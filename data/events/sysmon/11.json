@@ -1,49 +1,160 @@
 {
-    "id":  "11",
-    "source":  "sysmon",
-    "category":  "File",
-    "name":  "FileCreate",
-    "priority":  "P1",
-    "applicable_version":  "Sysmon 1.0 and later; FileCreate logging must be enabled",
-    "last_reviewed":  "2026-07-10",
-    "definition":  "Sysmon Event ID 11 records file creation or overwrite activity and supports detection of payload staging, dropped malware, and suspicious persistence artifacts.",
-    "trigger_scenarios":  "Sysmon generates the event when a configured process creates or overwrites a file. Collection rules determine which paths and file types are retained.",
-    "key_fields":  [
-                       {
-                           "field":  "Image / ProcessGuid",
-                           "explanation":  "The process that wrote the file. Join ProcessGuid to Event ID 1 for command line and parent context."
-                       },
-                       {
-                           "field":  "TargetFilename",
-                           "explanation":  "The created file path. Startup locations, temporary directories, user profiles, and script paths are common hunting areas."
-                       },
-                       {
-                           "field":  "CreationUtcTime",
-                           "explanation":  "The file creation timestamp recorded by Sysmon. Use it for timeline correlation rather than as proof of original file provenance."
-                       }
-                   ],
-    "false_positives":  [
-                            "Browsers, installers, updaters, compilers, and endpoint agents create many files.",
-                            "Temporary directories are noisy without process and extension filters."
-                        ],
-    "related_event_ids":  [
-                              "1",
-                              "7",
-                              "13"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1105",
-                              "technique_name":  "Ingress Tool Transfer"
-                          },
-                          {
-                              "technique_id":  "T1547",
-                              "technique_name":  "Boot or Logon Autostart Execution"
-                          }
-                      ],
-    "detection_notes":  "T1105 staging is concrete when TargetFilename is an executable or script under C:\\\\Users\\\\, C:\\\\ProgramData\\\\, or Startup, and Image is a browser, PowerShell, or script host. Join ProcessGuid to Event ID 1 and execution of the same file.",
-    "kql_snippet":  "Sysmon\n| where EventID == 11\n| where TargetFilename has_any (\"\\\\AppData\\\\Roaming\\\\Microsoft\\\\Windows\\\\Start Menu\\\\Programs\\\\Startup\", \"\\\\Users\\\\Public\")\n| project TimeGenerated, Computer, Image, TargetFilename, ProcessGuid",
-    "spl_snippet":  "index=sysmon EventCode=11\n| search TargetFilename IN (\"*\\\\Startup\\\\*\", \"*\\\\Users\\\\Public\\\\*\")\n| table _time, host, Image, TargetFilename, ProcessGuid",
-    "sample_log":  "UtcTime: 2026-07-10 03:21:00.000\nImage: C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\nTargetFilename: C:\\Users\\Public\\update.ps1\nProcessGuid: {11111111-2222-3333-4444-555555555555}",
-    "source_url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+  "id": "11",
+  "source": "sysmon",
+  "category": "File",
+  "name": "FileCreate",
+  "priority": "P1",
+  "applicable_version": "Sysmon 1.0 and later; FileCreate logging must be enabled",
+  "last_reviewed": "2026-07-21",
+  "definition": "Sysmon Event ID 11 records file creation or overwrite activity and supports detection of payload staging, dropped malware, and suspicious persistence artifacts.",
+  "trigger_scenarios": "Sysmon generates the event when a configured process creates or overwrites a file. Collection rules determine which paths and file types are retained.",
+  "key_fields": [
+    {
+      "field": "Image / ProcessGuid",
+      "explanation": "The process that wrote the file. Join ProcessGuid to Event ID 1 for command line and parent context."
+    },
+    {
+      "field": "TargetFilename",
+      "explanation": "The created file path. Startup locations, temporary directories, user profiles, and script paths are common hunting areas."
+    },
+    {
+      "field": "CreationUtcTime",
+      "explanation": "The file creation timestamp recorded by Sysmon. Use it for timeline correlation rather than as proof of original file provenance."
+    }
+  ],
+  "false_positives": [
+    "Browsers, installers, updaters, compilers, and endpoint agents create many files.",
+    "Temporary directories are noisy without process and extension filters."
+  ],
+  "related_event_ids": [
+    "1",
+    "7",
+    "13"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0011",
+      "tactic_name": "Command and Control",
+      "technique_id": "T1105",
+      "technique_name": "Ingress Tool Transfer",
+      "source_url": "https://attack.mitre.org/techniques/T1105/"
+    },
+    {
+      "tactic_id": "TA0003",
+      "tactic_name": "Persistence",
+      "technique_id": "T1547.001",
+      "technique_name": "Boot or Logon Autostart Execution: Registry Run Keys / Startup Folder",
+      "source_url": "https://attack.mitre.org/techniques/T1547/001/"
+    }
+  ],
+  "detection_notes": "T1105 Ingress Tool Transfer triage is stronger when TargetFilename is an executable or script under C:\\\\Users\\\\ or C:\\\\ProgramData\\\\ and the same ProcessGuid has preceding network activity. T1547.001 persistence applies when the created file is under a per-user or all-users Startup folder; join ProcessGuid to Event ID 1 and confirm later execution of the same path.",
+  "kql_snippet": "Sysmon\n| where EventID == 11\n| where TargetFilename has_any (\"\\\\AppData\\\\Roaming\\\\Microsoft\\\\Windows\\\\Start Menu\\\\Programs\\\\Startup\", \"\\\\Users\\\\Public\")\n| project TimeGenerated, Computer, Image, TargetFilename, ProcessGuid",
+  "spl_snippet": "index=sysmon EventCode=11\n| search TargetFilename IN (\"*\\\\Startup\\\\*\", \"*\\\\Users\\\\Public\\\\*\")\n| table _time, host, Image, TargetFilename, ProcessGuid",
+  "sample_log": "UtcTime: 2026-07-10 03:21:00.000\nImage: C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\nTargetFilename: C:\\Users\\Public\\update.ps1\nProcessGuid: {11111111-2222-3333-4444-555555555555}",
+  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Sysmon",
+    "channel": "Microsoft-Windows-Sysmon/Operational",
+    "level": "Informational"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Sysmon Event ID 11",
+      "query": "Event\n| where EventLog == \"Microsoft-Windows-Sysmon/Operational\" and EventID == 11\n| project TimeGenerated, Computer, RenderedDescription\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel Event table",
+      "assumptions": [
+        "The Sysmon Operational channel is collected into Event and retains RenderedDescription.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/event"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Sysmon Event ID 11",
+      "query": "index=sysmon source=\"WinEventLog:Microsoft-Windows-Sysmon/Operational\" EventCode=11\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Sysmon event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Sysmon Event ID 11",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 11",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Sysmon Operational channel is ingested into Cortex XDR.",
+        "Event ID 11 is not globally unique; confirm Provider is Microsoft-Windows-Sysmon before applying Sysmon field semantics."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Sysmon Event ID 11",
+      "query": "title: Sysmon Event ID 11\nstatus: experimental\nlogsource:\n    product: windows\n    service: sysmon\ndetection:\n    selection:\n        EventID: 11\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Sysmon log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "TargetFilename",
+      "value": "C:\\Users\\<user>\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\",
+      "meaning": "This is the per-user Startup folder path pattern.",
+      "security_relevance": "A newly written executable or script here can run at user logon; verify the writer process and approved software installation context.",
+      "source_url": "https://attack.mitre.org/techniques/T1547/001/"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Sysmon Event ID 11 record?",
+      "answer": "Sysmon Event ID 11 records file creation or overwrite operations that match the active Sysmon FileCreate configuration and identifies the writing process and target path."
+    },
+    {
+      "question": "Does Sysmon Event ID 11 record every file creation?",
+      "answer": "Only events selected by the installed Sysmon configuration are emitted; coverage and event volume therefore depend on include and exclude rules."
+    },
+    {
+      "question": "How can Event ID 11 support malware-staging detection?",
+      "answer": "Correlate the writing ProcessGuid with network and process events, then prioritize executable or script files in user-writable, temporary, Startup, and other execution-relevant paths."
+    }
+  ],
+  "sources": [
+    {
+      "title": "Sysmon",
+      "url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Ingress Tool Transfer (T1105)",
+      "url": "https://attack.mitre.org/techniques/T1105/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "Boot or Logon Autostart Execution: Registry Run Keys / Startup Folder (T1547.001)",
+      "url": "https://attack.mitre.org/techniques/T1547/001/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

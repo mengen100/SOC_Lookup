@@ -1,49 +1,148 @@
 {
-    "id":  "4794",
-    "source":  "windows_security",
-    "category":  "DSRM",
-    "name":  "An attempt was made to set the Directory Services Restore Mode administrator password",
-    "priority":  "P1",
-    "applicable_version":  "Windows Server 2008 R2 and later",
-    "last_reviewed":  "2026-07-11",
-    "definition":  "Event ID 4794 records an attempt to set the Directory Services Restore Mode (DSRM) local administrator password on a domain controller. It is a rare, high-signal Windows Security event.",
-    "trigger_scenarios":  "It fires when a process invokes the DSRM password-setting operation on a domain controller, most commonly through ntdsutil.exe. Outside scheduled disaster-recovery testing, it should be exceptional.",
-    "key_fields":  [
-                       {
-                           "field":  "Subject",
-                           "explanation":  "The account initiating the operation. It must map to an authorized domain controller administrator and a known change ticket."
-                       },
-                       {
-                           "field":  "Process Name",
-                           "explanation":  "ntdsutil.exe is the standard tool for this operation. Any other initiating process requires immediate scrutiny."
-                       },
-                       {
-                           "field":  "Computer",
-                           "explanation":  "The affected domain controller. Check the DsrmAdminLogonBehavior registry value on this same host before classifying activity as maintenance."
-                       }
-                   ],
-    "false_positives":  [
-                            "Ticketed disaster-recovery drills that rotate the DSRM password are the usual legitimate source.",
-                            "New domain controller promotion can set an initial DSRM password during a documented deployment window."
-                        ],
-    "related_event_ids":  [
-                              "4688",
-                              "4624",
-                              "4672"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1098",
-                              "technique_name":  "Account Manipulation"
-                          },
-                          {
-                              "technique_id":  "T1556",
-                              "technique_name":  "Modify Authentication Process"
-                          }
-                      ],
-    "detection_notes":  "4794 can expose a specific T1098/T1556 persistence technique: an attacker with domain-admin rights sets the DSRM password with ntdsutil and changes HKLM\\System\\CurrentControlSet\\Control\\Lsa\\DsrmAdminLogonBehavior to 1 or 2. A non-zero value permits the built-in DSRM local administrator to authenticate over the network to the domain controller. That local SAM account survives ordinary domain-password resets and some domain-account containment steps. Treat an unexpected 4794 as active persistence: verify the operator and change ticket, then inspect DsrmAdminLogonBehavior immediately. A non-zero unapproved value is a likely backdoor, not configuration drift.",
-    "kql_snippet":  "SecurityEvent\n| where EventID == 4794\n| project TimeGenerated, Computer, Account, ProcessName, SubjectLogonId\n| order by TimeGenerated desc",
-    "spl_snippet":  "index=wineventlog EventCode=4794\n| table _time, host, Subject_User_Name, Process_Name",
-    "sample_log":  "Subject: CORP\\admin.ops\nProcess Name: C:\\Windows\\System32\\ntdsutil.exe\nComputer: DC01.corp.example",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4794"
+  "id": "4794",
+  "source": "windows_security",
+  "category": "DSRM",
+  "name": "An attempt was made to set the Directory Services Restore Mode administrator password",
+  "priority": "P1",
+  "applicable_version": "Windows Server 2008 R2 and later",
+  "last_reviewed": "2026-07-21",
+  "definition": "Event ID 4794 records an attempt to set the Directory Services Restore Mode (DSRM) local administrator password on a domain controller. It is a rare, high-signal Windows Security event.",
+  "trigger_scenarios": "It is generated when an account attempts to set the DSRM administrator password on a domain controller. Outside scheduled disaster-recovery or domain-controller maintenance, it should be exceptional.",
+  "key_fields": [
+    {
+      "field": "Subject",
+      "explanation": "The account initiating the operation. It must map to an authorized domain controller administrator and a known change ticket."
+    },
+    {
+      "field": "Workstation",
+      "explanation": "The computer name from which the password-setting attempt originated. Compare it with approved domain-controller administration hosts."
+    },
+    {
+      "field": "Status",
+      "explanation": "The hexadecimal result of the attempt. Status 0x0 means the operation succeeded; other values require Windows error-code interpretation."
+    }
+  ],
+  "false_positives": [
+    "Ticketed disaster-recovery drills that rotate the DSRM password are the usual legitimate source.",
+    "New domain controller promotion can set an initial DSRM password during a documented deployment window."
+  ],
+  "related_event_ids": [
+    "4688",
+    "4624",
+    "4672"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0003",
+      "tactic_name": "Persistence",
+      "technique_id": "T1098",
+      "technique_name": "Account Manipulation",
+      "source_url": "https://attack.mitre.org/techniques/T1098/"
+    }
+  ],
+  "detection_notes": "T1098 Account Manipulation applies when an unauthorized operator attempts to set the Directory Services Restore Mode administrator password. Treat one unexpected 4794 on a domain controller as high priority: Status 0x0 means the operation succeeded, so confirm SubjectUserName, SubjectLogonId, and Workstation against an approved recovery-maintenance change; nonzero status values still warrant review as attempted access.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4794\n| project TimeGenerated, Computer, Account, SubjectLogonId, EventData\n| order by TimeGenerated desc",
+  "spl_snippet": "index=wineventlog EventCode=4794\n| table _time, host, SubjectUserName, SubjectLogonId, Workstation, Status",
+  "sample_log": "Subject: Account Name: CORP\\admin.ops\nLogon ID: 0x36f67\nWorkstation: DC01\nStatus: 0x0",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4794",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success or Audit Failure"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Event ID 4794",
+      "query": "SecurityEvent\n| where EventID == 4794\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Event ID 4794",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4794\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Event ID 4794",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4794",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4794",
+      "query": "title: Windows Security Event ID 4794\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4794\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "Status",
+      "value": "0x0",
+      "meaning": "The attempt to set the DSRM administrator password succeeded.",
+      "security_relevance": "A successful operation outside an approved recovery-maintenance workflow changes a sensitive domain-controller recovery credential and requires immediate validation.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4794"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4794 mean?",
+      "answer": "Event ID 4794 records an attempt to set the Directory Services Restore Mode administrator password on a domain controller and includes the actor, originating workstation, and status."
+    },
+    {
+      "question": "Does 4794 show whether the password-reset attempt succeeded?",
+      "answer": "Yes. Status 0x0 means the operation succeeded; a nonzero status represents a failed attempt that should be interpreted using the corresponding Windows error code."
+    },
+    {
+      "question": "Why is DSRM password activity sensitive?",
+      "answer": "The DSRM administrator is a local recovery account on a domain controller, so changing its password affects a credential that is separate from ordinary domain-account passwords and should be tightly controlled."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4794: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4794",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Account Manipulation (T1098)",
+      "url": "https://attack.mitre.org/techniques/T1098/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

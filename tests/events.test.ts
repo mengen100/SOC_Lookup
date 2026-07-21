@@ -324,8 +324,20 @@ test("requires migrated GEO records to satisfy enriched content validation", () 
     "windows_security:4720",
     "windows_security:4724",
     "windows_security:4732",
+    "windows_security:4738",
+    "windows_security:4740",
+    "windows_security:4765",
+    "windows_security:4768",
     "windows_security:4769",
+    "windows_security:4776",
+    "windows_security:4794",
+    "windows_security:5140",
     "sysmon:1",
+    "sysmon:3",
+    "sysmon:8",
+    "sysmon:10",
+    "sysmon:11",
+    "sysmon:22",
   ]);
   const errors = getCompleteEvents()
     .filter((event) => migratedKeys.has(`${event.source}:${event.id}`))

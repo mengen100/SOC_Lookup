@@ -1,48 +1,146 @@
 {
-    "id":  "22",
-    "source":  "sysmon",
-    "category":  "Network",
-    "name":  "DNSEvent (DNS query)",
-    "priority":  "P1",
-    "applicable_version":  "Sysmon 10.0 and later; DNS query logging must be enabled",
-    "last_reviewed":  "2026-07-10",
-    "definition":  "Sysmon Event ID 22 records DNS queries made by a process and connects requested domains to the initiating executable.",
-    "trigger_scenarios":  "The event is generated when a configured process performs a DNS query. It can include the queried name, result, status, and process context.",
-    "key_fields":  [
-                       {
-                           "field":  "Image / ProcessGuid",
-                           "explanation":  "The querying process and stable process identifier. Join to Event ID 1 to understand how the process was launched."
-                       },
-                       {
-                           "field":  "QueryName",
-                           "explanation":  "The requested domain. Look for newly observed domains, suspicious subdomains, and names inconsistent with the process role."
-                       },
-                       {
-                           "field":  "QueryStatus / QueryResults",
-                           "explanation":  "The DNS response status and returned records. Repeated failures or rapidly changing responses can provide useful context."
-                       }
-                   ],
-    "false_positives":  [
-                            "Browsers, cloud applications, security agents, and update clients issue large volumes of DNS queries.",
-                            "CDNs and telemetry services often create domains unfamiliar to analysts."
-                        ],
-    "related_event_ids":  [
-                              "1",
-                              "3"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1071.004",
-                              "technique_name":  "Application Layer Protocol: DNS"
-                          },
-                          {
-                              "technique_id":  "T1568",
-                              "technique_name":  "Dynamic Resolution"
-                          }
-                      ],
-    "detection_notes":  "T1071.004 DNS C2 is concrete when Image is powershell.exe or wscript.exe and QueryName is followed by Event ID 3 to DestinationPort 443 or 53. High-entropy subdomains or repeated QueryStatus failures should be correlated with ProcessGuid, not treated as a standalone verdict. A repeated timeout=60 second DNS-to-network correlation window is a practical starting point.",
-    "kql_snippet":  "Sysmon\n| where EventID == 22\n| where Image has_any (\"\\\\powershell.exe\", \"\\\\wscript.exe\", \"\\\\mshta.exe\")\n| project TimeGenerated, Computer, Image, QueryName, QueryStatus, QueryResults, ProcessGuid",
-    "spl_snippet":  "index=sysmon EventCode=22\n| search Image IN (\"*\\\\powershell.exe\", \"*\\\\wscript.exe\", \"*\\\\mshta.exe\")\n| table _time, host, Image, QueryName, QueryStatus, QueryResults, ProcessGuid",
-    "sample_log":  "UtcTime: 2026-07-10 03:20:13.000\nImage: C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\nQueryName: example.invalid\nQueryStatus: 0\nQueryResults: 203.0.113.10\nProcessGuid: {11111111-2222-3333-4444-555555555555}",
-    "source_url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+  "id": "22",
+  "source": "sysmon",
+  "category": "Network",
+  "name": "DNSEvent (DNS query)",
+  "priority": "P1",
+  "applicable_version": "Sysmon 10.0 and later; DNS query logging must be enabled",
+  "last_reviewed": "2026-07-21",
+  "definition": "Sysmon Event ID 22 records DNS queries made by a process and connects requested domains to the initiating executable.",
+  "trigger_scenarios": "The event is generated when a configured process performs a DNS query. It can include the queried name, result, status, and process context.",
+  "key_fields": [
+    {
+      "field": "Image / ProcessGuid",
+      "explanation": "The querying process and stable process identifier. Join to Event ID 1 to understand how the process was launched."
+    },
+    {
+      "field": "QueryName",
+      "explanation": "The requested domain. Look for newly observed domains, suspicious subdomains, and names inconsistent with the process role."
+    },
+    {
+      "field": "QueryStatus / QueryResults",
+      "explanation": "The DNS response status and returned records. Repeated failures or rapidly changing responses can provide useful context."
+    }
+  ],
+  "false_positives": [
+    "Browsers, cloud applications, security agents, and update clients issue large volumes of DNS queries.",
+    "CDNs and telemetry services often create domains unfamiliar to analysts."
+  ],
+  "related_event_ids": [
+    "1",
+    "3"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0011",
+      "tactic_name": "Command and Control",
+      "technique_id": "T1071.004",
+      "technique_name": "Application Layer Protocol: DNS",
+      "source_url": "https://attack.mitre.org/techniques/T1071/004/"
+    }
+  ],
+  "detection_notes": "T1071.004 DNS C2 is concrete when Image is powershell.exe or wscript.exe and QueryName is followed by Event ID 3 to DestinationPort 443 or 53. High-entropy subdomains or repeated QueryStatus failures should be correlated with ProcessGuid, not treated as a standalone verdict. A repeated timeout=60 second DNS-to-network correlation window is a practical starting point.",
+  "kql_snippet": "Sysmon\n| where EventID == 22\n| where Image has_any (\"\\\\powershell.exe\", \"\\\\wscript.exe\", \"\\\\mshta.exe\")\n| project TimeGenerated, Computer, Image, QueryName, QueryStatus, QueryResults, ProcessGuid",
+  "spl_snippet": "index=sysmon EventCode=22\n| search Image IN (\"*\\\\powershell.exe\", \"*\\\\wscript.exe\", \"*\\\\mshta.exe\")\n| table _time, host, Image, QueryName, QueryStatus, QueryResults, ProcessGuid",
+  "sample_log": "UtcTime: 2026-07-10 03:20:13.000\nImage: C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\nQueryName: example.invalid\nQueryStatus: 0\nQueryResults: 203.0.113.10\nProcessGuid: {11111111-2222-3333-4444-555555555555}",
+  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Sysmon",
+    "channel": "Microsoft-Windows-Sysmon/Operational",
+    "level": "Informational"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Sysmon Event ID 22",
+      "query": "Event\n| where EventLog == \"Microsoft-Windows-Sysmon/Operational\" and EventID == 22\n| project TimeGenerated, Computer, RenderedDescription\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel Event table",
+      "assumptions": [
+        "The Sysmon Operational channel is collected into Event and retains RenderedDescription.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/event"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Sysmon Event ID 22",
+      "query": "index=sysmon source=\"WinEventLog:Microsoft-Windows-Sysmon/Operational\" EventCode=22\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Sysmon event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Sysmon Event ID 22",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 22",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Sysmon Operational channel is ingested into Cortex XDR.",
+        "Event ID 22 is not globally unique; confirm Provider is Microsoft-Windows-Sysmon before applying Sysmon field semantics."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Sysmon Event ID 22",
+      "query": "title: Sysmon Event ID 22\nstatus: experimental\nlogsource:\n    product: windows\n    service: sysmon\ndetection:\n    selection:\n        EventID: 22\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Sysmon log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "QueryStatus",
+      "value": "0",
+      "meaning": "The DNS query completed successfully.",
+      "security_relevance": "A successful result provides addresses for correlation with Event ID 3, but the status alone does not identify malicious DNS activity.",
+      "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Sysmon Event ID 22 record?",
+      "answer": "Sysmon Event ID 22 records DNS queries made by a process and includes the process identity, query name, status, and returned results when available."
+    },
+    {
+      "question": "Does one unusual DNS query prove DNS command and control?",
+      "answer": "No. Domain generation, telemetry, advertising, software updates, and security products can create unusual names; analyze process context, frequency, entropy, results, and related connections."
+    },
+    {
+      "question": "How should Event ID 22 be correlated with network activity?",
+      "answer": "Join by ProcessGuid and time to Sysmon Event ID 3, then compare QueryResults with destination addresses while allowing for caching, proxies, and multiple DNS answers."
+    }
+  ],
+  "sources": [
+    {
+      "title": "Sysmon",
+      "url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Application Layer Protocol: DNS (T1071.004)",
+      "url": "https://attack.mitre.org/techniques/T1071/004/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

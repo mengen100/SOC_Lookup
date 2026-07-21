@@ -1,54 +1,158 @@
 {
-    "id":  "10",
-    "source":  "sysmon",
-    "category":  "Process",
-    "name":  "ProcessAccess",
-    "priority":  "P1",
-    "applicable_version":  "Sysmon 1.0 and later; ProcessAccess logging must be enabled",
-    "last_reviewed":  "2026-07-10",
-    "definition":  "Sysmon Event ID 10 records one process opening another process and is a key source for detecting credential dumping, process inspection, and suspicious cross-process access.",
-    "trigger_scenarios":  "The event is generated when a process opens a handle to another process under the configured Sysmon rules. Because the event can be noisy, collection should focus on sensitive target processes and meaningful access rights.",
-    "key_fields":  [
-                       {
-                           "field":  "SourceImage",
-                           "explanation":  "The executable requesting access. Its path, signer, command line, and parent process are central to determining whether the access is expected."
-                       },
-                       {
-                           "field":  "TargetImage",
-                           "explanation":  "The process being accessed. lsass.exe is a high-priority target because access with sensitive rights can indicate credential theft."
-                       },
-                       {
-                           "field":  "GrantedAccess",
-                           "explanation":  "The access mask granted to the source process. Interpret this alongside the target and source process because valid tools may require some overlapping rights."
-                       },
-                       {
-                           "field":  "CallTrace",
-                           "explanation":  "The recorded call stack can help distinguish known security or management tools from unknown access paths, although symbols and modules may be incomplete."
-                       }
-                   ],
-    "false_positives":  [
-                            "EDR, antivirus, backup, monitoring, and accessibility products often inspect other processes.",
-                            "Task Manager, debuggers, and performance tools can request process handles during normal administration.",
-                            "Broad ProcessAccess collection without filters can create large volumes that obscure high-risk activity."
-                        ],
-    "related_event_ids":  [
-                              "1",
-                              "8",
-                              "7"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1003",
-                              "technique_name":  "OS Credential Dumping"
-                          },
-                          {
-                              "technique_id":  "T1055",
-                              "technique_name":  "Process Injection"
-                          }
-                      ],
-    "detection_notes":  "T1003 credential dumping is concrete when TargetImage is lsass.exe and GrantedAccess includes 0x1010 or 0x1fffff from a source outside approved EDR paths. Join SourceProcessGuid to Event ID 1 for command-line and signer context.",
-    "kql_snippet":  "Sysmon\n| where EventID == 10\n| where TargetImage endswith @\"\\lsass.exe\"\n| project TimeGenerated, Computer, SourceImage, TargetImage, GrantedAccess, CallTrace, SourceProcessGuid\n| order by TimeGenerated desc",
-    "spl_snippet":  "index=sysmon EventCode=10 TargetImage=\"*\\\\lsass.exe\"\n| table _time, host, SourceImage, TargetImage, GrantedAccess, CallTrace, SourceProcessGuid",
-    "sample_log":  "UtcTime: 2026-07-10 03:20:22.000\nSourceImage: C:\\Users\\jsmith\\AppData\\Local\\Temp\\diagnostic.exe\nTargetImage: C:\\Windows\\System32\\lsass.exe\nGrantedAccess: 0x1010\nCallTrace: C:\\Windows\\SYSTEM32\\ntdll.dll+9d4c|UNKNOWN(000001F4A1230000)",
-    "source_url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+  "id": "10",
+  "source": "sysmon",
+  "category": "Process",
+  "name": "ProcessAccess",
+  "priority": "P1",
+  "applicable_version": "Sysmon 1.0 and later; ProcessAccess logging must be enabled",
+  "last_reviewed": "2026-07-21",
+  "definition": "Sysmon Event ID 10 records one process opening another process and is a key source for detecting credential dumping, process inspection, and suspicious cross-process access.",
+  "trigger_scenarios": "The event is generated when a process opens a handle to another process under the configured Sysmon rules. Because the event can be noisy, collection should focus on sensitive target processes and meaningful access rights.",
+  "key_fields": [
+    {
+      "field": "SourceImage",
+      "explanation": "The executable requesting access. Its path, signer, command line, and parent process are central to determining whether the access is expected."
+    },
+    {
+      "field": "TargetImage",
+      "explanation": "The process being accessed. lsass.exe is a high-priority target because access with sensitive rights can indicate credential theft."
+    },
+    {
+      "field": "GrantedAccess",
+      "explanation": "The access mask granted to the source process. Interpret this alongside the target and source process because valid tools may require some overlapping rights."
+    },
+    {
+      "field": "CallTrace",
+      "explanation": "The recorded call stack can help distinguish known security or management tools from unknown access paths, although symbols and modules may be incomplete."
+    }
+  ],
+  "false_positives": [
+    "EDR, antivirus, backup, monitoring, and accessibility products often inspect other processes.",
+    "Task Manager, debuggers, and performance tools can request process handles during normal administration.",
+    "Broad ProcessAccess collection without filters can create large volumes that obscure high-risk activity."
+  ],
+  "related_event_ids": [
+    "1",
+    "8",
+    "7"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0006",
+      "tactic_name": "Credential Access",
+      "technique_id": "T1003.001",
+      "technique_name": "OS Credential Dumping: LSASS Memory",
+      "source_url": "https://attack.mitre.org/techniques/T1003/001/"
+    }
+  ],
+  "detection_notes": "T1003.001 LSASS Memory triage is concrete when TargetImage is lsass.exe and GrantedAccess includes 0x1010, combining process-query and virtual-memory-read rights, from a source outside approved security-product paths. The mask alone is not proof of dumping; join SourceProcessGuid to Event ID 1 and evaluate signer, path, user, and CallTrace.",
+  "kql_snippet": "Sysmon\n| where EventID == 10\n| where TargetImage endswith @\"\\lsass.exe\"\n| project TimeGenerated, Computer, SourceImage, TargetImage, GrantedAccess, CallTrace, SourceProcessGuid\n| order by TimeGenerated desc",
+  "spl_snippet": "index=sysmon EventCode=10 TargetImage=\"*\\\\lsass.exe\"\n| table _time, host, SourceImage, TargetImage, GrantedAccess, CallTrace, SourceProcessGuid",
+  "sample_log": "UtcTime: 2026-07-10 03:20:22.000\nSourceImage: C:\\Users\\jsmith\\AppData\\Local\\Temp\\diagnostic.exe\nTargetImage: C:\\Windows\\System32\\lsass.exe\nGrantedAccess: 0x1010\nCallTrace: C:\\Windows\\SYSTEM32\\ntdll.dll+9d4c|UNKNOWN(000001F4A1230000)",
+  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Sysmon",
+    "channel": "Microsoft-Windows-Sysmon/Operational",
+    "level": "Informational"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Sysmon Event ID 10",
+      "query": "Event\n| where EventLog == \"Microsoft-Windows-Sysmon/Operational\" and EventID == 10\n| project TimeGenerated, Computer, RenderedDescription\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel Event table",
+      "assumptions": [
+        "The Sysmon Operational channel is collected into Event and retains RenderedDescription.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/event"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Sysmon Event ID 10",
+      "query": "index=sysmon source=\"WinEventLog:Microsoft-Windows-Sysmon/Operational\" EventCode=10\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Sysmon event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Sysmon Event ID 10",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 10",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Sysmon Operational channel is ingested into Cortex XDR.",
+        "Event ID 10 is not globally unique; confirm Provider is Microsoft-Windows-Sysmon before applying Sysmon field semantics."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Sysmon Event ID 10",
+      "query": "title: Sysmon Event ID 10\nstatus: experimental\nlogsource:\n    product: windows\n    service: sysmon\ndetection:\n    selection:\n        EventID: 10\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Sysmon log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "GrantedAccess",
+      "value": "0x1010",
+      "meaning": "The mask combines PROCESS_QUERY_LIMITED_INFORMATION (0x1000) and PROCESS_VM_READ (0x0010).",
+      "security_relevance": "Against lsass.exe, these rights allow querying and reading process memory; validate expected security products before treating the access as credential dumping.",
+      "source_url": "https://learn.microsoft.com/en-us/windows/win32/procthread/process-security-and-access-rights"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Sysmon Event ID 10 record?",
+      "answer": "Sysmon Event ID 10 records one process opening another process and includes source, target, granted access, and call-trace context."
+    },
+    {
+      "question": "Why is access to lsass.exe important?",
+      "answer": "LSASS holds authentication material, so unexpected processes requesting memory-read rights can support credential-dumping detection, while security products and system components require allowlisting."
+    },
+    {
+      "question": "Does GrantedAccess 0x1010 prove credential dumping?",
+      "answer": "No. It includes query and virtual-memory read rights, but the target, source signer and path, call trace, user context, and related behavior determine whether the access is suspicious."
+    }
+  ],
+  "sources": [
+    {
+      "title": "Sysmon",
+      "url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Process Security and Access Rights",
+      "url": "https://learn.microsoft.com/en-us/windows/win32/procthread/process-security-and-access-rights",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "OS Credential Dumping: LSASS Memory (T1003.001)",
+      "url": "https://attack.mitre.org/techniques/T1003/001/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

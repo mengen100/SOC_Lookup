@@ -1,54 +1,160 @@
 {
-    "id":  "5140",
-    "source":  "windows_security",
-    "category":  "FileShare",
-    "name":  "A network share object was accessed",
-    "priority":  "P1",
-    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
-    "last_reviewed":  "2026-07-10",
-    "definition":  "Windows Security Event ID 5140 records access to a network share and is an important source for investigating SMB-based lateral movement, administrative share use, and staging activity.",
-    "trigger_scenarios":  "The event is generated when a client accesses a shared resource on the audited host. It indicates share-level access; detailed file operations require additional object-access auditing such as Event ID 5145.",
-    "key_fields":  [
-                       {
-                           "field":  "Subject User Name",
-                           "explanation":  "The authenticated account accessing the share. Service and machine accounts are common, so identity alone should be considered with the share and source context."
-                       },
-                       {
-                           "field":  "Share Name",
-                           "explanation":  "The accessed share path. Administrative shares such as ADMIN$, C$, and IPC$ often deserve different triage rules from business file shares."
-                       },
-                       {
-                           "field":  "Source Address",
-                           "explanation":  "The client address that made the SMB connection. It is a key pivot for mapping remote access and potential lateral movement."
-                       },
-                       {
-                           "field":  "Share Local Path",
-                           "explanation":  "The local path backing the share. This helps classify whether the target exposes a system drive, application directory, or user data."
-                       }
-                   ],
-    "false_positives":  [
-                            "Normal file-server use, software distribution, backup, and endpoint management can generate high volumes.",
-                            "Domain controllers and application servers may receive frequent IPC$ and SYSVOL access.",
-                            "Administrative shares are commonly used by authorized remote-management tools."
-                        ],
-    "related_event_ids":  [
-                              "4624",
-                              "5145",
-                              "4688"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1021.002",
-                              "technique_name":  "Remote Services: SMB/Windows Admin Shares"
-                          },
-                          {
-                              "technique_id":  "T1070.004",
-                              "technique_name":  "Indicator Removal: File Deletion"
-                          }
-                      ],
-    "detection_notes":  "T1021.002 lateral movement is concrete when Share Name is ADMIN$ or C$ after a Type 3 4624 from a workstation, especially when Source Port is nonzero and 5145 shows Access Mask 0x2 write or 0x10000 delete. ADMIN$ staging followed by 4697 service creation is a remote-execution chain.",
-    "kql_snippet":  "SecurityEvent\n| where EventID == 5140\n| where ShareName has_any (\"ADMIN$\", \"C$\", \"IPC$\")\n| project TimeGenerated, Computer, Account, IpAddress, ShareName, ShareLocalPath\n| order by TimeGenerated desc",
-    "spl_snippet":  "index=wineventlog EventCode=5140 Share_Name IN (\"*ADMIN$\", \"*C$\", \"*IPC$\")\n| table _time, host, SubjectUserName, Source_Address, Share_Name, Share_Local_Path",
-    "sample_log":  "Subject: Account Name: CORP\\jsmith\nShare Information: Share Name: \\\\*\\ADMIN$\nShare Local Path: C:\\Windows\nNetwork Information: Source Address: 10.x.x.x\nSource Port: 52133",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-5140"
+  "id": "5140",
+  "source": "windows_security",
+  "category": "FileShare",
+  "name": "A network share object was accessed",
+  "priority": "P1",
+  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
+  "last_reviewed": "2026-07-21",
+  "definition": "Windows Security Event ID 5140 records access to a network share and is an important source for investigating SMB-based lateral movement, administrative share use, and staging activity.",
+  "trigger_scenarios": "The event is generated when a client accesses a shared resource on the audited host. It indicates share-level access; detailed file operations require additional object-access auditing such as Event ID 5145.",
+  "key_fields": [
+    {
+      "field": "Subject User Name",
+      "explanation": "The authenticated account accessing the share. Service and machine accounts are common, so identity alone should be considered with the share and source context."
+    },
+    {
+      "field": "Share Name",
+      "explanation": "The accessed share path. Administrative shares such as ADMIN$, C$, and IPC$ often deserve different triage rules from business file shares."
+    },
+    {
+      "field": "Source Address",
+      "explanation": "The client address that made the SMB connection. It is a key pivot for mapping remote access and potential lateral movement."
+    },
+    {
+      "field": "Share Local Path",
+      "explanation": "The local path backing the share. This helps classify whether the target exposes a system drive, application directory, or user data."
+    }
+  ],
+  "false_positives": [
+    "Normal file-server use, software distribution, backup, and endpoint management can generate high volumes.",
+    "Domain controllers and application servers may receive frequent IPC$ and SYSVOL access.",
+    "Administrative shares are commonly used by authorized remote-management tools."
+  ],
+  "related_event_ids": [
+    "4624",
+    "5145",
+    "4688"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0008",
+      "tactic_name": "Lateral Movement",
+      "technique_id": "T1021.002",
+      "technique_name": "Remote Services: SMB/Windows Admin Shares",
+      "source_url": "https://attack.mitre.org/techniques/T1021/002/"
+    }
+  ],
+  "detection_notes": "T1021.002 lateral movement is concrete when Share Name is ADMIN$ or C$ after a Type 3 4624 from a workstation, especially when Source Port is nonzero and 5145 shows Access Mask 0x2 write or 0x10000 delete. ADMIN$ staging followed by 4697 service creation is a remote-execution chain.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 5140\n| where ShareName has_any (\"ADMIN$\", \"C$\", \"IPC$\")\n| project TimeGenerated, Computer, Account, IpAddress, ShareName, ShareLocalPath\n| order by TimeGenerated desc",
+  "spl_snippet": "index=wineventlog EventCode=5140 Share_Name IN (\"*ADMIN$\", \"*C$\", \"*IPC$\")\n| table _time, host, SubjectUserName, Source_Address, Share_Name, Share_Local_Path",
+  "sample_log": "Subject: Account Name: CORP\\jsmith\nShare Information: Share Name: \\\\*\\ADMIN$\nShare Local Path: C:\\Windows\nNetwork Information: Source Address: 10.x.x.x\nSource Port: 52133",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-5140",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success or Audit Failure"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Event ID 5140",
+      "query": "SecurityEvent\n| where EventID == 5140\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Event ID 5140",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=5140\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Event ID 5140",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 5140",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 5140",
+      "query": "title: Windows Security Event ID 5140\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 5140\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "ShareName",
+      "value": "\\\\*\\ADMIN$",
+      "meaning": "The hidden administrative share maps to the Windows directory on the target computer.",
+      "security_relevance": "Unexpected remote access followed by file creation or service installation is a stronger lateral-movement sequence than share access alone.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-5140"
+    },
+    {
+      "field": "ShareName",
+      "value": "\\\\*\\C$",
+      "meaning": "The hidden administrative share exposes the root of the system drive to authorized administrators.",
+      "security_relevance": "Access from an unusual source or account should be correlated with 5145 requested rights and subsequent file or process activity.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-5140"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 5140 mean?",
+      "answer": "Event ID 5140 records that a network share object was accessed and is generated once per session on the computer hosting the share."
+    },
+    {
+      "question": "Does Event ID 5140 show the accessed file?",
+      "answer": "No. It identifies the share and connection context; event 5145 provides per-access checks with relative target names and requested access rights when detailed file-share auditing is enabled."
+    },
+    {
+      "question": "Are ADMIN$ and C$ accesses always malicious?",
+      "answer": "No. Administration, software deployment, backup, and monitoring tools use these shares; investigate unexpected accounts, source addresses, timing, written files, and follow-on service or task creation."
+    }
+  ],
+  "sources": [
+    {
+      "title": "5140: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-5140",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Remote Services: SMB/Windows Admin Shares (T1021.002)",
+      "url": "https://attack.mitre.org/techniques/T1021/002/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

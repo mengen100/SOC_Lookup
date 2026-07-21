@@ -1,49 +1,162 @@
 {
-    "id":  "4776",
-    "source":  "windows_security",
-    "category":  "Logon",
-    "name":  "The domain controller attempted to validate credentials (NTLM)",
-    "priority":  "P1",
-    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
-    "last_reviewed":  "2026-07-10",
-    "definition":  "Windows Security Event ID 4776 records NTLM credential validation performed by a domain controller.",
-    "trigger_scenarios":  "A domain controller logs this event when it validates NTLM credentials for a user or computer account.",
-    "key_fields":  [
-                       {
-                           "field":  "Logon Account",
-                           "explanation":  "The account whose NTLM credentials were validated. Watch for high-volume attempts against many identities."
-                       },
-                       {
-                           "field":  "Source Workstation",
-                           "explanation":  "The client that requested validation. This identifies the host performing authentication attempts."
-                       },
-                       {
-                           "field":  "Error Code",
-                           "explanation":  "The validation result. Codes distinguish bad passwords, unknown users, disabled accounts, and other outcomes."
-                       }
-                   ],
-    "false_positives":  [
-                            "Legacy applications and SMB systems may rely on NTLM by design.",
-                            "Password changes can cause recurring failures from services using old credentials."
-                        ],
-    "related_event_ids":  [
-                              "4625",
-                              "4624",
-                              "4648"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1110",
-                              "technique_name":  "Brute Force"
-                          },
-                          {
-                              "technique_id":  "T1078",
-                              "technique_name":  "Valid Accounts"
-                          }
-                      ],
-    "detection_notes":  "T1110.003 spraying through NTLM appears as Error Code 0xC000006A (bad password) across many Logon Account values from one Source Workstation. Error 0xC0000064 instead shows nonexistent-account enumeration. A successful 0x0 validation after either burst should be correlated with 4624 and 4648.",
-    "kql_snippet":  "SecurityEvent\n| where EventID == 4776\n| summarize Attempts=count() by Computer, Account, Workstation, Status, bin(TimeGenerated, 5m)\n| where Attempts \u003e 10",
-    "spl_snippet":  "index=wineventlog EventCode=4776\n| bucket _time span=5m\n| stats count by _time, Workstation, Logon_Account, Error_Code",
-    "sample_log":  "Logon Account: jsmith\nSource Workstation: WS-014\nError Code: 0xC000006A",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4776"
+  "id": "4776",
+  "source": "windows_security",
+  "category": "Logon",
+  "name": "The domain controller attempted to validate credentials (NTLM)",
+  "priority": "P1",
+  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
+  "last_reviewed": "2026-07-21",
+  "definition": "Windows Security Event ID 4776 records NTLM credential validation performed by a domain controller.",
+  "trigger_scenarios": "A domain controller logs this event when it validates NTLM credentials for a user or computer account.",
+  "key_fields": [
+    {
+      "field": "Logon Account",
+      "explanation": "The account whose NTLM credentials were validated. Watch for high-volume attempts against many identities."
+    },
+    {
+      "field": "Source Workstation",
+      "explanation": "The client that requested validation. This identifies the host performing authentication attempts."
+    },
+    {
+      "field": "Error Code",
+      "explanation": "The validation result. Codes distinguish bad passwords, unknown users, disabled accounts, and other outcomes."
+    }
+  ],
+  "false_positives": [
+    "Legacy applications and SMB systems may rely on NTLM by design.",
+    "Password changes can cause recurring failures from services using old credentials."
+  ],
+  "related_event_ids": [
+    "4625",
+    "4624",
+    "4648"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0006",
+      "tactic_name": "Credential Access",
+      "technique_id": "T1110.003",
+      "technique_name": "Brute Force: Password Spraying",
+      "source_url": "https://attack.mitre.org/techniques/T1110/003/"
+    }
+  ],
+  "detection_notes": "T1110.003 spraying through NTLM appears as Error Code 0xC000006A (bad password) across many Logon Account values from one Source Workstation. Error 0xC0000064 instead shows nonexistent-account enumeration. A successful 0x0 validation after either burst should be correlated with 4624 and 4648.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4776\n| summarize Attempts=count() by Computer, Account, Workstation, Status, bin(TimeGenerated, 5m)\n| where Attempts > 10",
+  "spl_snippet": "index=wineventlog EventCode=4776\n| bucket _time span=5m\n| stats count by _time, Workstation, Logon_Account, Error_Code",
+  "sample_log": "Logon Account: jsmith\nSource Workstation: WS-014\nError Code: 0xC000006A",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4776",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success or Audit Failure"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Event ID 4776",
+      "query": "SecurityEvent\n| where EventID == 4776\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Event ID 4776",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4776\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Event ID 4776",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4776",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4776",
+      "query": "title: Windows Security Event ID 4776\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4776\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "Status",
+      "value": "0x0",
+      "meaning": "The credential validation succeeded.",
+      "security_relevance": "A success after a burst of failures from the same workstation can indicate a guessed credential and should be correlated with the resulting 4624 logon.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4776"
+    },
+    {
+      "field": "Status",
+      "value": "0xC000006A",
+      "meaning": "The account exists, but the supplied password is incorrect.",
+      "security_relevance": "The same source workstation producing this status across many accounts is a password-spray pattern after environmental baselining.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4776"
+    },
+    {
+      "field": "Status",
+      "value": "0xC0000064",
+      "meaning": "The specified account does not exist.",
+      "security_relevance": "Repeated nonexistent account names are more consistent with account enumeration or stale configuration than confirmed password guessing.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4776"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4776 mean?",
+      "answer": "Event ID 4776 records an attempt by a computer to validate account credentials using NTLM and includes the account, source workstation, and result status."
+    },
+    {
+      "question": "Where is Event ID 4776 generated?",
+      "answer": "For domain credentials it is generated on the authoritative domain controller; for local account validation it is generated on the local computer."
+    },
+    {
+      "question": "Which 4776 status is useful for password spraying?",
+      "answer": "Status 0xC000006A means the account exists but the password is wrong; aggregate it across accounts by source workstation and distinguish it from 0xC0000064 unknown-account failures."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4776: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4776",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Brute Force: Password Spraying (T1110.003)",
+      "url": "https://attack.mitre.org/techniques/T1110/003/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }
