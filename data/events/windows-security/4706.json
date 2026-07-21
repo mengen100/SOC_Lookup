@@ -5,17 +5,17 @@
   "name": "A new trust was created to a domain",
   "priority": "P2",
   "applicable_version": "Windows Server 2008 R2 and later",
-  "last_reviewed": "2026-07-12",
+  "last_reviewed": "2026-07-21",
   "definition": "Windows Security Event ID 4706 records that a new Active Directory domain trust was created on a domain controller, logging the new trust's target domain, type, direction, and attribute bitmask.",
   "trigger_scenarios": "A domain administrator runs netdom, the Active Directory Domains and Trusts console, or PowerShell to create a trust between the local domain and another. This is a low-frequency infrastructure operation and should only occur during planned directory changes.",
   "key_fields": [
     {
       "field": "Trust Information\\Trust Type",
-      "explanation": "The kind of trust object created. Type 2 (Forest Trust) and Type 3 (External Trust) are the high-risk values because they expand the authentication boundary beyond the local domain: a forest trust creates a transitive path across all domains in the trusted forest, while an external trust creates a non-transitive path to a specific external domain."
+      "explanation": "The trust implementation type. Microsoft defines 1 as downlevel, 2 as uplevel Windows, 3 as MIT Kerberos, and 4 as DCE; forest scope is represented by the 0x8 FOREST_TRANSITIVE attribute, not Trust Type 2."
     },
     {
       "field": "Trust Information\\Trust Direction",
-      "explanation": "The direction of authentication flow. Direction 0 = Disabled, 1 = Inbound (the trusted domain can authenticate to this one), 2 = Outbound (this domain's users can authenticate to the trusted domain), 3 = Bidirectional. Direction 3 (Bidirectional) creates the largest exposure and is the most commonly abused for cross-forest lateral movement."
+      "explanation": "The trust direction. Value 0 is disabled, 1 means the trusted domain trusts the primary domain, 2 means the primary domain trusts the trusted domain, and 3 is bidirectional."
     },
     {
       "field": "Trust Information\\Trust Attributes",
@@ -30,16 +30,135 @@
     "Planned Active Directory forest consolidations and organizational mergers create domain trusts with appropriate change-management approval.",
     "Azure AD Connect or hybrid identity configurations create specific trust objects that are expected in hybrid deployments."
   ],
-  "related_event_ids": ["4707"],
+  "related_event_ids": [
+    "4707"
+  ],
   "attck_mapping": [
     {
+      "tactic_id": "TA0004",
+      "tactic_name": "Privilege Escalation",
       "technique_id": "T1484.002",
-      "technique_name": "Domain Policy Modification: Trust Modification"
+      "technique_name": "Domain or Tenant Policy Modification: Trust Modification",
+      "source_url": "https://attack.mitre.org/techniques/T1484/002/"
     }
   ],
-  "detection_notes": "Every 4706 should trigger a review against a change-management record, per the verbatim Microsoft recommendation: \"Any changes related to Active Directory domain trusts (especially creation of the new trust) must be monitored and alerts should be triggered.\" The concrete field values to validate are Trust Type (2=Forest, 3=External are high impact), Trust Direction (3=Bidirectional maximizes exposure), and Trust Attributes (0x8 FOREST_TRANSITIVE or 0x10 CROSS_ORGANIZATION widen scope). A T1484.002 Trust Modification scenario involves an attacker with domain-admin rights creating an unauthorized forest or external trust to an attacker-controlled domain, then using that trust to authenticate across the boundary with accounts that have no legitimate use in the victim forest. An unexpected Domain SID in New Domain\\Domain SID is the single fastest way to confirm that the target of the trust is not the expected organization.",
+  "detection_notes": "T1484.002 Trust Modification applies to unapproved trust creation. Validate TdoType 2 as an uplevel Windows-domain trust, TdoDirection 3 as bidirectional, and TdoAttributes 0x8 as forest transitive; these values are distinct and must not be conflated. Compare DomainSid and SidFilteringEnabled with the approved partner and change record, then correlate SubjectLogonId to the creating administrator session.",
   "kql_snippet": "SecurityEvent\n| where EventID == 4706\n| project TimeGenerated, Computer, SubjectUserName, DomainName, TrustType, TrustDirection, TrustAttributes",
   "spl_snippet": "index=wineventlog EventCode=4706\n| table _time, host, SubjectUserName, DomainName, TrustType, TrustDirection, TrustAttributes",
-  "sample_log": "Subject:\n  Security ID: CORP\\svc-admin\n  Account Name: svc-admin\n  Account Domain: CORP\n  Logon ID: 0x3F1E0\nNew Domain:\n  Domain Name: evil.example\n  Domain SID: S-1-5-21-9999999999-9999999999-9999999999\nTrust Information:\n  Trust Type: 2 (Forest)\n  Trust Direction: 3 (Bidirectional)\n  Trust Attributes: 0x8",
-  "source_url": "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4706"
+  "sample_log": "Subject:\n  Security ID: CORP\\svc-admin\n  Account Name: svc-admin\n  Account Domain: CORP\n  Logon ID: 0x3F1E0\nNew Domain:\n  Domain Name: partner.example\n  Domain SID: S-1-5-21-9999999999-9999999999-9999999999\nTrust Information:\n  Trust Type: 2 (Uplevel)\n  Trust Direction: 3 (Bidirectional)\n  Trust Attributes: 8 (0x8 FOREST_TRANSITIVE)",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4706",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Event ID 4706",
+      "query": "SecurityEvent\n| where EventID == 4706\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Event ID 4706",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4706\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Event ID 4706",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4706",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4706",
+      "query": "title: Windows Security Event ID 4706\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4706\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "TdoType",
+      "value": "2",
+      "meaning": "TRUST_TYPE_UPLEVEL: the trusted domain runs Windows 2000 or later.",
+      "security_relevance": "This is the common Windows-domain trust type, not a synonym for forest trust; scope is determined by direction and attribute bits.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4706"
+    },
+    {
+      "field": "TdoDirection",
+      "value": "3",
+      "meaning": "TRUST_DIRECTION_BIDIRECTIONAL: both domains trust one another for authentication and name lookups.",
+      "security_relevance": "An unapproved bidirectional trust expands authentication paths in both directions and has greater exposure than a one-way trust.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4706"
+    },
+    {
+      "field": "TdoAttributes",
+      "value": "0x8",
+      "meaning": "TRUST_ATTRIBUTE_FOREST_TRANSITIVE: the trust is a cross-forest trust between forest root domains.",
+      "security_relevance": "This bit establishes forest-transitive scope and must match the approved partner forest and SID-filtering design.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4706"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4706 mean?",
+      "answer": "Event ID 4706 records creation of an Active Directory domain trust and includes the actor, trusted-domain identity, trust type, direction, attributes, and SID-filtering state."
+    },
+    {
+      "question": "Does Trust Type 2 mean a forest trust?",
+      "answer": "No. Microsoft defines value 2 as TRUST_TYPE_UPLEVEL for Windows 2000 or later; the 0x8 FOREST_TRANSITIVE attribute identifies cross-forest trust scope."
+    },
+    {
+      "question": "Which 4706 values deserve immediate validation?",
+      "answer": "Every unplanned trust creation is high priority; specifically validate DomainSid, TdoDirection 3 bidirectional scope, TdoAttributes bits such as 0x8, and whether SID filtering is enabled."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4706: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4706",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Domain or Tenant Policy Modification: Trust Modification (T1484.002)",
+      "url": "https://attack.mitre.org/techniques/T1484/002/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

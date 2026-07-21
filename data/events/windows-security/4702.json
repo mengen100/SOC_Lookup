@@ -1,45 +1,155 @@
 {
-    "id":  "4702",
-    "source":  "windows_security",
-    "category":  "ScheduledTask",
-    "name":  "A scheduled task was updated",
-    "priority":  "P2",
-    "applicable_version":  "Windows Server 2016 and later; Windows 10 and later",
-    "last_reviewed":  "2026-07-11",
-    "definition":  "Event ID 4702 records modification of a scheduled task definition.",
-    "trigger_scenarios":  "Task Scheduler auditing logs the event when a registered task is changed.",
-    "key_fields":  [
-                       {
-                           "field":  "Task Name",
-                           "explanation":  "The changed task identifier."
-                       },
-                       {
-                           "field":  "Task Content",
-                           "explanation":  "Compare the XML before and after; Command, Arguments, Principal, and Trigger are decisive."
-                       },
-                       {
-                           "field":  "Subject",
-                           "explanation":  "The identity applying the change."
-                       }
-                   ],
-    "false_positives":  [
-                            "Management products update their scheduled tasks.",
-                            "Administrators revise approved maintenance tasks."
-                        ],
-    "related_event_ids":  [
-                              "4698",
-                              "4699",
-                              "4688"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1053.005",
-                              "technique_name":  "Scheduled Task/Job: Scheduled Task"
-                          }
-                      ],
-    "detection_notes":  "T1053.005 modification is indicated when Task Content changes \u003cCommand\u003e to powershell.exe, cmd.exe, mshta.exe, or a C:\\\\ProgramData\\\\ / C:\\\\Users\\\\ executable, or changes Principal to SYSTEM. Compare before-and-after XML, not the task name alone.",
-    "kql_snippet":  "SecurityEvent\n| where EventID == 4702\n| project TimeGenerated, Computer, Account, TaskName, TaskContent",
-    "spl_snippet":  "index=wineventlog EventCode=4702 | table _time, host, SubjectUserName, TaskName, TaskContent",
-    "sample_log":  "Task Name: \\Microsoft\\Windows\\Update\\CacheRefresh\nTask Content: \u003cCommand\u003epowershell.exe\u003c/Command\u003e\nSubject: CORP\\admin.ops",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4702"
+  "id": "4702",
+  "source": "windows_security",
+  "category": "ScheduledTask",
+  "name": "A scheduled task was updated",
+  "priority": "P2",
+  "applicable_version": "Windows Server 2016 and later; Windows 10 and later",
+  "last_reviewed": "2026-07-21",
+  "definition": "Event ID 4702 records modification of a scheduled task definition.",
+  "trigger_scenarios": "Task Scheduler auditing logs the event when a registered task is changed.",
+  "key_fields": [
+    {
+      "field": "Task Name",
+      "explanation": "The changed task identifier."
+    },
+    {
+      "field": "Task Content",
+      "explanation": "Compare the XML before and after; Command, Arguments, Principal, and Trigger are decisive."
+    },
+    {
+      "field": "Subject",
+      "explanation": "The identity applying the change."
+    }
+  ],
+  "false_positives": [
+    "Management products update their scheduled tasks.",
+    "Administrators revise approved maintenance tasks."
+  ],
+  "related_event_ids": [
+    "4698",
+    "4699",
+    "4688"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0003",
+      "tactic_name": "Persistence",
+      "technique_id": "T1053.005",
+      "technique_name": "Scheduled Task/Job: Scheduled Task",
+      "source_url": "https://attack.mitre.org/techniques/T1053/005/"
+    }
+  ],
+  "detection_notes": "T1053.005 Scheduled Task modification is indicated when TaskContent changes Command to powershell.exe, cmd.exe, mshta.exe, or a C:\\ProgramData\\ or C:\\Users\\ executable, or changes RunLevel to HighestAvailable under an unexpected principal. Compare before-and-after XML and correlate SubjectLogonId with 4624 rather than relying on TaskName alone.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4702\n| project TimeGenerated, Computer, Account, TaskName, TaskContent",
+  "spl_snippet": "index=wineventlog EventCode=4702 | table _time, host, SubjectUserName, TaskName, TaskContent",
+  "sample_log": "Task Name: \\Microsoft\\Windows\\Update\\CacheRefresh\nTask Content: <Command>powershell.exe</Command>\nSubject: CORP\\admin.ops",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4702",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Event ID 4702",
+      "query": "SecurityEvent\n| where EventID == 4702\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Event ID 4702",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4702\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Event ID 4702",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4702",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4702",
+      "query": "title: Windows Security Event ID 4702\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4702\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "TaskContent/Command",
+      "value": "powershell.exe",
+      "meaning": "The updated task executes PowerShell.",
+      "security_relevance": "This is not malicious by itself, but an unexpected principal, arguments, trigger, or user-writable script path can make it an actionable scheduled-task persistence change.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4702"
+    },
+    {
+      "field": "TaskContent/RunLevel",
+      "value": "HighestAvailable",
+      "meaning": "The task requests the highest privilege available to its configured principal.",
+      "security_relevance": "Compare the value with the prior task XML and principal to identify a privilege-impacting modification rather than alerting on the value alone.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4702"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4702 mean?",
+      "answer": "Event ID 4702 records that a scheduled task was updated and includes the actor, task name, and task definition content."
+    },
+    {
+      "question": "Which parts of TaskContent should be compared?",
+      "answer": "Compare actions and arguments, principals, run level, triggers, working directory, and settings with the prior XML or approved task baseline."
+    },
+    {
+      "question": "Does PowerShell in a scheduled task prove persistence?",
+      "answer": "No. Legitimate automation uses PowerShell; investigate unexpected changes, encoded or remote content, user-writable paths, elevated principals, and subsequent executions."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4702: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4702",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Scheduled Task/Job: Scheduled Task (T1053.005)",
+      "url": "https://attack.mitre.org/techniques/T1053/005/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

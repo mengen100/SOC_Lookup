@@ -5,7 +5,7 @@
   "name": "A replay attack was detected",
   "priority": "P2",
   "applicable_version": "Windows Server 2008 R2 and later",
-  "last_reviewed": "2026-07-13",
+  "last_reviewed": "2026-07-21",
   "definition": "Windows Security Event ID 4649 records a Kerberos replay condition where the domain controller returned KRB_AP_ERR_REPEAT to the client.",
   "trigger_scenarios": "This event is generated on domain controllers when a Kerberos authenticator is replayed: Microsoft documents that the server name, client name, time, and microsecond fields matched recently cached authenticator data.",
   "key_fields": [
@@ -33,13 +33,123 @@
   ],
   "attck_mapping": [
     {
+      "tactic_id": "TA0005",
+      "tactic_name": "Defense Evasion",
       "technique_id": "T1550.003",
-      "technique_name": "Use Alternate Authentication Material: Pass the Ticket"
+      "technique_name": "Use Alternate Authentication Material: Pass the Ticket",
+      "source_url": "https://attack.mitre.org/techniques/T1550/003/"
     }
   ],
-  "detection_notes": "Use threshold=1 occurrence on a domain controller: Microsoft recommends alerting and investigating Event 4649 because KRB_AP_ERR_REPEAT means the server name, client name, time, and microsecond fields matched recently cached Kerberos authenticator data. Treat this as T1550.003 Pass the Ticket when the replayed Account Name also has abnormal 4769 service ticket requests or follow-on 4624 network logons; if the same Workstation Name aligns with a recent network change, validate packet duplication before declaring compromise.",
+  "detection_notes": "Use threshold=1 for triage because Event ID 4649 represents KRB_AP_ERR_REPEAT replay detection. T1550.003 Pass the Ticket becomes more plausible when RequestType is KRB_AP_REQ, AuthenticationPackage is Kerberos, and the same account or workstation has abnormal 4769 service-ticket requests or follow-on 4624 network logons; first exclude packet duplication or network-path anomalies.",
   "kql_snippet": "SecurityEvent\n| where EventID == 4649\n| project TimeGenerated, Computer, Account",
   "spl_snippet": "index=wineventlog EventCode=4649 | table _time, host",
   "sample_log": "EventID: 4649\nCredentials Which Were Replayed Account Name: svc-web\nAccount Domain: CORP\nRequest Type: KRB_AP_REQ\nAuthentication Package: Kerberos\nWorkstation Name: WS-042\nProcess ID: 0x1f4",
-  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4649"
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4649",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Event ID 4649",
+      "query": "SecurityEvent\n| where EventID == 4649\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Event ID 4649",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4649\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Event ID 4649",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4649",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4649",
+      "query": "title: Windows Security Event ID 4649\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4649\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "RequestType",
+      "value": "KRB_AP_REQ",
+      "meaning": "The replay involved a Kerberos application request carrying an authenticator.",
+      "security_relevance": "Together with KRB_AP_ERR_REPEAT semantics and suspicious ticket activity, it supports investigation of replayed Kerberos authentication material.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4649"
+    },
+    {
+      "field": "AuthenticationPackage",
+      "value": "Kerberos",
+      "meaning": "Kerberos processed the replayed credential request.",
+      "security_relevance": "This narrows correlation to Kerberos service-ticket and logon events rather than NTLM credential validation.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4649"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4649 mean?",
+      "answer": "Event ID 4649 records that Windows detected a replayed Kerberos authenticator and includes the replayed account, request, process, and workstation context."
+    },
+    {
+      "question": "Does one Event ID 4649 prove pass-the-ticket activity?",
+      "answer": "No. Microsoft notes that network configuration problems can produce replay detections; confirm duplicate traffic and correlate the account with abnormal service-ticket and logon activity."
+    },
+    {
+      "question": "Which events should be correlated with 4649?",
+      "answer": "Review 4769 service-ticket requests and 4624 logons for the account and workstation, then compare ProcessId and ProcessName with local process telemetry."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4649: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4649",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Use Alternate Authentication Material: Pass the Ticket (T1550.003)",
+      "url": "https://attack.mitre.org/techniques/T1550/003/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

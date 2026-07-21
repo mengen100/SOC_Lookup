@@ -1,45 +1,155 @@
 {
-    "id":  "4657",
-    "source":  "windows_security",
-    "category":  "Registry",
-    "name":  "A registry value was modified",
-    "priority":  "P2",
-    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
-    "last_reviewed":  "2026-07-11",
-    "definition":  "Event ID 4657 records modification of an audited registry value.",
-    "trigger_scenarios":  "It requires a SACL on the affected registry key and Object Access auditing.",
-    "key_fields":  [
-                       {
-                           "field":  "Object Name",
-                           "explanation":  "The modified registry path."
-                       },
-                       {
-                           "field":  "Object Value Name",
-                           "explanation":  "The changed value; focus on autorun and security-policy values."
-                       },
-                       {
-                           "field":  "Old Value / New Value",
-                           "explanation":  "The before-and-after data identifies the actual persistence or defense change."
-                       }
-                   ],
-    "false_positives":  [
-                            "Installers and policy management modify registry values.",
-                            "Legitimate software updates can alter autorun configuration."
-                        ],
-    "related_event_ids":  [
-                              "4663",
-                              "4688",
-                              "4719"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1547.001",
-                              "technique_name":  "Boot or Logon Autostart Execution: Registry Run Keys / Startup Folder"
-                          }
-                      ],
-    "detection_notes":  "T1547.001 persistence is indicated when Object Name is HKLM or HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run or RunOnce and New Value points to a script, LOLBin, or user-writable executable. Capture Old Value and New Value and pivot to the process that made the change.",
-    "kql_snippet":  "SecurityEvent\n| where EventID == 4657\n| where ObjectName has @\"\\CurrentVersion\\Run\"\n| project TimeGenerated, Computer, Account, ObjectName, ObjectValueName, NewValue",
-    "spl_snippet":  "index=wineventlog EventCode=4657 Object_Name=\"*\\CurrentVersion\\Run*\" | table _time, host, Object_Name, Object_Value_Name, New_Value",
-    "sample_log":  "Object Name: HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\nObject Value Name: Updater\nNew Value: C:\\Users\\Public\\updater.exe",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4657"
+  "id": "4657",
+  "source": "windows_security",
+  "category": "Registry",
+  "name": "A registry value was modified",
+  "priority": "P2",
+  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
+  "last_reviewed": "2026-07-21",
+  "definition": "Event ID 4657 records modification of an audited registry value.",
+  "trigger_scenarios": "It requires a SACL on the affected registry key and Object Access auditing.",
+  "key_fields": [
+    {
+      "field": "Object Name",
+      "explanation": "The modified registry path."
+    },
+    {
+      "field": "Object Value Name",
+      "explanation": "The changed value; focus on autorun and security-policy values."
+    },
+    {
+      "field": "Old Value / New Value",
+      "explanation": "The before-and-after data identifies the actual persistence or defense change."
+    }
+  ],
+  "false_positives": [
+    "Installers and policy management modify registry values.",
+    "Legitimate software updates can alter autorun configuration."
+  ],
+  "related_event_ids": [
+    "4663",
+    "4688",
+    "4719"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0003",
+      "tactic_name": "Persistence",
+      "technique_id": "T1547.001",
+      "technique_name": "Boot or Logon Autostart Execution: Registry Run Keys / Startup Folder",
+      "source_url": "https://attack.mitre.org/techniques/T1547/001/"
+    }
+  ],
+  "detection_notes": "T1547.001 persistence is indicated when ObjectName is HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run or HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run and NewValue points to a script, LOLBin, or user-writable executable. Compare OldValue with NewValue and correlate ProcessId and SubjectLogonId to 4688 before deciding whether the change came from approved software installation.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4657\n| where ObjectName has @\"\\CurrentVersion\\Run\"\n| project TimeGenerated, Computer, Account, ObjectName, ObjectValueName, NewValue",
+  "spl_snippet": "index=wineventlog EventCode=4657 Object_Name=\"*\\CurrentVersion\\Run*\" | table _time, host, Object_Name, Object_Value_Name, New_Value",
+  "sample_log": "Object Name: HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\nObject Value Name: Updater\nNew Value: C:\\Users\\Public\\updater.exe",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4657",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Event ID 4657",
+      "query": "SecurityEvent\n| where EventID == 4657\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Event ID 4657",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4657\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Event ID 4657",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4657",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4657",
+      "query": "title: Windows Security Event ID 4657\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4657\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "ObjectName",
+      "value": "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+      "meaning": "The per-user Run key starts configured commands when that user logs on.",
+      "security_relevance": "A newly added value pointing to a script, LOLBin, or user-writable executable can establish logon persistence.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4657"
+    },
+    {
+      "field": "ObjectName",
+      "value": "HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+      "meaning": "The machine Run key applies logon startup configuration across users.",
+      "security_relevance": "Unexpected modification has broader persistence impact and should be joined to the writer process and prior value.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4657"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4657 mean?",
+      "answer": "Event ID 4657 records creation, modification, or deletion of a registry value when the value's SACL requests Set Value auditing."
+    },
+    {
+      "question": "Why might Event ID 4657 be missing for a registry change?",
+      "answer": "Registry object-access auditing and a matching SACL must be configured; absence of the event does not prove that no registry modification occurred."
+    },
+    {
+      "question": "Which 4657 fields matter for Run-key persistence?",
+      "answer": "ObjectName, ObjectValueName, OldValue, NewValue, ProcessName, and SubjectLogonId show where the value changed, its before-and-after data, and the responsible context."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4657: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4657",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Boot or Logon Autostart Execution: Registry Run Keys / Startup Folder (T1547.001)",
+      "url": "https://attack.mitre.org/techniques/T1547/001/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

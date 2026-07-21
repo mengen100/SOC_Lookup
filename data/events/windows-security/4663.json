@@ -1,45 +1,162 @@
 {
-    "id":  "4663",
-    "source":  "windows_security",
-    "category":  "ObjectAccess",
-    "name":  "An attempt was made to access an object",
-    "priority":  "P2",
-    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
-    "last_reviewed":  "2026-07-11",
-    "definition":  "Event ID 4663 records access to an audited file, registry key, or other securable object.",
-    "trigger_scenarios":  "It fires only when the target has an SACL and the requested access matches the audit policy.",
-    "key_fields":  [
-                       {
-                           "field":  "Object Name",
-                           "explanation":  "The audited file or registry path."
-                       },
-                       {
-                           "field":  "Access Mask",
-                           "explanation":  "0x2 is write data, 0x10000 is DELETE, and 0x40000 is WRITE_DAC; interpret it with Object Type."
-                       },
-                       {
-                           "field":  "Process Name",
-                           "explanation":  "The process requesting access, essential for distinguishing users from tools."
-                       }
-                   ],
-    "false_positives":  [
-                            "File servers and applications create substantial expected access noise.",
-                            "Backup and antivirus products request broad rights."
-                        ],
-    "related_event_ids":  [
-                              "4657",
-                              "5145",
-                              "4688"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1005",
-                              "technique_name":  "Data from Local System"
-                          }
-                      ],
-    "detection_notes":  "Use 4663 for T1005 collection when Object Name matches sensitive shares or local data and Access Mask includes 0x1 read data or 0x2 write data from an unusual Process Name. Access Mask 0x10000 on a large set of files can support ransomware or cleanup investigation.",
-    "kql_snippet":  "SecurityEvent\n| where EventID == 4663\n| project TimeGenerated, Computer, Account, ObjectName, AccessMask, ProcessName",
-    "spl_snippet":  "index=wineventlog EventCode=4663 | table _time, host, SubjectUserName, Object_Name, Access_Mask, Process_Name",
-    "sample_log":  "Object Name: C:\\Finance\\payroll.xlsx\nAccess Mask: 0x1\nProcess Name: C:\\Windows\\System32\\cmd.exe",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4663"
+  "id": "4663",
+  "source": "windows_security",
+  "category": "ObjectAccess",
+  "name": "An attempt was made to access an object",
+  "priority": "P2",
+  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
+  "last_reviewed": "2026-07-21",
+  "definition": "Event ID 4663 records access to an audited file, registry key, or other securable object.",
+  "trigger_scenarios": "It fires only when the target has an SACL and the requested access matches the audit policy.",
+  "key_fields": [
+    {
+      "field": "Object Name",
+      "explanation": "The audited file or registry path."
+    },
+    {
+      "field": "Access Mask",
+      "explanation": "0x2 is write data, 0x10000 is DELETE, and 0x40000 is WRITE_DAC; interpret it with Object Type."
+    },
+    {
+      "field": "Process Name",
+      "explanation": "The process requesting access, essential for distinguishing users from tools."
+    }
+  ],
+  "false_positives": [
+    "File servers and applications create substantial expected access noise.",
+    "Backup and antivirus products request broad rights."
+  ],
+  "related_event_ids": [
+    "4657",
+    "5145",
+    "4688"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0009",
+      "tactic_name": "Collection",
+      "technique_id": "T1005",
+      "technique_name": "Data from Local System",
+      "source_url": "https://attack.mitre.org/techniques/T1005/"
+    }
+  ],
+  "detection_notes": "Use 4663 for T1005 Data from Local System only when ObjectType and ObjectName identify sensitive local data and AccessMask includes 0x1 ReadData from an unexpected ProcessName. AccessMask 0x2 indicates writes and 0x10000 indicates delete access for file objects; retain ObjectType because the same bit can have different meanings for other object classes, then join ProcessId to 4688.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4663\n| project TimeGenerated, Computer, Account, ObjectName, AccessMask, ProcessName",
+  "spl_snippet": "index=wineventlog EventCode=4663 | table _time, host, SubjectUserName, Object_Name, Access_Mask, Process_Name",
+  "sample_log": "Object Name: C:\\Finance\\payroll.xlsx\nAccess Mask: 0x1\nProcess Name: C:\\Windows\\System32\\cmd.exe",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4663",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Event ID 4663",
+      "query": "SecurityEvent\n| where EventID == 4663\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Event ID 4663",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4663\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Event ID 4663",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4663",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4663",
+      "query": "title: Windows Security Event ID 4663\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4663\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "AccessMask",
+      "value": "0x1",
+      "meaning": "For file objects, the requested access includes ReadData/ListDirectory.",
+      "security_relevance": "Reading a sensitive local file supports collection triage when the process, account, and object are unexpected; the mask alone is common and benign in many workflows.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4663"
+    },
+    {
+      "field": "AccessMask",
+      "value": "0x2",
+      "meaning": "For file objects, the requested access includes WriteData/AddFile.",
+      "security_relevance": "Unexpected writes to protected or monitored data can indicate staging, tampering, or ransomware and require object-specific context.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4663"
+    },
+    {
+      "field": "AccessMask",
+      "value": "0x10000",
+      "meaning": "DELETE access was requested for the object.",
+      "security_relevance": "High-volume delete access against monitored files can support destructive-action or cleanup investigation when correlated with the responsible process.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4663"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4663 mean?",
+      "answer": "Event ID 4663 records that a process used an access right on an audited object, such as a file, registry key, kernel object, or Active Directory object."
+    },
+    {
+      "question": "Does AccessMask 0x1 always mean file read?",
+      "answer": "No. Access-mask meanings depend on ObjectType; for file objects 0x1 is ReadData/ListDirectory, so detection must retain the object type and requested-access text."
+    },
+    {
+      "question": "Why can Event ID 4663 be high volume?",
+      "answer": "Broad object SACLs can audit routine reads and writes; scope auditing to high-value objects and baseline approved processes and accounts."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4663: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4663",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Data from Local System (T1005)",
+      "url": "https://attack.mitre.org/techniques/T1005/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

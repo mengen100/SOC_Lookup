@@ -221,12 +221,24 @@ test("ships reader-facing event content in English", () => {
 
 test("connects each completed event to a specific ATT&CK technique in detection guidance", () => {
   const incompleteEvents: string[] = [];
+  const noDirectAttackMapping = new Set([
+    "windows_security:4616",
+    "windows_security:4647",
+    "windows_security:4689",
+  ]);
 
   for (const event of getCompleteEvents()) {
     const techniqueIds = event.attck_mapping?.map((mapping) => mapping.technique_id) ?? [];
     const eventKey = `${event.source}:${event.id}`;
 
-    if (techniqueIds.length === 0 || !techniqueIds.some((techniqueId) => event.detection_notes.includes(techniqueId))) {
+    if (techniqueIds.length === 0) {
+      if (!noDirectAttackMapping.has(eventKey) || !event.detection_notes.includes("no direct ATT&CK technique mapping")) {
+        incompleteEvents.push(eventKey);
+      }
+      continue;
+    }
+
+    if (noDirectAttackMapping.has(eventKey) || !techniqueIds.some((techniqueId) => event.detection_notes.includes(techniqueId))) {
       incompleteEvents.push(eventKey);
     }
   }
@@ -310,18 +322,30 @@ test("collects every semantic error in an enriched event record", () => {
 test("requires migrated GEO records to satisfy enriched content validation", () => {
   const migratedKeys = new Set([
     "windows_security:1102",
+    "windows_security:4616",
     "windows_security:4103",
     "windows_security:4104",
     "windows_security:4624",
     "windows_security:4625",
     "windows_security:4634",
+    "windows_security:4647",
     "windows_security:4648",
+    "windows_security:4649",
+    "windows_security:4657",
+    "windows_security:4663",
     "windows_security:4672",
     "windows_security:4688",
+    "windows_security:4689",
     "windows_security:4697",
     "windows_security:4698",
+    "windows_security:4699",
+    "windows_security:4702",
+    "windows_security:4706",
+    "windows_security:4715",
+    "windows_security:4716",
     "windows_security:4719",
     "windows_security:4720",
+    "windows_security:4722",
     "windows_security:4724",
     "windows_security:4732",
     "windows_security:4738",
