@@ -1,55 +1,161 @@
 {
-    "id":  "4624",
-    "source":  "windows_security",
-    "category":  "Logon",
-    "name":  "An account was successfully logged on",
-    "priority":  "P1",
-    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
-    "last_reviewed":  "2026-07-10",
-    "definition":  "Windows Security Event ID 4624 records a successful logon and provides the primary host-level record for determining who accessed a system, how they authenticated, and from where.",
-    "trigger_scenarios":  "Windows generates this event when a logon session is created successfully. It covers local console access, network access, RDP, scheduled tasks, services, and other authentication mechanisms.",
-    "key_fields":  [
-                       {
-                           "field":  "New Logon / Account Name",
-                           "explanation":  "The account associated with the new session. Review the domain, account type, and whether the identity is expected on the target system."
-                       },
-                       {
-                           "field":  "Logon Type",
-                           "explanation":  "Identifies the session type. Type 3 commonly represents SMB or other network access, Type 10 represents RDP, and Type 2 represents a local interactive session."
-                       },
-                       {
-                           "field":  "Network Information",
-                           "explanation":  "Workstation Name, Source Network Address, and Source Port identify the client when the logon is remote. These values are useful for lateral-movement timelines."
-                       },
-                       {
-                           "field":  "Authentication Package / Logon Process",
-                           "explanation":  "Shows the authentication path, such as Kerberos or NTLM. Unexpected NTLM use, unusual logon processes, or a mismatch with normal access patterns can be significant."
-                       }
-                   ],
-    "false_positives":  [
-                            "Service accounts, scheduled tasks, and management platforms may create large volumes of expected logons.",
-                            "Domain controllers and file servers commonly record Type 3 logons during normal application and SMB activity.",
-                            "Jump hosts and remote-management tooling can produce legitimate Type 10 logons outside normal business hours."
-                        ],
-    "related_event_ids":  [
-                              "4625",
-                              "4634",
-                              "4648",
-                              "4672"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1078",
-                              "technique_name":  "Valid Accounts"
-                          },
-                          {
-                              "technique_id":  "T1021",
-                              "technique_name":  "Remote Services"
-                          }
-                      ],
-    "detection_notes":  "T1021 remote-service activity is indicated by Logon Type 10 for RDP or Logon Type 3 for SMB from a source that is not an approved jump host. A Type 10 4624 immediately after 4625 failures or a Type 3 logon to ADMIN$ should be correlated to 5140 and 4688; the Logon ID binds the session to follow-on execution.",
-    "kql_snippet":  "SecurityEvent\n| where EventID == 4624 and LogonType in (3, 10)\n| project TimeGenerated, Computer, Account, LogonType, IpAddress, WorkstationName, AuthenticationPackageName\n| order by TimeGenerated desc",
-    "spl_snippet":  "index=wineventlog EventCode=4624 Logon_Type IN (3, 10)\n| table _time, host, Account_Name, Logon_Type, Source_Network_Address, Workstation_Name",
-    "sample_log":  "Subject: Security ID: S-1-0-0\nNew Logon: Security ID: CORP\\jsmith\nLogon Type: 10\nWorkstation Name: WS-014\nSource Network Address: 10.x.x.x\nAuthentication Package: Kerberos",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4624"
+  "id": "4624",
+  "source": "windows_security",
+  "category": "Logon",
+  "name": "An account was successfully logged on",
+  "priority": "P1",
+  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
+  "last_reviewed": "2026-07-21",
+  "definition": "Windows Security Event ID 4624 records a successful logon and provides the primary host-level record for determining who accessed a system, how they authenticated, and from where.",
+  "trigger_scenarios": "Windows generates this event when a logon session is created successfully. It covers local console access, network access, RDP, scheduled tasks, services, and other authentication mechanisms.",
+  "key_fields": [
+    {
+      "field": "New Logon / Account Name",
+      "explanation": "The account associated with the new session. Review the domain, account type, and whether the identity is expected on the target system."
+    },
+    {
+      "field": "Logon Type",
+      "explanation": "Identifies the session type. Type 3 commonly represents SMB or other network access, Type 10 represents RDP, and Type 2 represents a local interactive session."
+    },
+    {
+      "field": "Network Information",
+      "explanation": "Workstation Name, Source Network Address, and Source Port identify the client when the logon is remote. These values are useful for lateral-movement timelines."
+    },
+    {
+      "field": "Authentication Package / Logon Process",
+      "explanation": "Shows the authentication path, such as Kerberos or NTLM. Unexpected NTLM use, unusual logon processes, or a mismatch with normal access patterns can be significant."
+    }
+  ],
+  "false_positives": [
+    "Service accounts, scheduled tasks, and management platforms may create large volumes of expected logons.",
+    "Domain controllers and file servers commonly record Type 3 logons during normal application and SMB activity.",
+    "Jump hosts and remote-management tooling can produce legitimate Type 10 logons outside normal business hours."
+  ],
+  "related_event_ids": [
+    "4625",
+    "4634",
+    "4648",
+    "4672"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0001",
+      "tactic_name": "Initial Access",
+      "technique_id": "T1078",
+      "technique_name": "Valid Accounts",
+      "source_url": "https://attack.mitre.org/techniques/T1078/"
+    }
+  ],
+  "detection_notes": "T1078 Valid Accounts triage should separate Logon Type 10 RemoteInteractive sessions from Type 3 network logons and compare the source with approved jump hosts and service paths. A Type 10 success immediately after 4625 failures, or a Type 3 session followed by ADMIN$ access in 5140, is more significant than an isolated successful logon; use Logon ID to bind the session to follow-on 4688 activity.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4624 and LogonType in (3, 10)\n| project TimeGenerated, Computer, Account, LogonType, IpAddress, WorkstationName, AuthenticationPackageName\n| order by TimeGenerated desc",
+  "spl_snippet": "index=wineventlog EventCode=4624 Logon_Type IN (3, 10)\n| table _time, host, Account_Name, Logon_Type, Source_Network_Address, Workstation_Name",
+  "sample_log": "Subject: Security ID: S-1-0-0\nNew Logon: Security ID: CORP\\jsmith\nLogon Type: 10\nWorkstation Name: WS-014\nSource Network Address: 10.x.x.x\nAuthentication Package: Kerberos",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4624",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Event ID 4624",
+      "query": "SecurityEvent\n| where EventID == 4624\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Microsoft Sentinel Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Event ID 4624",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4624\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before implementing event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Event ID 4624",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4624",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The relevant Windows event channel is ingested through a Cortex XDR Windows event collection path.",
+        "Inspect raw provider fields because parsed field names vary by collection path and event provider."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Event ID 4624",
+      "query": "title: Windows Event ID 4624\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4624\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "LogonType",
+      "value": "3",
+      "meaning": "Network logon, such as access to a shared resource.",
+      "security_relevance": "It separates network authentication from local console and remote-interactive sessions.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4624"
+    },
+    {
+      "field": "LogonType",
+      "value": "10",
+      "meaning": "RemoteInteractive logon, commonly Remote Desktop or Terminal Services.",
+      "security_relevance": "It isolates successful remote-interactive sessions for RDP investigations.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4624"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4624 mean?",
+      "answer": "Event ID 4624 records a successful Windows logon on the destination computer and identifies the account, logon type, authentication process, and available network origin."
+    },
+    {
+      "question": "Which 4624 logon type indicates RDP?",
+      "answer": "Logon Type 10 is RemoteInteractive and is commonly associated with Remote Desktop or Terminal Services."
+    },
+    {
+      "question": "Does Event ID 4624 prove valid-account abuse?",
+      "answer": "No. It records successful authentication, most of which is legitimate; abuse requires correlation with account expectations, source, logon type, preceding failures, and follow-on activity."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4624: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4624",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Valid Accounts (T1078)",
+      "url": "https://attack.mitre.org/techniques/T1078/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

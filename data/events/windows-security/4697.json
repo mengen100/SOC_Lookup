@@ -1,49 +1,155 @@
 {
-    "id":  "4697",
-    "source":  "windows_security",
-    "category":  "Service",
-    "name":  "A service was installed in the system",
-    "priority":  "P1",
-    "applicable_version":  "Windows Server 2016 and later; Windows 10 and later",
-    "last_reviewed":  "2026-07-10",
-    "definition":  "Windows Security Event ID 4697 records installation of a service and is a high-value signal for persistence and remote execution.",
-    "trigger_scenarios":  "The event is generated when a new service is installed and Security System Extension auditing is enabled.",
-    "key_fields":  [
-                       {
-                           "field":  "Service Name",
-                           "explanation":  "The installed service identifier. Names that imitate legitimate services require careful validation."
-                       },
-                       {
-                           "field":  "Service File Name",
-                           "explanation":  "The binary path and arguments used by the service. Writable paths, UNC paths, and suspicious command lines are important indicators."
-                       },
-                       {
-                           "field":  "Subject",
-                           "explanation":  "The account that installed the service. Correlate it with remote logon and process telemetry."
-                       }
-                   ],
-    "false_positives":  [
-                            "Software installation, patching, EDR, and management systems routinely install services.",
-                            "Administrators may install services during maintenance windows."
-                        ],
-    "related_event_ids":  [
-                              "7045",
-                              "4624",
-                              "4688"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1543.003",
-                              "technique_name":  "Create or Modify System Process: Windows Service"
-                          },
-                          {
-                              "technique_id":  "T1021.002",
-                              "technique_name":  "Remote Services: SMB/Windows Admin Shares"
-                          }
-                      ],
-    "detection_notes":  "T1543.003 Windows Service persistence is indicated when Service File Name points to a user-writable path, UNC path, or contains powershell.exe/cmd.exe, and Service Start Type is Auto start or Boot start. A service created after Type 3 SMB access is consistent with remote service execution.",
-    "kql_snippet":  "SecurityEvent\n| where EventID == 4697\n| project TimeGenerated, Computer, Account, ServiceName, ServiceFileName, ServiceType, StartType\n| order by TimeGenerated desc",
-    "spl_snippet":  "index=wineventlog EventCode=4697\n| table _time, host, SubjectUserName, ServiceName, ServiceFileName, ServiceStartType",
-    "sample_log":  "Service Name: UpdaterSvc\nService File Name: C:\\Users\\Public\\updater.exe\nService Start Type: Auto start\nSubject: CORP\\admin.ops",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4697"
+  "id": "4697",
+  "source": "windows_security",
+  "category": "Service",
+  "name": "A service was installed in the system",
+  "priority": "P1",
+  "applicable_version": "Windows Server 2016 and later; Windows 10 and later",
+  "last_reviewed": "2026-07-21",
+  "definition": "Windows Security Event ID 4697 records installation of a service and is a high-value signal for persistence and remote execution.",
+  "trigger_scenarios": "The event is generated when a new service is installed and Security System Extension auditing is enabled.",
+  "key_fields": [
+    {
+      "field": "Service Name",
+      "explanation": "The installed service identifier. Names that imitate legitimate services require careful validation."
+    },
+    {
+      "field": "Service File Name",
+      "explanation": "The binary path and arguments used by the service. Writable paths, UNC paths, and suspicious command lines are important indicators."
+    },
+    {
+      "field": "Subject",
+      "explanation": "The account that installed the service. Correlate it with remote logon and process telemetry."
+    }
+  ],
+  "false_positives": [
+    "Software installation, patching, EDR, and management systems routinely install services.",
+    "Administrators may install services during maintenance windows."
+  ],
+  "related_event_ids": [
+    "7045",
+    "4624",
+    "4688"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0003",
+      "tactic_name": "Persistence",
+      "technique_id": "T1543.003",
+      "technique_name": "Create or Modify System Process: Windows Service",
+      "source_url": "https://attack.mitre.org/techniques/T1543/003/"
+    }
+  ],
+  "detection_notes": "T1543.003 Windows Service persistence is indicated when Service File Name points to a user-writable path, UNC path, or contains powershell.exe/cmd.exe, and Service Start Type is Auto start or Boot start. A service created after Type 3 SMB access is consistent with remote service execution.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4697\n| project TimeGenerated, Computer, Account, ServiceName, ServiceFileName, ServiceType, StartType\n| order by TimeGenerated desc",
+  "spl_snippet": "index=wineventlog EventCode=4697\n| table _time, host, SubjectUserName, ServiceName, ServiceFileName, ServiceStartType",
+  "sample_log": "Service Name: UpdaterSvc\nService File Name: C:\\Users\\Public\\updater.exe\nService Start Type: Auto start\nSubject: CORP\\admin.ops",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4697",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Event ID 4697",
+      "query": "SecurityEvent\n| where EventID == 4697\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Microsoft Sentinel Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Event ID 4697",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4697\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before implementing event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Event ID 4697",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4697",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The relevant Windows event channel is ingested through a Cortex XDR Windows event collection path.",
+        "Inspect raw provider fields because parsed field names vary by collection path and event provider."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Event ID 4697",
+      "query": "title: Windows Event ID 4697\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4697\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "ServiceStartType",
+      "value": "2",
+      "meaning": "The service is configured for automatic start by the service control manager during startup.",
+      "security_relevance": "An unknown executable with start type 2 establishes reboot persistence and deserves immediate path and signer review.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4697"
+    },
+    {
+      "field": "ServiceStartType",
+      "value": "0",
+      "meaning": "The service is a boot-start device driver loaded by the system loader.",
+      "security_relevance": "An unexpected driver service at boot start has kernel-level impact and requires validation of the image and signature.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4697"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4697 mean?",
+      "answer": "Event ID 4697 records installation of a Windows service and includes its name, image path, service type, start type, and service account."
+    },
+    {
+      "question": "Which 4697 fields are most important for detection?",
+      "answer": "ServiceFileName, ServiceStartType, ServiceType, ServiceAccount, SubjectUserName, and the host determine what will run, when it starts, and who installed it."
+    },
+    {
+      "question": "Are all new service events malicious?",
+      "answer": "No. Software installation and enterprise management routinely create services; suspicious cases involve unapproved installers, user-writable or remote paths, command interpreters, unusual accounts, or unexpected boot and automatic start types."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4697: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4697",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Create or Modify System Process: Windows Service (T1543.003)",
+      "url": "https://attack.mitre.org/techniques/T1543/003/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

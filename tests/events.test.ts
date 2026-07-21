@@ -307,19 +307,31 @@ test("collects every semantic error in an enriched event record", () => {
   assert.ok(errors.some((error) => error.includes("vendor source")));
 });
 
-test("requires the GEO pilot records to satisfy enriched content validation", () => {
-  const pilotKeys = new Set([
+test("requires migrated GEO records to satisfy enriched content validation", () => {
+  const migratedKeys = new Set([
+    "windows_security:1102",
+    "windows_security:4103",
     "windows_security:4104",
+    "windows_security:4624",
     "windows_security:4625",
+    "windows_security:4634",
+    "windows_security:4648",
+    "windows_security:4672",
     "windows_security:4688",
+    "windows_security:4697",
+    "windows_security:4698",
+    "windows_security:4719",
+    "windows_security:4720",
+    "windows_security:4724",
+    "windows_security:4732",
     "windows_security:4769",
     "sysmon:1",
   ]);
   const errors = getCompleteEvents()
-    .filter((event) => pilotKeys.has(`${event.source}:${event.id}`))
+    .filter((event) => migratedKeys.has(`${event.source}:${event.id}`))
     .flatMap(validateEnrichedEvent);
 
-  assert.deepEqual(errors, [], `GEO pilot validation errors:\n${errors.join("\n")}`);
+  assert.deepEqual(errors, [], `GEO migration validation errors:\n${errors.join("\n")}`);
 });
 
 test("returns completed events by public route", () => {

@@ -1,45 +1,155 @@
 {
-    "id":  "4634",
-    "source":  "windows_security",
-    "category":  "Logon",
-    "name":  "An account was logged off",
-    "priority":  "P1",
-    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
-    "last_reviewed":  "2026-07-10",
-    "definition":  "Windows Security Event ID 4634 records termination of a logon session and helps bound the duration of user and service activity.",
-    "trigger_scenarios":  "Windows writes the event when a logon session ends because of user sign-out, shutdown, disconnect, or service termination.",
-    "key_fields":  [
-                       {
-                           "field":  "Subject",
-                           "explanation":  "The account associated with the ending session."
-                       },
-                       {
-                           "field":  "Logon Type",
-                           "explanation":  "The session type, such as network or RemoteInteractive."
-                       },
-                       {
-                           "field":  "Logon ID",
-                           "explanation":  "Use this identifier to correlate the event with 4624 and related activity."
-                       }
-                   ],
-    "false_positives":  [
-                            "Normal session completion generates frequent events.",
-                            "Service and network sessions can end rapidly under normal application behavior."
-                        ],
-    "related_event_ids":  [
-                              "4624",
-                              "4647",
-                              "4778"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1078",
-                              "technique_name":  "Valid Accounts"
-                          }
-                      ],
-    "detection_notes":  "For T1078 Valid Accounts timeline reconstruction, pair 4634 with its 4624 by Logon ID. A Type 10 session that has no 4647 user-initiated logoff but ends after suspicious 4688 activity can indicate disconnect or forced session cleanup; the exact Logon Type distinguishes RDP from SMB Type 3 activity.",
-    "kql_snippet":  "SecurityEvent\n| where EventID in (4624, 4634)\n| project TimeGenerated, EventID, Computer, Account, LogonType, TargetLogonId\n| order by TimeGenerated asc",
-    "spl_snippet":  "index=wineventlog EventCode=4634\n| table _time, host, TargetUserName, LogonType, TargetLogonId",
-    "sample_log":  "Target Account: CORP\\jsmith\nLogon Type: 10\nLogon ID: 0x1a2b3c",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4634"
+  "id": "4634",
+  "source": "windows_security",
+  "category": "Logon",
+  "name": "An account was logged off",
+  "priority": "P1",
+  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
+  "last_reviewed": "2026-07-21",
+  "definition": "Windows Security Event ID 4634 records termination of a logon session and helps bound the duration of user and service activity.",
+  "trigger_scenarios": "Windows writes the event when a logon session ends because of user sign-out, shutdown, disconnect, or service termination.",
+  "key_fields": [
+    {
+      "field": "Subject",
+      "explanation": "The account associated with the ending session."
+    },
+    {
+      "field": "Logon Type",
+      "explanation": "The session type, such as network or RemoteInteractive."
+    },
+    {
+      "field": "Logon ID",
+      "explanation": "Use this identifier to correlate the event with 4624 and related activity."
+    }
+  ],
+  "false_positives": [
+    "Normal session completion generates frequent events.",
+    "Service and network sessions can end rapidly under normal application behavior."
+  ],
+  "related_event_ids": [
+    "4624",
+    "4647",
+    "4778"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0005",
+      "tactic_name": "Defense Evasion",
+      "technique_id": "T1078",
+      "technique_name": "Valid Accounts",
+      "source_url": "https://attack.mitre.org/techniques/T1078/"
+    }
+  ],
+  "detection_notes": "For T1078 Valid Accounts timeline reconstruction, pair 4634 with its 4624 by Logon ID. A Type 10 session that has no 4647 user-initiated logoff but ends after suspicious 4688 activity can indicate disconnect or forced session cleanup; the exact Logon Type distinguishes RDP from SMB Type 3 activity.",
+  "kql_snippet": "SecurityEvent\n| where EventID in (4624, 4634)\n| project TimeGenerated, EventID, Computer, Account, LogonType, TargetLogonId\n| order by TimeGenerated asc",
+  "spl_snippet": "index=wineventlog EventCode=4634\n| table _time, host, TargetUserName, LogonType, TargetLogonId",
+  "sample_log": "Target Account: CORP\\jsmith\nLogon Type: 10\nLogon ID: 0x1a2b3c",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4634",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Event ID 4634",
+      "query": "SecurityEvent\n| where EventID == 4634\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Microsoft Sentinel Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Event ID 4634",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4634\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before implementing event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Event ID 4634",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4634",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The relevant Windows event channel is ingested through a Cortex XDR Windows event collection path.",
+        "Inspect raw provider fields because parsed field names vary by collection path and event provider."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Event ID 4634",
+      "query": "title: Windows Event ID 4634\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4634\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "LogonType",
+      "value": "3",
+      "meaning": "The ended session was a network logon.",
+      "security_relevance": "Use it to bound network-resource access rather than an interactive desktop session.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4634"
+    },
+    {
+      "field": "LogonType",
+      "value": "10",
+      "meaning": "The ended session was RemoteInteractive.",
+      "security_relevance": "Pair it with a Type 10 event 4624 to bound an RDP session timeline.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4634"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4634 mean?",
+      "answer": "Event ID 4634 records that a Windows logon session was terminated and identifies the session through its Logon ID and Logon Type."
+    },
+    {
+      "question": "How do analysts pair 4634 with a logon?",
+      "answer": "Match the 4634 Logon ID to the Logon ID in event 4624 on the same computer; the identifier is only unique between reboots on that computer."
+    },
+    {
+      "question": "Is 4634 a user-initiated logoff?",
+      "answer": "Not necessarily. Event 4647 specifically records a user-initiated logoff, while 4634 records session termination and can also result from other cleanup paths."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4634: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4634",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Valid Accounts (T1078)",
+      "url": "https://attack.mitre.org/techniques/T1078/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

@@ -1,55 +1,159 @@
 {
-    "id":  "4720",
-    "source":  "windows_security",
-    "category":  "AccountMgmt",
-    "name":  "A user account was created",
-    "priority":  "P1",
-    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
-    "last_reviewed":  "2026-07-10",
-    "definition":  "Windows Security Event ID 4720 records creation of a local or domain user account and is a high-value signal for unauthorized persistence and account abuse.",
-    "trigger_scenarios":  "The event is generated when a security principal creates a user account on the audited computer or in Active Directory, depending on where the account is created.",
-    "key_fields":  [
-                       {
-                           "field":  "Subject",
-                           "explanation":  "The account that performed the creation. Validate whether it is an approved administrator, automation identity, or a potentially compromised privileged account."
-                       },
-                       {
-                           "field":  "Target Account",
-                           "explanation":  "The new account name, domain, and security identifier. Look for names that imitate built-in accounts or established administrators."
-                       },
-                       {
-                           "field":  "Account Expires / Password Last Set",
-                           "explanation":  "Account properties provide initial context. Long-lived accounts with passwords set at creation can be more useful to investigate than short-lived provisioning accounts."
-                       },
-                       {
-                           "field":  "User Principal Name",
-                           "explanation":  "For domain accounts, this identifies the UPN assigned to the new identity and helps correlate the account across directory and cloud telemetry."
-                       }
-                   ],
-    "false_positives":  [
-                            "HR-driven onboarding and automated identity provisioning regularly create valid accounts.",
-                            "Application installers and lab environments may create local service identities.",
-                            "Migration projects can create accounts in bursts that are unusual but authorized."
-                        ],
-    "related_event_ids":  [
-                              "4722",
-                              "4724",
-                              "4728",
-                              "4732"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1136",
-                              "technique_name":  "Create Account"
-                          },
-                          {
-                              "technique_id":  "T1098",
-                              "technique_name":  "Account Manipulation"
-                          }
-                      ],
-    "detection_notes":  "T1136 Create Account becomes high-confidence when a new Target Account is followed by 4722 enablement, 4732/4728 group addition, or a 4624 Type 10 logon within a short window. Account names mimicking built-ins and a password set with Password Never Expires are concrete persistence indicators.",
-    "kql_snippet":  "SecurityEvent\n| where EventID == 4720\n| project TimeGenerated, Computer, SubjectAccount = Account, TargetAccount, TargetDomainName, TargetSid\n| order by TimeGenerated desc",
-    "spl_snippet":  "index=wineventlog EventCode=4720\n| table _time, host, SubjectUserName, TargetUserName, TargetDomainName, TargetSid",
-    "sample_log":  "Subject: Account Name: CORP\\admin.ops\nTarget Account: Account Name: svc_backup2\nTarget Domain: CORP\nTarget SID: S-1-5-21-REDACTED\nUser Principal Name: svc_backup2@corp.example",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4720"
+  "id": "4720",
+  "source": "windows_security",
+  "category": "AccountMgmt",
+  "name": "A user account was created",
+  "priority": "P1",
+  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
+  "last_reviewed": "2026-07-21",
+  "definition": "Windows Security Event ID 4720 records creation of a local or domain user account and is a high-value signal for unauthorized persistence and account abuse.",
+  "trigger_scenarios": "The event is generated when a security principal creates a user account on the audited computer or in Active Directory, depending on where the account is created.",
+  "key_fields": [
+    {
+      "field": "Subject",
+      "explanation": "The account that performed the creation. Validate whether it is an approved administrator, automation identity, or a potentially compromised privileged account."
+    },
+    {
+      "field": "Target Account",
+      "explanation": "The new account name, domain, and security identifier. Look for names that imitate built-in accounts or established administrators."
+    },
+    {
+      "field": "Account Expires / Password Last Set",
+      "explanation": "Account properties provide initial context. Long-lived accounts with passwords set at creation can be more useful to investigate than short-lived provisioning accounts."
+    },
+    {
+      "field": "User Principal Name",
+      "explanation": "For domain accounts, this identifies the UPN assigned to the new identity and helps correlate the account across directory and cloud telemetry."
+    }
+  ],
+  "false_positives": [
+    "HR-driven onboarding and automated identity provisioning regularly create valid accounts.",
+    "Application installers and lab environments may create local service identities.",
+    "Migration projects can create accounts in bursts that are unusual but authorized."
+  ],
+  "related_event_ids": [
+    "4722",
+    "4724",
+    "4728",
+    "4732"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0003",
+      "tactic_name": "Persistence",
+      "technique_id": "T1136.001",
+      "technique_name": "Create Account: Local Account",
+      "source_url": "https://attack.mitre.org/techniques/T1136/001/"
+    },
+    {
+      "tactic_id": "TA0003",
+      "tactic_name": "Persistence",
+      "technique_id": "T1136.002",
+      "technique_name": "Create Account: Domain Account",
+      "source_url": "https://attack.mitre.org/techniques/T1136/002/"
+    }
+  ],
+  "detection_notes": "T1136.001 Local Account or T1136.002 Domain Account persistence becomes higher confidence when the new Target Account is followed by 4722 enablement, 4732/4728 group addition, or a 4624 Type 10 logon in a local correlation window=60 minutes. Account names mimicking built-ins and UserAccountControl settings that disable password expiration require comparison with the approved provisioning workflow rather than name-only alerting.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4720\n| project TimeGenerated, Computer, SubjectAccount = Account, TargetAccount, TargetDomainName, TargetSid\n| order by TimeGenerated desc",
+  "spl_snippet": "index=wineventlog EventCode=4720\n| table _time, host, SubjectUserName, TargetUserName, TargetDomainName, TargetSid",
+  "sample_log": "Subject: Account Name: CORP\\admin.ops\nTarget Account: Account Name: svc_backup2\nTarget Domain: CORP\nTarget SID: S-1-5-21-REDACTED\nUser Principal Name: svc_backup2@corp.example",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4720",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Event ID 4720",
+      "query": "SecurityEvent\n| where EventID == 4720\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Microsoft Sentinel Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Event ID 4720",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4720\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before implementing event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Event ID 4720",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4720",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The relevant Windows event channel is ingested through a Cortex XDR Windows event collection path.",
+        "Inspect raw provider fields because parsed field names vary by collection path and event provider."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Event ID 4720",
+      "query": "title: Windows Event ID 4720\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4720\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4720 mean?",
+      "answer": "Event ID 4720 records creation of a Windows user account and identifies both the actor and the new account."
+    },
+    {
+      "question": "Where is Event ID 4720 generated?",
+      "answer": "For a domain account it is generated on a domain controller; for a local account it is generated on the computer where the account was created."
+    },
+    {
+      "question": "Does Event ID 4720 prove persistence?",
+      "answer": "No. Provisioning systems and administrators create legitimate accounts; investigate unexpected creators, naming patterns, account attributes, group additions, enablement, and subsequent logons."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4720: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4720",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Create Account: Local Account (T1136.001)",
+      "url": "https://attack.mitre.org/techniques/T1136/001/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "Create Account: Domain Account (T1136.002)",
+      "url": "https://attack.mitre.org/techniques/T1136/002/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

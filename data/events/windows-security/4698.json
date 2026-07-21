@@ -1,45 +1,148 @@
 {
-    "id":  "4698",
-    "source":  "windows_security",
-    "category":  "ScheduledTask",
-    "name":  "A scheduled task was created",
-    "priority":  "P1",
-    "applicable_version":  "Windows Server 2016 and later; Windows 10 and later",
-    "last_reviewed":  "2026-07-10",
-    "definition":  "Windows Security Event ID 4698 records creation of a scheduled task and supports detection of task-based persistence and execution.",
-    "trigger_scenarios":  "The event is written when a scheduled task is registered and Task Scheduler auditing is enabled.",
-    "key_fields":  [
-                       {
-                           "field":  "Task Name",
-                           "explanation":  "The task path and name. Hidden-looking names, names that imitate Microsoft tasks, and new tasks on servers are useful pivots."
-                       },
-                       {
-                           "field":  "Task Content",
-                           "explanation":  "The XML task definition includes command, arguments, trigger, principal, and run level."
-                       },
-                       {
-                           "field":  "Subject",
-                           "explanation":  "The creating account. Review whether its role and logon context authorize task creation."
-                       }
-                   ],
-    "false_positives":  [
-                            "Enterprise management agents and software updaters create scheduled tasks.",
-                            "Administrators and developers may create one-time maintenance tasks."
-                        ],
-    "related_event_ids":  [
-                              "4702",
-                              "4699",
-                              "4688"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1053.005",
-                              "technique_name":  "Scheduled Task/Job: Scheduled Task"
-                          }
-                      ],
-    "detection_notes":  "T1053.005 is concrete when Task Content sets \u003cCommand\u003epowershell.exe\u003c/Command\u003e, mshta.exe, or a C:\\\\Users\\\\ / C:\\\\ProgramData\\\\ path, or sets \u003cRunLevel\u003eHighestAvailable\u003c/RunLevel\u003e or SYSTEM. Those XML values establish executable persistence, not merely an unusual Task Name.",
-    "kql_snippet":  "SecurityEvent\n| where EventID == 4698\n| project TimeGenerated, Computer, Account, TaskName, TaskContent\n| order by TimeGenerated desc",
-    "spl_snippet":  "index=wineventlog EventCode=4698\n| table _time, host, SubjectUserName, TaskName, TaskContent",
-    "sample_log":  "Task Name: \\Microsoft\\Windows\\Update\\CacheRefresh\nTask Content: \u003cExec\u003e\u003cCommand\u003epowershell.exe\u003c/Command\u003e\u003cArguments\u003e-File C:\\Users\\Public\\refresh.ps1\u003c/Arguments\u003e\u003c/Exec\u003e\nSubject: CORP\\admin.ops",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4698"
+  "id": "4698",
+  "source": "windows_security",
+  "category": "ScheduledTask",
+  "name": "A scheduled task was created",
+  "priority": "P1",
+  "applicable_version": "Windows Server 2016 and later; Windows 10 and later",
+  "last_reviewed": "2026-07-21",
+  "definition": "Windows Security Event ID 4698 records creation of a scheduled task and supports detection of task-based persistence and execution.",
+  "trigger_scenarios": "The event is written when a scheduled task is registered and Task Scheduler auditing is enabled.",
+  "key_fields": [
+    {
+      "field": "Task Name",
+      "explanation": "The task path and name. Hidden-looking names, names that imitate Microsoft tasks, and new tasks on servers are useful pivots."
+    },
+    {
+      "field": "Task Content",
+      "explanation": "The XML task definition includes command, arguments, trigger, principal, and run level."
+    },
+    {
+      "field": "Subject",
+      "explanation": "The creating account. Review whether its role and logon context authorize task creation."
+    }
+  ],
+  "false_positives": [
+    "Enterprise management agents and software updaters create scheduled tasks.",
+    "Administrators and developers may create one-time maintenance tasks."
+  ],
+  "related_event_ids": [
+    "4702",
+    "4699",
+    "4688"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0003",
+      "tactic_name": "Persistence",
+      "technique_id": "T1053.005",
+      "technique_name": "Scheduled Task/Job: Scheduled Task",
+      "source_url": "https://attack.mitre.org/techniques/T1053/005/"
+    }
+  ],
+  "detection_notes": "T1053.005 is concrete when Task Content sets <Command>powershell.exe</Command>, mshta.exe, or a C:\\\\Users\\\\ / C:\\\\ProgramData\\\\ path, or sets <RunLevel>HighestAvailable</RunLevel> or SYSTEM. Those XML values establish executable persistence, not merely an unusual Task Name.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4698\n| project TimeGenerated, Computer, Account, TaskName, TaskContent\n| order by TimeGenerated desc",
+  "spl_snippet": "index=wineventlog EventCode=4698\n| table _time, host, SubjectUserName, TaskName, TaskContent",
+  "sample_log": "Task Name: \\Microsoft\\Windows\\Update\\CacheRefresh\nTask Content: <Exec><Command>powershell.exe</Command><Arguments>-File C:\\Users\\Public\\refresh.ps1</Arguments></Exec>\nSubject: CORP\\admin.ops",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4698",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Event ID 4698",
+      "query": "SecurityEvent\n| where EventID == 4698\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Microsoft Sentinel Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Event ID 4698",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4698\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before implementing event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Event ID 4698",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4698",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The relevant Windows event channel is ingested through a Cortex XDR Windows event collection path.",
+        "Inspect raw provider fields because parsed field names vary by collection path and event provider."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Event ID 4698",
+      "query": "title: Windows Event ID 4698\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4698\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "TaskContent/RunLevel",
+      "value": "HighestAvailable",
+      "meaning": "The task requests the highest privilege level available to its principal.",
+      "security_relevance": "Pair this value with the task principal and executable path to identify elevated persistence rather than treating the value alone as malicious.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4698"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4698 mean?",
+      "answer": "Event ID 4698 records creation of a scheduled task and includes the task name and XML task definition."
+    },
+    {
+      "question": "Where is the executable stored in Event ID 4698?",
+      "answer": "Inspect the TaskContent XML, especially Exec Command and Arguments elements; other task action types can appear and should also be reviewed."
+    },
+    {
+      "question": "Are all newly created scheduled tasks suspicious?",
+      "answer": "No. Windows, management tools, and applications create legitimate tasks; prioritize unexpected principals, elevated run levels, unusual triggers, and commands in user-writable or temporary paths."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4698: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4698",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Scheduled Task/Job: Scheduled Task (T1053.005)",
+      "url": "https://attack.mitre.org/techniques/T1053/005/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

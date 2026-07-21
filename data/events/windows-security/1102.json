@@ -5,7 +5,7 @@
   "name": "The audit log was cleared",
   "priority": "P1",
   "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
-  "last_reviewed": "2026-07-10",
+  "last_reviewed": "2026-07-21",
   "definition": "Windows Security Event ID 1102 records clearing of the Windows Security audit log and is a high-confidence defense-evasion signal.",
   "trigger_scenarios": "The event is generated when a user or process clears the Security log. It can be logged immediately before older records are removed.",
   "key_fields": [
@@ -33,13 +33,108 @@
   ],
   "attck_mapping": [
     {
+      "tactic_id": "TA0005",
+      "tactic_name": "Defense Evasion",
       "technique_id": "T1070.001",
-      "technique_name": "Indicator Removal: Clear Windows Event Logs"
+      "technique_name": "Indicator Removal: Clear Windows Event Logs",
+      "source_url": "https://attack.mitre.org/techniques/T1070/001/"
     }
   ],
   "detection_notes": "T1070.001 is high confidence when Event ID 1102 follows wevtutil.exe cl Security or Clear-EventLog in 4688 under the same Subject Logon ID. Security log clearing has no universal volume threshold: one unexpected clear on a domain controller or server is an incident. Use a local correlation window=60 minutes before the clear to review process creation, logon, and audit-policy changes, and preserve forwarded copies because the local retention window is destroyed.",
   "kql_snippet": "SecurityEvent\n| where EventID == 1102\n| project TimeGenerated, Computer, Account, SubjectLogonId\n| order by TimeGenerated desc",
   "spl_snippet": "index=wineventlog EventCode=1102\n| table _time, host, SubjectUserName, SubjectLogonId",
   "sample_log": "Subject: Account Name: CORP\\admin.ops\nLogon ID: 0x8e2c\nComputer: DC01",
-  "source_url": "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-1102"
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-1102",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Event ID 1102",
+      "query": "SecurityEvent\n| where EventID == 1102\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Microsoft Sentinel Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Event ID 1102",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=1102\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before implementing event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Event ID 1102",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 1102",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The relevant Windows event channel is ingested through a Cortex XDR Windows event collection path.",
+        "Inspect raw provider fields because parsed field names vary by collection path and event provider."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Event ID 1102",
+      "query": "title: Windows Event ID 1102\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 1102\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 1102 mean?",
+      "answer": "Event ID 1102 records that the Windows Security audit log was cleared. Microsoft documents it as an event generated whenever the Security log is cleared, regardless of the configured system audit policy."
+    },
+    {
+      "question": "Is Event ID 1102 always malicious?",
+      "answer": "No. Authorized maintenance and forensic testing can clear a log, but an unexpected Security-log clear is high priority because it removes local audit history."
+    },
+    {
+      "question": "How should Event ID 1102 be investigated?",
+      "answer": "Join SubjectLogonId to logon and process-creation records, identify the clearing process, and preserve forwarded or centralized copies of the events that preceded the clear."
+    }
+  ],
+  "sources": [
+    {
+      "title": "1102: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-1102",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Indicator Removal: Clear Windows Event Logs (T1070.001)",
+      "url": "https://attack.mitre.org/techniques/T1070/001/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

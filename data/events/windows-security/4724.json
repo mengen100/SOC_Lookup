@@ -1,49 +1,148 @@
 {
-    "id":  "4724",
-    "source":  "windows_security",
-    "category":  "AccountMgmt",
-    "name":  "An attempt was made to reset an account\u0027s password",
-    "priority":  "P1",
-    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
-    "last_reviewed":  "2026-07-10",
-    "definition":  "Windows Security Event ID 4724 records an attempt to reset another account\u0027s password and is important for account-takeover investigations.",
-    "trigger_scenarios":  "The event is logged when an administrator, helpdesk workflow, or other principal resets a user password rather than changing its own password.",
-    "key_fields":  [
-                       {
-                           "field":  "Subject",
-                           "explanation":  "The identity that attempted the reset. Confirm it is an approved administrator or identity-management process."
-                       },
-                       {
-                           "field":  "Target Account",
-                           "explanation":  "The account whose password was reset. Privileged, service, and recently created accounts deserve special attention."
-                       },
-                       {
-                           "field":  "Status",
-                           "explanation":  "The operation result. Failed resets can reveal attempted but blocked account abuse."
-                       }
-                   ],
-    "false_positives":  [
-                            "Helpdesk and self-service identity workflows legitimately reset passwords.",
-                            "Emergency access procedures may reset privileged accounts during incidents."
-                        ],
-    "related_event_ids":  [
-                              "4723",
-                              "4738",
-                              "4624"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1098",
-                              "technique_name":  "Account Manipulation"
-                          },
-                          {
-                              "technique_id":  "T1078",
-                              "technique_name":  "Valid Accounts"
-                          }
-                      ],
-    "detection_notes":  "T1098 Account Manipulation is signaled when Subject resets a privileged or service Target Account and Status is 0x0, followed by 4624 from a new Client Address. A successful reset outside approved helpdesk workflows gives an attacker a new valid credential, unlike a failed policy attempt.",
-    "kql_snippet":  "SecurityEvent\n| where EventID == 4724\n| project TimeGenerated, Computer, Account, TargetAccount, Activity, Status\n| order by TimeGenerated desc",
-    "spl_snippet":  "index=wineventlog EventCode=4724\n| table _time, host, SubjectUserName, TargetUserName, Status",
-    "sample_log":  "Subject: CORP\\helpdesk01\nTarget Account: CORP\\admin.ops\nStatus: 0x0",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4724"
+  "id": "4724",
+  "source": "windows_security",
+  "category": "AccountMgmt",
+  "name": "An attempt was made to reset an account's password",
+  "priority": "P1",
+  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
+  "last_reviewed": "2026-07-21",
+  "definition": "Windows Security Event ID 4724 records an attempt to reset another account's password and is important for account-takeover investigations.",
+  "trigger_scenarios": "The event is logged when an administrator, helpdesk workflow, or other principal resets a user password rather than changing its own password.",
+  "key_fields": [
+    {
+      "field": "Subject",
+      "explanation": "The identity that attempted the reset. Confirm it is an approved administrator or identity-management process."
+    },
+    {
+      "field": "Target Account",
+      "explanation": "The account whose password was reset. Privileged, service, and recently created accounts deserve special attention."
+    },
+    {
+      "field": "Status",
+      "explanation": "The operation result. Failed resets can reveal attempted but blocked account abuse."
+    }
+  ],
+  "false_positives": [
+    "Helpdesk and self-service identity workflows legitimately reset passwords.",
+    "Emergency access procedures may reset privileged accounts during incidents."
+  ],
+  "related_event_ids": [
+    "4723",
+    "4738",
+    "4624"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0003",
+      "tactic_name": "Persistence",
+      "technique_id": "T1098",
+      "technique_name": "Account Manipulation",
+      "source_url": "https://attack.mitre.org/techniques/T1098/"
+    }
+  ],
+  "detection_notes": "T1098 Account Manipulation is signaled when Subject resets a privileged or service Target Account and Status is 0x0, followed by 4624 from a new Client Address. A successful reset outside approved helpdesk workflows gives an attacker a new valid credential, unlike a failed policy attempt.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4724\n| project TimeGenerated, Computer, Account, TargetAccount, Activity, Status\n| order by TimeGenerated desc",
+  "spl_snippet": "index=wineventlog EventCode=4724\n| table _time, host, SubjectUserName, TargetUserName, Status",
+  "sample_log": "Subject: CORP\\helpdesk01\nTarget Account: CORP\\admin.ops\nStatus: 0x0",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4724",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success or Audit Failure"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Event ID 4724",
+      "query": "SecurityEvent\n| where EventID == 4724\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Microsoft Sentinel Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Event ID 4724",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4724\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before implementing event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Event ID 4724",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4724",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The relevant Windows event channel is ingested through a Cortex XDR Windows event collection path.",
+        "Inspect raw provider fields because parsed field names vary by collection path and event provider."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Event ID 4724",
+      "query": "title: Windows Event ID 4724\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4724\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "Status",
+      "value": "0x0",
+      "meaning": "The password-reset operation succeeded.",
+      "security_relevance": "A successful reset of a privileged or service account outside an approved workflow can give an actor durable access with a credential they control.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4724"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4724 mean?",
+      "answer": "Event ID 4724 records an attempt by one account to reset another account's password and can be generated for successful or failed attempts."
+    },
+    {
+      "question": "How is a password reset different from a password change?",
+      "answer": "A reset is performed without supplying the target account's old password, while event 4723 covers an attempt to change an account password using the existing credential flow."
+    },
+    {
+      "question": "Which 4724 events deserve immediate review?",
+      "answer": "Prioritize successful resets of privileged, service, dormant, or break-glass accounts by an unexpected subject, especially when followed by a logon from a new source."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4724: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4724",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Account Manipulation (T1098)",
+      "url": "https://attack.mitre.org/techniques/T1098/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }
