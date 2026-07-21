@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import { validateEnrichedEvent } from "../lib/event-content-validation";
 import {
+  type EventPageRecord,
   getCompleteEvents,
   getCompletedEventKeys,
   getEventByRoute,
@@ -9,6 +11,61 @@ import {
   routeSlugToSource,
   sourceToRouteSlug,
 } from "../lib/events";
+
+function makeEnrichedEvent(): EventPageRecord {
+  const event = getEventByRoute("windows-events", "4625");
+  assert.ok(event);
+
+  return {
+    ...event,
+    definition: "Windows Security Event ID 4625 records an unsuccessful logon attempt.",
+    technical_metadata: {
+      provider: "Microsoft-Windows-Security-Auditing",
+      channel: "Security",
+      level: "Information",
+      audit_keyword: "Audit Failure",
+    },
+    attck_mapping: [
+      {
+        tactic_id: "TA0006",
+        tactic_name: "Credential Access",
+        technique_id: "T1110.001",
+        technique_name: "Password Guessing",
+        source_url: "https://attack.mitre.org/techniques/T1110/001/",
+      },
+    ],
+    queries: [
+      {
+        language: "xql",
+        title: "Failed logons",
+        query: "dataset = microsoft_windows_raw\n| filter edr_event_id = 4625",
+        data_source: "Cortex XDR microsoft_windows_raw",
+        assumptions: ["Windows event logs are collected by Cortex XDR."],
+      },
+    ],
+    value_references: [
+      {
+        field: "SubStatus",
+        value: "0xC000006A",
+        meaning: "The username is correct but the password is wrong.",
+        security_relevance: "Repeated failures can indicate password guessing.",
+        source_url: "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4625",
+      },
+    ],
+    faqs: [
+      { question: "What does Event ID 4625 mean?", answer: "It records a failed logon." },
+      { question: "Where is it logged?", answer: "It is logged in the Windows Security channel." },
+    ],
+    sources: [
+      {
+        title: "4625(S): An account failed to log on",
+        url: "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4625",
+        publisher: "Microsoft",
+        source_type: "vendor",
+      },
+    ],
+  };
+}
 
 test("maps data sources to public route slugs", () => {
   assert.equal(sourceToRouteSlug("windows_security"), "windows-events");
@@ -194,6 +251,52 @@ test("requires concrete detection values beyond ATT&CK technique identifiers", (
     [],
     `Detection guidance missing a concrete value after ATT&CK IDs are removed:\n${incompleteEvents.join("\n")}`,
   );
+});
+
+test("collects every semantic error in an enriched event record", () => {
+  const valid = makeEnrichedEvent();
+  assert.deepEqual(validateEnrichedEvent(valid), []);
+
+  const invalid: EventPageRecord = {
+    ...valid,
+    definition: "First sentence. Second sentence. Third sentence.",
+    queries: [
+      ...(valid.queries ?? []),
+      {
+        language: "xql",
+        title: "Invalid duplicate",
+        query: "dataset = microsoft_windows_raw | filter winlog.event_id = 4625",
+        data_source: "Cortex XDR",
+        assumptions: [],
+      },
+    ],
+    attck_mapping: [
+      {
+        tactic_id: "TA0006",
+        tactic_name: "Credential Access",
+        technique_id: "T1110.001",
+        technique_name: "Password Guessing",
+        source_url: "https://attack.mitre.org/techniques/T1078/",
+      },
+    ],
+    faqs: [{ question: "Only one?", answer: "Only one." }],
+    sources: [
+      {
+        title: "Community rule",
+        url: "https://example.com/rule",
+        publisher: "Example",
+        source_type: "detection-rule",
+      },
+    ],
+  };
+  const errors = validateEnrichedEvent(invalid);
+
+  assert.ok(errors.some((error) => error.includes("one or two sentences")));
+  assert.ok(errors.some((error) => error.includes("duplicate query language")));
+  assert.ok(errors.some((error) => error.includes("winlog.event_id")));
+  assert.ok(errors.some((error) => error.includes("official ATT&CK URL")));
+  assert.ok(errors.some((error) => error.includes("two to four FAQs")));
+  assert.ok(errors.some((error) => error.includes("vendor source")));
 });
 
 test("returns completed events by public route", () => {
