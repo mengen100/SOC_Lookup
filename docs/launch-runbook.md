@@ -49,6 +49,25 @@ Select-String -Path out/index.html,out/sitemap.xml,out/robots.txt -Pattern "soc-
 
 Expected: no matches. `out/sitemap.xml` must contain 118 `<url>` entries and `out/robots.txt` must reference `https://soceventlookup.com/sitemap.xml`.
 
+## CDN Cache Policy
+
+Cloudflare Pages serves the exported site through its global network. `public/_headers` applies browser cache policy to static responses:
+
+- Content-hashed files under `/_next/static/` are immutable for one year.
+- The site icon is cached for one day.
+- Stable event JSON URLs are cached for one hour and may be served stale for one day while revalidating.
+- HTML has no custom long-lived cache rule and continues to revalidate after deployments.
+
+After a production deployment, inspect representative headers:
+
+```powershell
+curl.exe -sSI https://soceventlookup.com/_next/static/css/<current-build-hash>.css
+curl.exe -sSI https://soceventlookup.com/api/events/windows-security/4625.json
+curl.exe -sSI https://soceventlookup.com/windows-events/4625/
+```
+
+Expected: the hashed asset includes `max-age=31536000, immutable`; the JSON includes its shorter cache policy; HTML does not receive the immutable policy.
+
 ## Production Acceptance
 
 After DNS and TLS are active:

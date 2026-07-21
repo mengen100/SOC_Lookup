@@ -6,3 +6,4 @@ import "./production-verification.test";
 import "./validate-data.test";
 import "./tools.test";
 import "./ui-layout.test";
+import "./cache-headers.test";
