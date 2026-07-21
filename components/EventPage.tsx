@@ -44,7 +44,7 @@ export function EventPage({ event }: EventPageProps) {
         <p className="max-w-3xl text-lg leading-8 text-steel">{event.definition}</p>
       </section>
 
-      <div className="grid gap-8 py-8">
+      <div className="grid min-w-0 gap-8 py-8">
         {event.technical_metadata ? (
           <Section title="Technical Metadata">
             <EventMetadataTable event={event} />
@@ -129,9 +129,9 @@ export function EventPage({ event }: EventPageProps) {
 
 function Section({ title, children }: Readonly<{ title: string; children: React.ReactNode }>) {
   return (
-    <section>
+    <section className="min-w-0">
       <h2 className="text-xl font-semibold text-ink">{title}</h2>
-      <div className="mt-3 break-words text-base leading-7 text-steel">{children}</div>
+      <div className="mt-3 min-w-0 break-words text-base leading-7 text-steel">{children}</div>
     </section>
   );
 }

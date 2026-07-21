@@ -13,7 +13,7 @@ export function DetectionQueries({ event }: Readonly<{ event: EventPageRecord }>
     return (
       <div className="grid gap-5">
         {event.queries.map((query) => (
-          <article key={query.language}>
+          <article key={query.language} className="min-w-0">
             <CodeBlock label={`${languageLabels[query.language]}: ${query.title}`} code={query.query} />
             <dl className="mt-2 grid gap-2 px-1 text-sm sm:grid-cols-[8rem_1fr]">
               <dt className="font-semibold text-ink">Data source</dt>

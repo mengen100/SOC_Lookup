@@ -6,7 +6,7 @@ export function EventValueTable({ values }: Readonly<{ values?: EventValueRefere
   }
 
   return (
-    <div className="overflow-x-auto rounded border border-line bg-white">
+    <div className="min-w-0 max-w-full overflow-x-auto rounded border border-line bg-white">
       <table className="w-full min-w-[48rem] border-collapse text-left text-sm">
         <caption className="sr-only">Documented event values and their security relevance</caption>
         <thead className="bg-[#f6f8f4] text-ink">

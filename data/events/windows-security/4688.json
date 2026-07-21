@@ -5,7 +5,13 @@
     "name":  "A new process has been created",
     "priority":  "P1",
     "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
-    "last_reviewed":  "2026-07-10",
+    "last_reviewed":  "2026-07-21",
+    "technical_metadata":  {
+                               "provider":  "Microsoft-Windows-Security-Auditing",
+                               "channel":  "Security",
+                               "level":  "Information",
+                               "audit_keyword":  "Audit Success"
+                           },
     "definition":  "Windows Security Event ID 4688 records process creation and is a foundational telemetry source for identifying command execution, suspicious parent-child relationships, and attacker tooling.",
     "trigger_scenarios":  "The event is generated when a process starts and Process Creation auditing is enabled. Full command-line capture additionally requires the relevant audit policy setting.",
     "key_fields":  [
@@ -38,15 +44,121 @@
                           ],
     "attck_mapping":  [
                           {
-                              "technique_id":  "T1059",
-                              "technique_name":  "Command and Scripting Interpreter"
-                          },
-                          {
-                              "technique_id":  "T1105",
-                              "technique_name":  "Ingress Tool Transfer"
+                              "tactic_id":  "TA0002",
+                              "tactic_name":  "Execution",
+                              "technique_id":  "T1059.001",
+                              "technique_name":  "PowerShell",
+                              "source_url":  "https://attack.mitre.org/techniques/T1059/001/"
                           }
                       ],
-    "detection_notes":  "T1059/T1105 becomes concrete when New Process Name is powershell.exe, mshta.exe, or rundll32.exe and Command Line contains -EncodedCommand, -ExecutionPolicy Bypass, or a path under C:\\\\Users\\\\, C:\\\\ProgramData\\\\, or C:\\\\Temp\\\\. Office or browser Parent Process Name launching that child is a high-signal chain.",
+    "queries":  [
+                    {
+                        "language":  "kql",
+                        "title":  "Suspicious PowerShell process creation",
+                        "query":  "SecurityEvent\n| where EventID == 4688\n| where NewProcessName endswith @\"\\powershell.exe\"\n| where CommandLine has_any (\"-EncodedCommand\", \"-ExecutionPolicy Bypass\", \"DownloadString\")\n| project TimeGenerated, Computer, Account, NewProcessName, CommandLine, ParentProcessName",
+                        "data_source":  "Microsoft Sentinel SecurityEvent table",
+                        "assumptions":  [
+                                            "The Include command line in process creation events policy is enabled; otherwise CommandLine is empty.",
+                                            "The Windows security connector maps version 2 fields to NewProcessName, CommandLine, and ParentProcessName."
+                                        ],
+                        "source_url":  "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+                    },
+                    {
+                        "language":  "spl",
+                        "title":  "Suspicious PowerShell process creation",
+                        "query":  "index=wineventlog source=\"WinEventLog:Security\" EventCode=4688 NewProcessName=\"*\\\\powershell.exe\"\n| search CommandLine IN (\"*-EncodedCommand*\", \"*-ExecutionPolicy Bypass*\", \"*DownloadString*\")\n| table _time, host, SubjectUserName, NewProcessName, CommandLine, ParentProcessName",
+                        "data_source":  "Splunk Windows Security event data",
+                        "assumptions":  [
+                                            "Field aliases vary by Splunk add-on and must be mapped to the Windows XML names.",
+                                            "Command-line auditing is enabled on the endpoint."
+                                        ]
+                    },
+                    {
+                        "language":  "xql",
+                        "title":  "Retrieve process-creation audit events",
+                        "query":  "dataset = microsoft_windows_raw\n| filter edr_event_id = 4688",
+                        "data_source":  "Cortex XDR microsoft_windows_raw",
+                        "assumptions":  [
+                                            "Windows Security logs are ingested into Cortex XDR.",
+                                            "Inspect raw NewProcessName, CommandLine, ParentProcessName, and TokenElevationType values because parsed raw-field names can vary by collection path."
+                                        ],
+                        "source_url":  "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+                    },
+                    {
+                        "language":  "sigma",
+                        "title":  "Encoded or policy-bypassing PowerShell process",
+                        "query":  "title: Encoded Or Policy Bypassing PowerShell Process\nstatus: experimental\nlogsource:\n    category: process_creation\n    product: windows\ndetection:\n    image:\n        Image|endswith: '\\powershell.exe'\n    options:\n        CommandLine|contains:\n            - '-EncodedCommand'\n            - '-ExecutionPolicy Bypass'\n    condition: image and options\nfalsepositives:\n    - Approved administrative automation\nlevel: medium\ntags:\n    - attack.execution\n    - attack.t1059.001",
+                        "data_source":  "Sigma Windows process_creation log source",
+                        "assumptions":  [
+                                            "The Sigma backend maps generic Image and CommandLine fields to Event ID 4688 or another configured process-creation source."
+                                        ],
+                        "source_url":  "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+                    }
+                ],
+    "value_references":  [
+                              {
+                                  "field":  "TokenElevationType",
+                                  "value":  "%%1937",
+                                  "meaning":  "Type 2: an elevated token with no privileges removed or groups disabled.",
+                                  "security_relevance":  "On a standard workstation it identifies a process explicitly running with administrative privileges and should be assessed against the user and parent process.",
+                                  "source_url":  "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4688"
+                              },
+                              {
+                                  "field":  "MandatoryLabel",
+                                  "value":  "S-1-16-12288",
+                                  "meaning":  "High integrity level (RID 0x00003000).",
+                                  "security_relevance":  "A high-integrity scripting process provides context for elevated execution but is not malicious without command-line, user, and parent evidence.",
+                                  "source_url":  "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4688"
+                              },
+                              {
+                                  "field":  "CommandLine",
+                                  "value":  "empty",
+                                  "meaning":  "The field is empty by default unless command-line process auditing is enabled.",
+                                  "security_relevance":  "An empty value prevents argument-level detections, so telemetry configuration must be checked before treating missing arguments as benign.",
+                                  "source_url":  "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4688"
+                              }
+                          ],
+    "faqs":  [
+                  {
+                      "question":  "What does Windows Event ID 4688 record?",
+                      "answer":  "Event ID 4688 records the creation of a new process when Audit Process Creation is enabled, including the creator identity, executable path, process identifiers, and version-dependent process context."
+                  },
+                  {
+                      "question":  "Why is the Process Command Line field empty in Event ID 4688?",
+                      "answer":  "Windows leaves Process Command Line empty by default. The administrative policy Include command line in process creation events must be enabled to populate it."
+                  },
+                  {
+                      "question":  "Does PowerShell in Event ID 4688 automatically indicate an attack?",
+                      "answer":  "No. PowerShell is widely used for administration; suspiciousness comes from arguments such as encoded commands, an unexpected parent process, user-writable paths, elevation context, and related PowerShell or network events."
+                  }
+              ],
+    "sources":  [
+                     {
+                         "title":  "4688(S): A new process has been created",
+                         "url":  "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4688",
+                         "publisher":  "Microsoft",
+                         "source_type":  "vendor"
+                     },
+                     {
+                         "title":  "Command and Scripting Interpreter: PowerShell (T1059.001)",
+                         "url":  "https://attack.mitre.org/techniques/T1059/001/",
+                         "publisher":  "MITRE ATT&CK",
+                         "source_type":  "attack"
+                     },
+                     {
+                         "title":  "XDR Collector datasets",
+                         "url":  "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+                         "publisher":  "Palo Alto Networks",
+                         "source_type":  "vendor"
+                     },
+                     {
+                         "title":  "Sigma Rules Specification",
+                         "url":  "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+                         "publisher":  "SigmaHQ",
+                         "source_type":  "detection-rule"
+                     }
+                 ],
+    "detection_notes":  "T1059.001 becomes concrete when New Process Name is powershell.exe and Command Line contains -EncodedCommand, -ExecutionPolicy Bypass, or a path under C:\\\\Users\\\\, C:\\\\ProgramData\\\\, or C:\\\\Temp\\\\. Office or browser Parent Process Name launching that child is a high-signal chain, especially with Token Elevation Type %%1937 or high-integrity Mandatory Label S-1-16-12288.",
     "kql_snippet":  "SecurityEvent\n| where EventID == 4688\n| where NewProcessName has_any (\"\\\\powershell.exe\", \"\\\\cmd.exe\", \"\\\\mshta.exe\", \"\\\\rundll32.exe\")\n| project TimeGenerated, Computer, Account, NewProcessName, CommandLine, ParentProcessName\n| order by TimeGenerated desc",
     "spl_snippet":  "index=wineventlog EventCode=4688\n| search New_Process_Name IN (\"*\\\\powershell.exe\", \"*\\\\cmd.exe\", \"*\\\\mshta.exe\", \"*\\\\rundll32.exe\")\n| table _time, host, SubjectUserName, New_Process_Name, Process_Command_Line, Creator_Process_Name",
     "sample_log":  "New Process Name: C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\nProcess Command Line: powershell.exe -NoProfile -EncodedCommand \u003credacted\u003e\nCreator Process Name: C:\\Program Files\\Microsoft Office\\root\\Office16\\WINWORD.EXE\nSubject User Name: CORP\\jsmith",

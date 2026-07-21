@@ -36,6 +36,7 @@ test("renders enriched event sections with semantic and responsive structure", (
   const faq = fs.readFileSync(path.join(projectRoot, "components", "EventFaq.tsx"), "utf8");
 
   assert.match(eventPage, /<section id="quick-summary"/);
+  assert.match(eventPage, /<section className="min-w-0">/);
   assert.match(eventPage, /<EventMetadataTable event=\{event\}/);
   assert.match(eventPage, /<DetectionQueries event=\{event\}/);
   assert.match(metadata, /overflow-x-auto/);

@@ -49,10 +49,11 @@ test("builds website and event breadcrumb structured data", () => {
   });
 
   const graph = buildEventStructuredData(event)["@graph"];
+  const breadcrumb = graph.find((item) => item["@type"] === "BreadcrumbList");
   assert.equal(graph[0]["@type"], "TechArticle");
   assert.equal(graph[0].headline, eventPageTitle(event));
-  assert.equal(graph[1]["@type"], "BreadcrumbList");
-  const breadcrumbItems = graph[1].itemListElement as Array<{ name: string }>;
+  assert.ok(breadcrumb);
+  const breadcrumbItems = breadcrumb.itemListElement as Array<{ name: string }>;
   assert.deepEqual(breadcrumbItems.map((item) => item.name), [
     "SOC Event Lookup",
     "Windows Events",

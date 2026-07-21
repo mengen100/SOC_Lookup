@@ -1,3 +1,5 @@
+import yaml from "js-yaml";
+
 import type { EventPageRecord } from "./events";
 
 const SENTENCE_END_PATTERN = /[.!?](?=\s|$)/g;
@@ -39,6 +41,17 @@ export function validateEnrichedEvent(event: EventPageRecord): string[] {
         errors.push(`${key}: XQL must not use winlog.event_id`);
       }
     }
+
+    if (query.language === "sigma") {
+      try {
+        const rule = yaml.load(query.query);
+        if (!isRecord(rule) || !isRecord(rule.logsource) || !isRecord(rule.detection) || typeof rule.detection.condition !== "string") {
+          errors.push(`${key}: query must contain valid Sigma YAML with logsource, detection, and condition`);
+        }
+      } catch {
+        errors.push(`${key}: query must contain valid Sigma YAML with logsource, detection, and condition`);
+      }
+    }
   }
 
   for (const mapping of event.attck_mapping ?? []) {
@@ -70,6 +83,10 @@ export function validateEnrichedEvent(event: EventPageRecord): string[] {
   }
 
   return errors;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function isHttpUrl(value: string): boolean {

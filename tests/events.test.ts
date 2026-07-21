@@ -269,6 +269,13 @@ test("collects every semantic error in an enriched event record", () => {
         data_source: "Cortex XDR",
         assumptions: [],
       },
+      {
+        language: "sigma",
+        title: "Invalid Sigma",
+        query: "title: [",
+        data_source: "Sigma",
+        assumptions: [],
+      },
     ],
     attck_mapping: [
       {
@@ -294,9 +301,25 @@ test("collects every semantic error in an enriched event record", () => {
   assert.ok(errors.some((error) => error.includes("one or two sentences")));
   assert.ok(errors.some((error) => error.includes("duplicate query language")));
   assert.ok(errors.some((error) => error.includes("winlog.event_id")));
+  assert.ok(errors.some((error) => error.includes("valid Sigma YAML")));
   assert.ok(errors.some((error) => error.includes("official ATT&CK URL")));
   assert.ok(errors.some((error) => error.includes("two to four FAQs")));
   assert.ok(errors.some((error) => error.includes("vendor source")));
+});
+
+test("requires the GEO pilot records to satisfy enriched content validation", () => {
+  const pilotKeys = new Set([
+    "windows_security:4104",
+    "windows_security:4625",
+    "windows_security:4688",
+    "windows_security:4769",
+    "sysmon:1",
+  ]);
+  const errors = getCompleteEvents()
+    .filter((event) => pilotKeys.has(`${event.source}:${event.id}`))
+    .flatMap(validateEnrichedEvent);
+
+  assert.deepEqual(errors, [], `GEO pilot validation errors:\n${errors.join("\n")}`);
 });
 
 test("returns completed events by public route", () => {

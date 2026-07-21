@@ -20,7 +20,7 @@ export function EventMetadataTable({ event }: Readonly<{ event: EventPageRecord 
   ];
 
   return (
-    <div className="overflow-x-auto rounded border border-line bg-white">
+    <div className="min-w-0 max-w-full overflow-x-auto rounded border border-line bg-white">
       <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
         <caption className="sr-only">Technical metadata for Event ID {event.id}</caption>
         <tbody>

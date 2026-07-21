@@ -2,6 +2,18 @@
 
 Status values: `done`, `needs-rework`, `pending`.
 
+## GEO enrichment migration
+
+The content status below tracks the original event-guide completion. GEO enrichment adds structured technical metadata, sourced ATT&CK mappings, KQL/SPL/XQL/Sigma queries, documented values, visible FAQs, and complete source lists.
+
+- Enriched: 5 / 108
+- [done] windows_security:4104
+- [done] windows_security:4625
+- [done] windows_security:4688
+- [done] windows_security:4769
+- [done] sysmon:1
+- All other event records: pending GEO enrichment
+
 ## windows_security
 - [done] windows_security:4624 - An account was successfully logged on
 - [done] windows_security:4625 - An account failed to log on

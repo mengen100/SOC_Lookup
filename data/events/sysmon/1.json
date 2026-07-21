@@ -5,7 +5,12 @@
     "name":  "Process creation",
     "priority":  "P1",
     "applicable_version":  "Sysmon 1.0 and later",
-    "last_reviewed":  "2026-07-10",
+    "last_reviewed":  "2026-07-21",
+    "technical_metadata":  {
+                               "provider":  "Microsoft-Windows-Sysmon",
+                               "channel":  "Microsoft-Windows-Sysmon/Operational",
+                               "level":  "Informational"
+                           },
     "definition":  "Sysmon Event ID 1 records process creation and is one of the most important events for reconstructing command execution, parent-child process chains, and suspicious process launches.",
     "trigger_scenarios":  "Whenever Sysmon observes a new process start, it records Event ID 1 with process image, command line, parent process, hashes, user, integrity level, and related metadata according to the active Sysmon configuration.",
     "key_fields":  [
@@ -39,19 +44,127 @@
                           ],
     "attck_mapping":  [
                           {
-                              "technique_id":  "T1059",
-                              "technique_name":  "Command and Scripting Interpreter"
-                          },
-                          {
-                              "technique_id":  "T1105",
-                              "technique_name":  "Ingress Tool Transfer"
-                          },
-                          {
-                              "technique_id":  "T1204",
-                              "technique_name":  "User Execution"
+                              "tactic_id":  "TA0002",
+                              "tactic_name":  "Execution",
+                              "technique_id":  "T1059.001",
+                              "technique_name":  "PowerShell",
+                              "source_url":  "https://attack.mitre.org/techniques/T1059/001/"
                           }
                       ],
-    "detection_notes":  "T1059 execution is concrete when Image is powershell.exe with -EncodedCommand or -ExecutionPolicy Bypass and CommandLine references C:\\\\Users\\\\ or C:\\\\ProgramData\\\\. ParentImage WINWORD.EXE or browser process launching that interpreter is a high-signal chain; join ProcessGuid to Event ID 3.",
+    "queries":  [
+                    {
+                        "language":  "kql",
+                        "title":  "Suspicious Sysmon PowerShell process creation",
+                        "query":  "Event\n| where EventLog == \"Microsoft-Windows-Sysmon/Operational\" and EventID == 1\n| where RenderedDescription has_all (\"powershell.exe\")\n| where RenderedDescription has_any (\"-EncodedCommand\", \"-ExecutionPolicy Bypass\", \"DownloadString\")\n| project TimeGenerated, Computer, RenderedDescription",
+                        "data_source":  "Microsoft Sentinel Event table",
+                        "assumptions":  [
+                                            "The connector collects the Sysmon Operational channel into the Event table and retains RenderedDescription.",
+                                            "For parsed Sysmon tables, replace RenderedDescription with the local Image, CommandLine, ParentImage, and ParentCommandLine fields."
+                                        ],
+                        "source_url":  "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/event"
+                    },
+                    {
+                        "language":  "spl",
+                        "title":  "Suspicious Sysmon PowerShell process creation",
+                        "query":  "index=sysmon source=\"WinEventLog:Microsoft-Windows-Sysmon/Operational\" EventCode=1 Image=\"*\\\\powershell.exe\"\n| search CommandLine IN (\"*-EncodedCommand*\", \"*-ExecutionPolicy Bypass*\", \"*DownloadString*\")\n| table _time, host, User, Image, CommandLine, ParentImage, ParentCommandLine, ProcessGuid",
+                        "data_source":  "Splunk Sysmon event data",
+                        "assumptions":  [
+                                            "The Sysmon add-on or local field extraction exposes XML field names without spaces.",
+                                            "Administrative PowerShell usage is baselined before alerting."
+                                        ]
+                    },
+                    {
+                        "language":  "xql",
+                        "title":  "Retrieve Sysmon Event ID 1 candidates",
+                        "query":  "dataset = microsoft_windows_raw\n| filter edr_event_id = 1",
+                        "data_source":  "Cortex XDR microsoft_windows_raw",
+                        "assumptions":  [
+                                            "The Sysmon Operational channel is ingested into Cortex XDR.",
+                                            "Event ID 1 is not globally unique; confirm Provider is Microsoft-Windows-Sysmon in the raw event before applying Sysmon field semantics."
+                                        ],
+                        "source_url":  "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+                    },
+                    {
+                        "language":  "sigma",
+                        "title":  "Encoded or policy-bypassing PowerShell process",
+                        "query":  "title: Encoded Or Policy Bypassing PowerShell Process\nstatus: experimental\nlogsource:\n    category: process_creation\n    product: windows\ndetection:\n    image:\n        Image|endswith: '\\powershell.exe'\n    options:\n        CommandLine|contains:\n            - '-EncodedCommand'\n            - '-ExecutionPolicy Bypass'\n    condition: image and options\nfalsepositives:\n    - Approved administrative automation\nlevel: medium\ntags:\n    - attack.execution\n    - attack.t1059.001",
+                        "data_source":  "Sigma Windows process_creation log source",
+                        "assumptions":  [
+                                            "The Sigma backend is configured to use Sysmon Event ID 1 for the generic process_creation category."
+                                        ],
+                        "source_url":  "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+                    }
+                ],
+    "value_references":  [
+                              {
+                                  "field":  "EventID",
+                                  "value":  "1",
+                                  "meaning":  "Sysmon process creation event.",
+                                  "security_relevance":  "Provider and channel must also match Sysmon because Event ID values are not globally unique across Windows providers.",
+                                  "source_url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+                              },
+                              {
+                                  "field":  "HashAlgorithms",
+                                  "value":  "*",
+                                  "meaning":  "Sysmon configuration requests all supported hash algorithms.",
+                                  "security_relevance":  "The Hashes field only contains algorithms enabled in configuration, so missing SHA256 data can be a collection configuration issue rather than missing telemetry from the process itself.",
+                                  "source_url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+                              },
+                              {
+                                  "field":  "ProcessGuid",
+                                  "value":  "GUID",
+                                  "meaning":  "A process identifier designed for correlation even when Windows reuses numeric process IDs.",
+                                  "security_relevance":  "Use it to join the process to Sysmon network, image-load, process-access, and file events without relying only on a reused ProcessId.",
+                                  "source_url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+                              }
+                          ],
+    "faqs":  [
+                  {
+                      "question":  "What does Sysmon Event ID 1 record?",
+                      "answer":  "Sysmon Event ID 1 records process creation with extended context such as current and parent command lines, process identifiers, user, integrity context, and configured image hashes."
+                  },
+                  {
+                      "question":  "How is Sysmon Event ID 1 different from Windows Security Event ID 4688?",
+                      "answer":  "Both describe process creation, but Sysmon supplies a ProcessGuid, parent command line, and configured hashes in its own Operational channel, while 4688 is generated by Windows Audit Process Creation in the Security channel."
+                  },
+                  {
+                      "question":  "Does Sysmon Event ID 1 identify malicious processes by itself?",
+                      "answer":  "No. Sysmon records telemetry and does not classify events as malicious; analysts must evaluate image path, command line, parent relationship, user, integrity, hashes, prevalence, and correlated activity."
+                  }
+              ],
+    "sources":  [
+                     {
+                         "title":  "Sysmon: Event ID 1 Process creation",
+                         "url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+                         "publisher":  "Microsoft Sysinternals",
+                         "source_type":  "vendor"
+                     },
+                     {
+                         "title":  "Read and tune Sysmon events on Windows",
+                         "url":  "https://learn.microsoft.com/en-us/windows/security/operating-system-security/sysmon/read-tune-sysmon-events",
+                         "publisher":  "Microsoft",
+                         "source_type":  "vendor"
+                     },
+                     {
+                         "title":  "Command and Scripting Interpreter: PowerShell (T1059.001)",
+                         "url":  "https://attack.mitre.org/techniques/T1059/001/",
+                         "publisher":  "MITRE ATT&CK",
+                         "source_type":  "attack"
+                     },
+                     {
+                         "title":  "XDR Collector datasets",
+                         "url":  "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+                         "publisher":  "Palo Alto Networks",
+                         "source_type":  "vendor"
+                     },
+                     {
+                         "title":  "Sigma Rules Specification",
+                         "url":  "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+                         "publisher":  "SigmaHQ",
+                         "source_type":  "detection-rule"
+                     }
+                 ],
+    "detection_notes":  "T1059.001 execution is concrete when Image is powershell.exe with -EncodedCommand or -ExecutionPolicy Bypass and CommandLine references C:\\\\Users\\\\ or C:\\\\ProgramData\\\\. ParentImage WINWORD.EXE or a browser process launching that interpreter is a high-signal chain; join ProcessGuid to Event ID 3 rather than relying on a reused numeric ProcessId.",
     "kql_snippet":  "Sysmon\n| where EventID == 1\n| where Image has_any (\"\\\\powershell.exe\", \"\\\\cmd.exe\", \"\\\\wscript.exe\", \"\\\\cscript.exe\", \"\\\\mshta.exe\")\n| project TimeGenerated, Computer, User, Image, CommandLine, ParentImage, ParentCommandLine\n| order by TimeGenerated desc",
     "spl_snippet":  "index=sysmon EventCode=1\n| search Image IN (\"*\\\\powershell.exe\", \"*\\\\cmd.exe\", \"*\\\\wscript.exe\", \"*\\\\cscript.exe\", \"*\\\\mshta.exe\")\n| table _time, host, User, Image, CommandLine, ParentImage, ParentCommandLine",
     "sample_log":  "UtcTime: 2026-07-10 03:20:11.123\nProcessGuid: {11111111-2222-3333-4444-555555555555}\nProcessId: 4242\nImage: C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\nCommandLine: powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\Public\\script.ps1\nCurrentDirectory: C:\\Users\\Public\\\nUser: CORP\\jsmith\nParentImage: C:\\Windows\\System32\\cmd.exe\nParentCommandLine: cmd.exe /c powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\\Users\\Public\\script.ps1\nHashes: SHA256=REDACTED",
