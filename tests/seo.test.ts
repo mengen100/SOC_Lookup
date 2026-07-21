@@ -52,11 +52,54 @@ test("builds website and event breadcrumb structured data", () => {
   assert.equal(graph[0]["@type"], "TechArticle");
   assert.equal(graph[0].headline, eventPageTitle(event));
   assert.equal(graph[1]["@type"], "BreadcrumbList");
-  assert.deepEqual(graph[1].itemListElement?.map((item) => item.name), [
+  const breadcrumbItems = graph[1].itemListElement as Array<{ name: string }>;
+  assert.deepEqual(breadcrumbItems.map((item) => item.name), [
     "SOC Event Lookup",
     "Windows Events",
     "Event ID 4625",
   ]);
+});
+
+test("builds stable TechArticle and visible-data FAQPage nodes", () => {
+  const event = getEventByRoute("windows-events", "4625");
+  assert.ok(event);
+  const faqs = [
+    { question: "What does Event ID 4625 mean?", answer: "It records a failed Windows logon attempt." },
+    { question: "Where is Event ID 4625 logged?", answer: "It is logged in the Windows Security channel." },
+  ];
+  const enriched = {
+    ...event,
+    faqs,
+    attck_mapping: [
+      {
+        tactic_id: "TA0006",
+        tactic_name: "Credential Access",
+        technique_id: "T1110.001",
+        technique_name: "Password Guessing",
+        source_url: "https://attack.mitre.org/techniques/T1110/001/",
+      },
+    ],
+  };
+  const canonical = absoluteUrl("/windows-events/4625/");
+  const graph = buildEventStructuredData(enriched)["@graph"] as Array<Record<string, unknown>>;
+  const article = graph.find((item) => item["@type"] === "TechArticle");
+  const faqPage = graph.find((item) => item["@type"] === "FAQPage");
+
+  assert.equal(article?.["@id"], `${canonical}#article`);
+  assert.equal(article?.mainEntityOfPage, canonical);
+  assert.deepEqual(article?.about, [
+    {
+      "@type": "Thing",
+      name: "T1110.001 Password Guessing",
+      sameAs: "https://attack.mitre.org/techniques/T1110/001/",
+    },
+  ]);
+
+  const mainEntity = faqPage?.mainEntity as Array<{ name: string; acceptedAnswer: { text: string } }>;
+  assert.deepEqual(
+    mainEntity.map((item) => [item.name, item.acceptedAnswer.text]),
+    faqs.map((item) => [item.question, item.answer]),
+  );
 });
 
 test("includes every indexable route without fake static modification dates", () => {

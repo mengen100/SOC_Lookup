@@ -95,6 +95,7 @@ export async function verifyProductionSite(
   for (const path of ["/windows-events/4625/", "/sysmon-events/1/"]) {
     const body = bodies.get(path) ?? "";
     addCheck(`TechArticle ${path}`, body.includes('"@type":"TechArticle"'), "Expected TechArticle structured data");
+    addCheck(`FAQPage ${path}`, body.includes('"@type":"FAQPage"'), "Expected FAQPage structured data");
     addCheck(`BreadcrumbList ${path}`, body.includes('"@type":"BreadcrumbList"'), "Expected BreadcrumbList structured data");
   }
 
