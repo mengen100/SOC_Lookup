@@ -1,49 +1,155 @@
 {
-    "id":  "4672",
-    "source":  "windows_security",
-    "category":  "Logon",
-    "name":  "Special privileges assigned to new logon",
-    "priority":  "P1",
-    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
-    "last_reviewed":  "2026-07-10",
-    "definition":  "Windows Security Event ID 4672 records assignment of sensitive privileges to a newly created logon session.",
-    "trigger_scenarios":  "The event is generated when a logon receives administrative privileges such as SeDebugPrivilege or SeTcbPrivilege.",
-    "key_fields":  [
-                       {
-                           "field":  "Subject",
-                           "explanation":  "The privileged identity and Logon ID. Use the Logon ID to join the event to its 4624 session."
-                       },
-                       {
-                           "field":  "Privilege List",
-                           "explanation":  "The privileges assigned to the session. Their meaning depends on the account role and target system."
-                       },
-                       {
-                           "field":  "Logon ID",
-                           "explanation":  "A session identifier used for correlation with logon, process, and object-access events."
-                       }
-                   ],
-    "false_positives":  [
-                            "Domain and local administrators create this event as part of normal operations.",
-                            "Service accounts on servers may require privileged rights by design."
-                        ],
-    "related_event_ids":  [
-                              "4624",
-                              "4688",
-                              "4648"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1078",
-                              "technique_name":  "Valid Accounts"
-                          },
-                          {
-                              "technique_id":  "T1068",
-                              "technique_name":  "Exploitation for Privilege Escalation"
-                          }
-                      ],
-    "detection_notes":  "Treat SeDebugPrivilege on a new Logon ID as T1078/T1068 triage, especially when 4688 shows procdump.exe or rundll32.exe accessing lsass.exe. Logon ID 0x3e7 is the standard LocalSystem session and is normally noisy; an interactive Type 10 session with SeDebugPrivilege is a stronger deviation.",
-    "kql_snippet":  "SecurityEvent\n| where EventID == 4672\n| project TimeGenerated, Computer, Account, SubjectLogonId, PrivilegeList\n| order by TimeGenerated desc",
-    "spl_snippet":  "index=wineventlog EventCode=4672\n| table _time, host, SubjectUserName, SubjectLogonId, PrivilegeList",
-    "sample_log":  "Subject: Account Name: CORP\\admin.ops\nLogon ID: 0x3e7\nPrivileges: SeSecurityPrivilege SeTakeOwnershipPrivilege SeDebugPrivilege",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4672"
+  "id": "4672",
+  "source": "windows_security",
+  "category": "Logon",
+  "name": "Special privileges assigned to new logon",
+  "priority": "P1",
+  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
+  "last_reviewed": "2026-07-21",
+  "definition": "Windows Security Event ID 4672 records assignment of sensitive privileges to a newly created logon session.",
+  "trigger_scenarios": "The event is generated when a logon receives administrative privileges such as SeDebugPrivilege or SeTcbPrivilege.",
+  "key_fields": [
+    {
+      "field": "Subject",
+      "explanation": "The privileged identity and Logon ID. Use the Logon ID to join the event to its 4624 session."
+    },
+    {
+      "field": "Privilege List",
+      "explanation": "The privileges assigned to the session. Their meaning depends on the account role and target system."
+    },
+    {
+      "field": "Logon ID",
+      "explanation": "A session identifier used for correlation with logon, process, and object-access events."
+    }
+  ],
+  "false_positives": [
+    "Domain and local administrators create this event as part of normal operations.",
+    "Service accounts on servers may require privileged rights by design."
+  ],
+  "related_event_ids": [
+    "4624",
+    "4688",
+    "4648"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0004",
+      "tactic_name": "Privilege Escalation",
+      "technique_id": "T1078",
+      "technique_name": "Valid Accounts",
+      "source_url": "https://attack.mitre.org/techniques/T1078/"
+    }
+  ],
+  "detection_notes": "Use 4672 as T1078 Valid Accounts privilege context rather than proof that privilege escalation occurred. SeDebugPrivilege on an unexpected user Logon ID is higher risk when related process and object-access telemetry shows access to lsass.exe; Logon ID 0x3e7 commonly represents LocalSystem and is a noisy baseline, while a Type 10 user session with the same privilege is a stronger deviation.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4672\n| project TimeGenerated, Computer, Account, SubjectLogonId, PrivilegeList\n| order by TimeGenerated desc",
+  "spl_snippet": "index=wineventlog EventCode=4672\n| table _time, host, SubjectUserName, SubjectLogonId, PrivilegeList",
+  "sample_log": "Subject: Account Name: CORP\\admin.ops\nLogon ID: 0x3e7\nPrivileges: SeSecurityPrivilege SeTakeOwnershipPrivilege SeDebugPrivilege",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4672",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Event ID 4672",
+      "query": "SecurityEvent\n| where EventID == 4672\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Microsoft Sentinel Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Event ID 4672",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4672\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before implementing event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Event ID 4672",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4672",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The relevant Windows event channel is ingested through a Cortex XDR Windows event collection path.",
+        "Inspect raw provider fields because parsed field names vary by collection path and event provider."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Event ID 4672",
+      "query": "title: Windows Event ID 4672\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4672\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "PrivilegeList",
+      "value": "SeDebugPrivilege",
+      "meaning": "The new logon received the privilege to debug and adjust the memory of another process.",
+      "security_relevance": "Unexpected assignment supports investigation of process access and credential-dumping activity, but the assignment alone does not prove exploitation.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4672"
+    },
+    {
+      "field": "SubjectLogonId",
+      "value": "0x3e7",
+      "meaning": "This commonly identifies the LocalSystem logon session.",
+      "security_relevance": "Microsoft notes that 4672 is normally generated for SYSTEM logons; suppressing that baseline reduces noise without hiding unusual user sessions.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4672"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4672 mean?",
+      "answer": "Event ID 4672 records that sensitive privileges were assigned to a new logon session, including privileges commonly held by administrators and service identities."
+    },
+    {
+      "question": "Is Event ID 4672 proof of privilege escalation?",
+      "answer": "No. It is normal for SYSTEM and administrator logons; the event becomes useful when the account, logon type, privilege list, or follow-on process behavior is unexpected."
+    },
+    {
+      "question": "Why is Logon ID important in Event ID 4672?",
+      "answer": "The Logon ID joins the privilege assignment to the corresponding 4624 logon and to subsequent activity attributed to that session."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4672: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4672",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Valid Accounts (T1078)",
+      "url": "https://attack.mitre.org/techniques/T1078/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

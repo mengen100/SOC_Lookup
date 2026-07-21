@@ -1,45 +1,154 @@
 {
-    "id":  "4103",
-    "source":  "windows_security",
-    "category":  "PowerShell",
-    "name":  "PowerShell Module Logging",
-    "priority":  "P1",
-    "applicable_version":  "Windows PowerShell 3.0 and later with Module Logging enabled",
-    "last_reviewed":  "2026-07-10",
-    "definition":  "PowerShell Event ID 4103 records pipeline execution details for configured modules and provides command-level context for PowerShell activity.",
-    "trigger_scenarios":  "The PowerShell operational log writes this event when Module Logging is enabled and a configured module processes commands.",
-    "key_fields":  [
-                       {
-                           "field":  "Payload",
-                           "explanation":  "The logged command and parameter data. Review it with the associated host and user context."
-                       },
-                       {
-                           "field":  "HostApplication",
-                           "explanation":  "The PowerShell host command line, which can expose encoded commands and noninteractive execution."
-                       },
-                       {
-                           "field":  "UserId",
-                           "explanation":  "The security principal running the pipeline."
-                       }
-                   ],
-    "false_positives":  [
-                            "Administrative automation and configuration management often generate extensive module logging.",
-                            "Developer and operations systems can have diverse PowerShell command activity."
-                        ],
-    "related_event_ids":  [
-                              "4104",
-                              "4688",
-                              "4624"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1059.001",
-                              "technique_name":  "Command and Scripting Interpreter: PowerShell"
-                          }
-                      ],
-    "detection_notes":  "T1059.001 is actionable when HostApplication contains -EncodedCommand and Payload contains FromBase64String or Invoke-Expression. The -EncodedCommand switch carries Base64 command text, so join its UserId and host with 4104 ScriptBlockText and 4688; PowerShell running from C:\\\\Windows\\\\System32 is not benign by path alone.",
-    "kql_snippet":  "Event\n| where Source == \"Microsoft-Windows-PowerShell\" and EventID == 4103\n| project TimeGenerated, Computer, UserName, RenderedDescription\n| order by TimeGenerated desc",
-    "spl_snippet":  "index=wineventlog source=\"WinEventLog:Microsoft-Windows-PowerShell/Operational\" EventCode=4103\n| table _time, host, UserId, HostApplication, Payload",
-    "sample_log":  "EventCode: 4103\nUserId: CORP\\jsmith\nHostApplication: powershell.exe -NoProfile\nPayload: CommandInvocation(Invoke-WebRequest): \"Invoke-WebRequest\"",
-    "source_url":  "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows"
+  "id": "4103",
+  "source": "windows_security",
+  "category": "PowerShell",
+  "name": "PowerShell Module Logging",
+  "priority": "P1",
+  "applicable_version": "Windows PowerShell 3.0 and later with Module Logging enabled",
+  "last_reviewed": "2026-07-21",
+  "definition": "PowerShell Event ID 4103 records pipeline execution details for configured modules and provides command-level context for PowerShell activity.",
+  "trigger_scenarios": "The PowerShell operational log writes this event when Module Logging is enabled and a configured module processes commands.",
+  "key_fields": [
+    {
+      "field": "Payload",
+      "explanation": "The logged command and parameter data. Review it with the associated host and user context."
+    },
+    {
+      "field": "HostApplication",
+      "explanation": "The PowerShell host command line, which can expose encoded commands and noninteractive execution."
+    },
+    {
+      "field": "UserId",
+      "explanation": "The security principal running the pipeline."
+    }
+  ],
+  "false_positives": [
+    "Administrative automation and configuration management often generate extensive module logging.",
+    "Developer and operations systems can have diverse PowerShell command activity."
+  ],
+  "related_event_ids": [
+    "4104",
+    "4688",
+    "4624"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0002",
+      "tactic_name": "Execution",
+      "technique_id": "T1059.001",
+      "technique_name": "Command and Scripting Interpreter: PowerShell",
+      "source_url": "https://attack.mitre.org/techniques/T1059/001/"
+    }
+  ],
+  "detection_notes": "T1059.001 is actionable when HostApplication contains -EncodedCommand and Payload contains FromBase64String or Invoke-Expression. The -EncodedCommand switch carries Base64 command text, so join its UserId and host with 4104 ScriptBlockText and 4688; PowerShell running from C:\\\\Windows\\\\System32 is not benign by path alone.",
+  "kql_snippet": "Event\n| where Source == \"Microsoft-Windows-PowerShell\" and EventID == 4103\n| project TimeGenerated, Computer, UserName, RenderedDescription\n| order by TimeGenerated desc",
+  "spl_snippet": "index=wineventlog source=\"WinEventLog:Microsoft-Windows-PowerShell/Operational\" EventCode=4103\n| table _time, host, UserId, HostApplication, Payload",
+  "sample_log": "EventCode: 4103\nUserId: CORP\\jsmith\nHostApplication: powershell.exe -NoProfile\nPayload: CommandInvocation(Invoke-WebRequest): \"Invoke-WebRequest\"",
+  "source_url": "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-PowerShell",
+    "channel": "Microsoft-Windows-PowerShell/Operational",
+    "level": "Information"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Event ID 4103",
+      "query": "WindowsEvent\n| where EventID == 4103\n| project TimeGenerated, Computer, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel WindowsEvent table",
+      "assumptions": [
+        "PowerShell Operational events are collected into WindowsEvent and EventData retains the provider payload.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/windowsevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Event ID 4103",
+      "query": "index=wineventlog source=\"XmlWinEventLog:Microsoft-Windows-PowerShell/Operational\" EventCode=4103\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk PowerShell Operational event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before implementing event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Event ID 4103",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4103",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The relevant Windows event channel is ingested through a Cortex XDR Windows event collection path.",
+        "Inspect raw provider fields because parsed field names vary by collection path and event provider."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Event ID 4103",
+      "query": "title: Windows Event ID 4103\nstatus: experimental\nlogsource:\n    product: windows\n    service: powershell-classic\ndetection:\n    selection:\n        EventID: 4103\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma PowerShell event log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "Event ID",
+      "value": "4103",
+      "meaning": "PowerShell module logging records pipeline execution details for selected modules.",
+      "security_relevance": "The payload can expose commands and parameters that are not visible in process-creation command lines.",
+      "source_url": "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows"
+    },
+    {
+      "field": "Policy path",
+      "value": "HKLM\\Software\\Policies\\Microsoft\\Windows\\PowerShell\\ModuleLogging",
+      "meaning": "The Group Policy-backed registry area controls PowerShell module logging.",
+      "security_relevance": "Absence of 4103 data can be a configuration gap; verify policy scope before treating missing events as attacker suppression.",
+      "source_url": "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does PowerShell Event ID 4103 record?",
+      "answer": "Event ID 4103 is produced by PowerShell module logging and records pipeline execution details for modules selected by policy."
+    },
+    {
+      "question": "How is Event ID 4103 different from 4104?",
+      "answer": "Event ID 4103 focuses on module and pipeline execution details, while 4104 script block logging records processed PowerShell script blocks."
+    },
+    {
+      "question": "Does Event ID 4103 prove malicious PowerShell use?",
+      "answer": "No. Administrative automation also generates 4103; analysts must evaluate the payload, host application, user, encoded content, and related process activity."
+    }
+  ],
+  "sources": [
+    {
+      "title": "about_Logging_Windows",
+      "url": "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging_windows",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Command and Scripting Interpreter: PowerShell (T1059.001)",
+      "url": "https://attack.mitre.org/techniques/T1059/001/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

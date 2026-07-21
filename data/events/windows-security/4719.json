@@ -5,7 +5,7 @@
   "name": "System audit policy was changed",
   "priority": "P1",
   "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
-  "last_reviewed": "2026-07-10",
+  "last_reviewed": "2026-07-21",
   "definition": "Windows Security Event ID 4719 records a system audit policy change and can reveal attempts to reduce logging before malicious activity.",
   "trigger_scenarios": "Windows logs the event when one or more audit subcategories are enabled or disabled through policy or local configuration.",
   "key_fields": [
@@ -33,13 +33,123 @@
   ],
   "attck_mapping": [
     {
+      "tactic_id": "TA0005",
+      "tactic_name": "Defense Evasion",
       "technique_id": "T1562.002",
-      "technique_name": "Impair Defenses: Disable Windows Event Logging"
+      "technique_name": "Impair Defenses: Disable Windows Event Logging",
+      "source_url": "https://attack.mitre.org/techniques/T1562/002/"
     }
   ],
   "detection_notes": "T1562.002 occurs when Audit Policy Changes removes Success or Failure for Audit Process Creation, Logon, or other security-critical audit subcategories. Disabling both Success and Failure is materially different from enabling a category because it removes future visibility. Use a local correlation window=60 minutes to connect the same Subject Logon ID to 4688 policy-change tooling and any following 1102 log clear.",
   "kql_snippet": "SecurityEvent\n| where EventID == 4719\n| project TimeGenerated, Computer, Account, AuditPolicyChanges\n| order by TimeGenerated desc",
   "spl_snippet": "index=wineventlog EventCode=4719\n| table _time, host, SubjectUserName, AuditPolicyChanges",
   "sample_log": "Subject: Account Name: CORP\\admin.ops\nAudit Policy Changes: Audit Process Creation: Success removed\nComputer: DC01",
-  "source_url": "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4719"
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4719",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Event ID 4719",
+      "query": "SecurityEvent\n| where EventID == 4719\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Microsoft Sentinel Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Event ID 4719",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4719\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before implementing event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Event ID 4719",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4719",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The relevant Windows event channel is ingested through a Cortex XDR Windows event collection path.",
+        "Inspect raw provider fields because parsed field names vary by collection path and event provider."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Event ID 4719",
+      "query": "title: Windows Event ID 4719\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4719\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "AuditPolicyChanges",
+      "value": "%%8448",
+      "meaning": "Success auditing was removed for the named audit subcategory.",
+      "security_relevance": "Removing success auditing can suppress evidence such as successful logons or process creation, depending on the affected subcategory.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4719"
+    },
+    {
+      "field": "AuditPolicyChanges",
+      "value": "%%8450",
+      "meaning": "Failure auditing was removed for the named audit subcategory.",
+      "security_relevance": "Removing failure auditing can hide rejected authentication or access attempts for the affected subcategory.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4719"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4719 mean?",
+      "answer": "Event ID 4719 records a change to the computer's system audit policy and identifies the changed audit subcategory and whether success or failure auditing was added or removed."
+    },
+    {
+      "question": "Why can 4719 appear even when audit policy settings change?",
+      "answer": "Microsoft states that this event is generated regardless of the Audit Policy Change subcategory setting, helping retain evidence of audit-policy modification."
+    },
+    {
+      "question": "Which 4719 changes are highest priority?",
+      "answer": "Unexpected removal of success or failure auditing from security-critical subcategories is higher risk than approved additions; verify the subject, subcategory GUID, policy deployment source, and nearby process activity."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4719: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4719",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Impair Defenses: Disable Windows Event Logging (T1562.002)",
+      "url": "https://attack.mitre.org/techniques/T1562/002/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }
