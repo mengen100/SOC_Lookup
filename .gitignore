@@ -7,3 +7,4 @@ public/api/
 .env*.local
 AGENTS.md
 .claude/
+.worktrees/
