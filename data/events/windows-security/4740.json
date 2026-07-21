@@ -1,45 +1,153 @@
 {
-    "id":  "4740",
-    "source":  "windows_security",
-    "category":  "AccountMgmt",
-    "name":  "A user account was locked out",
-    "priority":  "P1",
-    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
-    "last_reviewed":  "2026-07-10",
-    "definition":  "Windows Security Event ID 4740 records a domain account lockout and is a key correlation point for brute-force activity and stale credential troubleshooting.",
-    "trigger_scenarios":  "A domain controller generates the event when failed authentication reaches the configured account-lockout threshold.",
-    "key_fields":  [
-                       {
-                           "field":  "Account That Was Locked Out",
-                           "explanation":  "The affected account. Determine whether it is a user, privileged, service, or shared identity."
-                       },
-                       {
-                           "field":  "Caller Computer Name",
-                           "explanation":  "The computer that submitted the failed credentials. This is often the fastest path to the underlying source."
-                       },
-                       {
-                           "field":  "Subject",
-                           "explanation":  "The domain controller context that recorded the lockout; it is not necessarily the user who caused it."
-                       }
-                   ],
-    "false_positives":  [
-                            "Stale credentials in services, mobile devices, and mapped drives commonly cause lockouts.",
-                            "Users can lock themselves out by repeatedly entering an old password."
-                        ],
-    "related_event_ids":  [
-                              "4625",
-                              "4776",
-                              "4768"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1110",
-                              "technique_name":  "Brute Force"
-                          }
-                      ],
-    "detection_notes":  "T1110 brute force is distinguished through Caller Computer Name and policy values: repeated lockouts from one caller across many Target Accounts inside one Account Lockout Observation Window are spray-like, while one account locked from many callers often reflects stale credentials. Correlate preceding 4625 Sub Status 0xC000006A (bad password) versus 0xC0000072 (disabled account); only the former normally drives password-lockout behavior. Compare counts with the configured Account Lockout Threshold before alerting.",
-    "kql_snippet":  "SecurityEvent\n| where EventID == 4740\n| project TimeGenerated, Computer, TargetAccount, CallerComputerName\n| order by TimeGenerated desc",
-    "spl_snippet":  "index=wineventlog EventCode=4740\n| table _time, host, TargetUserName, CallerComputerName",
-    "sample_log":  "Account That Was Locked Out: CORP\\jsmith\nCaller Computer Name: WS-014\nComputer: DC01",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4740"
+  "id": "4740",
+  "source": "windows_security",
+  "category": "AccountMgmt",
+  "name": "A user account was locked out",
+  "priority": "P1",
+  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
+  "last_reviewed": "2026-07-21",
+  "definition": "Windows Security Event ID 4740 records a domain account lockout and is a key correlation point for brute-force activity and stale credential troubleshooting.",
+  "trigger_scenarios": "A domain controller generates the event when failed authentication reaches the configured account-lockout threshold.",
+  "key_fields": [
+    {
+      "field": "Account That Was Locked Out",
+      "explanation": "The affected account. Determine whether it is a user, privileged, service, or shared identity."
+    },
+    {
+      "field": "Caller Computer Name",
+      "explanation": "The computer that submitted the failed credentials. This is often the fastest path to the underlying source."
+    },
+    {
+      "field": "Subject",
+      "explanation": "The domain controller context that recorded the lockout; it is not necessarily the user who caused it."
+    }
+  ],
+  "false_positives": [
+    "Stale credentials in services, mobile devices, and mapped drives commonly cause lockouts.",
+    "Users can lock themselves out by repeatedly entering an old password."
+  ],
+  "related_event_ids": [
+    "4625",
+    "4776",
+    "4768"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0006",
+      "tactic_name": "Credential Access",
+      "technique_id": "T1110.001",
+      "technique_name": "Brute Force: Password Guessing",
+      "source_url": "https://attack.mitre.org/techniques/T1110/001/"
+    },
+    {
+      "tactic_id": "TA0006",
+      "tactic_name": "Credential Access",
+      "technique_id": "T1110.003",
+      "technique_name": "Brute Force: Password Spraying",
+      "source_url": "https://attack.mitre.org/techniques/T1110/003/"
+    }
+  ],
+  "detection_notes": "T1110.001 Password Guessing and T1110.003 Password Spraying must be distinguished through CallerComputerName and policy values: repeated lockouts from one caller across many TargetUserName values inside the configured Account Lockout Observation Window are spray-like, while one account repeatedly locked from a familiar caller often reflects stale credentials. Correlate preceding 4625 SubStatus 0xC000006A bad-password failures and compare their count with the domain Account Lockout Threshold before alerting.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4740\n| project TimeGenerated, Computer, TargetAccount, CallerComputerName\n| order by TimeGenerated desc",
+  "spl_snippet": "index=wineventlog EventCode=4740\n| table _time, host, TargetUserName, CallerComputerName",
+  "sample_log": "Account That Was Locked Out: CORP\\jsmith\nCaller Computer Name: WS-014\nComputer: DC01",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4740",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Event ID 4740",
+      "query": "SecurityEvent\n| where EventID == 4740\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Event ID 4740",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4740\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Event ID 4740",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4740",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4740",
+      "query": "title: Windows Security Event ID 4740\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4740\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4740 mean?",
+      "answer": "Event ID 4740 records that a user account was locked out and identifies the locked account and, when available, the caller computer involved."
+    },
+    {
+      "question": "Does Event ID 4740 prove a brute-force attack?",
+      "answer": "No. Stale service, scheduled-task, mobile-device, or mapped-drive credentials can also reach the configured lockout threshold; analyze preceding authentication failures and the caller pattern."
+    },
+    {
+      "question": "How can CallerComputerName help with a lockout investigation?",
+      "answer": "One caller locking many accounts is more consistent with automated spraying, while repeated lockout of one account from a familiar host often points to a stored credential; the field can be empty in some authentication paths."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4740: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4740",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Brute Force: Password Guessing (T1110.001)",
+      "url": "https://attack.mitre.org/techniques/T1110/001/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "Brute Force: Password Spraying (T1110.003)",
+      "url": "https://attack.mitre.org/techniques/T1110/003/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

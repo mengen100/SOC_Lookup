@@ -1,45 +1,161 @@
 {
-    "id":  "4738",
-    "source":  "windows_security",
-    "category":  "AccountMgmt",
-    "name":  "A user account was changed",
-    "priority":  "P1",
-    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
-    "last_reviewed":  "2026-07-10",
-    "definition":  "Windows Security Event ID 4738 records a change to a user account and provides visibility into security-relevant attribute modification.",
-    "trigger_scenarios":  "A domain controller logs the event when account properties such as UAC flags, delegation settings, password attributes, or profile fields are changed.",
-    "key_fields":  [
-                       {
-                           "field":  "Subject",
-                           "explanation":  "The account that performed the modification."
-                       },
-                       {
-                           "field":  "Target Account",
-                           "explanation":  "The modified account. Compare old and new values with the expected identity state."
-                       },
-                       {
-                           "field":  "Changed Attributes",
-                           "explanation":  "Fields such as User Account Control, AllowedToDelegateTo, and AccountExpires reveal the security impact of the change."
-                       }
-                   ],
-    "false_positives":  [
-                            "HR systems and directory synchronization update account attributes routinely.",
-                            "Administrators may modify account properties during access provisioning."
-                        ],
-    "related_event_ids":  [
-                              "4720",
-                              "4722",
-                              "4724"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1098",
-                              "technique_name":  "Account Manipulation"
-                          }
-                      ],
-    "detection_notes":  "T1098 is indicated when User Account Control enables DONT_REQ_PREAUTH, TRUSTED_FOR_DELEGATION, or PASSWORD_NEVER_EXPIRES, or AllowedToDelegateTo gains an SPN such as cifs/server. DONT_REQ_PREAUTH enables AS-REP roasting and delegation values expand impersonation paths.  Review delegation changes in a window=60 minute interval with the initiating logon.",
-    "kql_snippet":  "SecurityEvent\n| where EventID == 4738\n| project TimeGenerated, Computer, Account, TargetAccount, UserAccountControl, AllowedToDelegateTo\n| order by TimeGenerated desc",
-    "spl_snippet":  "index=wineventlog EventCode=4738\n| table _time, host, SubjectUserName, TargetUserName, UserAccountControl, AllowedToDelegateTo",
-    "sample_log":  "Subject: CORP\\admin.ops\nTarget Account: CORP\\jsmith\nUser Account Control: Account enabled\nAllowedToDelegateTo: cifs/file01.corp.example",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4738"
+  "id": "4738",
+  "source": "windows_security",
+  "category": "AccountMgmt",
+  "name": "A user account was changed",
+  "priority": "P1",
+  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
+  "last_reviewed": "2026-07-21",
+  "definition": "Windows Security Event ID 4738 records a change to a user account and provides visibility into security-relevant attribute modification.",
+  "trigger_scenarios": "A domain controller logs the event when account properties such as UAC flags, delegation settings, password attributes, or profile fields are changed.",
+  "key_fields": [
+    {
+      "field": "Subject",
+      "explanation": "The account that performed the modification."
+    },
+    {
+      "field": "Target Account",
+      "explanation": "The modified account. Compare old and new values with the expected identity state."
+    },
+    {
+      "field": "Changed Attributes",
+      "explanation": "Fields such as User Account Control, AllowedToDelegateTo, and AccountExpires reveal the security impact of the change."
+    }
+  ],
+  "false_positives": [
+    "HR systems and directory synchronization update account attributes routinely.",
+    "Administrators may modify account properties during access provisioning."
+  ],
+  "related_event_ids": [
+    "4720",
+    "4722",
+    "4724"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0003",
+      "tactic_name": "Persistence",
+      "technique_id": "T1098",
+      "technique_name": "Account Manipulation",
+      "source_url": "https://attack.mitre.org/techniques/T1098/"
+    }
+  ],
+  "detection_notes": "T1098 Account Manipulation is indicated when UserAccountControl adds DONT_REQ_PREAUTH (0x400000) or TRUSTED_FOR_DELEGATION (0x80000), or AllowedToDelegateTo gains an SPN such as cifs/server. The first value permits Kerberos requests without preauthentication and the second expands delegation; correlate the SubjectLogonId with the initiating session in a window=60 minutes and compare the prior directory state.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4738\n| project TimeGenerated, Computer, Account, TargetAccount, UserAccountControl, AllowedToDelegateTo\n| order by TimeGenerated desc",
+  "spl_snippet": "index=wineventlog EventCode=4738\n| table _time, host, SubjectUserName, TargetUserName, UserAccountControl, AllowedToDelegateTo",
+  "sample_log": "Subject: CORP\\admin.ops\nTarget Account: CORP\\jsmith\nUser Account Control: Account enabled\nAllowedToDelegateTo: cifs/file01.corp.example",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4738",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Event ID 4738",
+      "query": "SecurityEvent\n| where EventID == 4738\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Event ID 4738",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4738\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Event ID 4738",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4738",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4738",
+      "query": "title: Windows Security Event ID 4738\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4738\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "UserAccountControl",
+      "value": "0x400000",
+      "meaning": "DONT_REQ_PREAUTH: Kerberos preauthentication is not required for the account.",
+      "security_relevance": "A newly enabled value can expose the account to AS-REP roasting and should match an approved legacy requirement.",
+      "source_url": "https://learn.microsoft.com/en-us/troubleshoot/windows-server/active-directory/useraccountcontrol-manipulate-account-properties"
+    },
+    {
+      "field": "UserAccountControl",
+      "value": "0x80000",
+      "meaning": "TRUSTED_FOR_DELEGATION: the account is trusted for Kerberos delegation.",
+      "security_relevance": "Unexpected delegation broadens where the account can impersonate authenticated users and is a high-impact account change.",
+      "source_url": "https://learn.microsoft.com/en-us/troubleshoot/windows-server/active-directory/useraccountcontrol-manipulate-account-properties"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4738 mean?",
+      "answer": "Event ID 4738 records that a Windows user account changed and includes the actor, target account, and changed account attributes."
+    },
+    {
+      "question": "Which 4738 account changes are security-sensitive?",
+      "answer": "Review delegation settings, password and expiration controls, user principal name, script path, allowed workstation list, and UserAccountControl changes against an approved identity-management workflow."
+    },
+    {
+      "question": "Does Event ID 4738 identify exactly which attribute changed?",
+      "answer": "It provides current values for documented fields, but unchanged fields can be represented by a hyphen and interpretation can vary by event version; compare with directory change auditing and the prior account state."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4738: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4738",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Use the UserAccountControl flags to manipulate user account properties",
+      "url": "https://learn.microsoft.com/en-us/troubleshoot/windows-server/active-directory/useraccountcontrol-manipulate-account-properties",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Account Manipulation (T1098)",
+      "url": "https://attack.mitre.org/techniques/T1098/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

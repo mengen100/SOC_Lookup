@@ -1,50 +1,152 @@
 {
-    "id":  "8",
-    "source":  "sysmon",
-    "category":  "Process",
-    "name":  "CreateRemoteThread",
-    "priority":  "P1",
-    "applicable_version":  "Sysmon 1.0 and later; CreateRemoteThread logging must be enabled",
-    "last_reviewed":  "2026-07-10",
-    "definition":  "Sysmon Event ID 8 records a process creating a thread in another process and is a high-value telemetry source for investigating process injection and cross-process execution.",
-    "trigger_scenarios":  "Sysmon generates the event when it observes a remote thread creation attempt. The event can be produced by benign debuggers and security tooling as well as by injection techniques.",
-    "key_fields":  [
-                       {
-                           "field":  "SourceImage / SourceProcessGuid",
-                           "explanation":  "The process that created the remote thread. Investigate whether it is expected to interact with the target process and correlate it to Event ID 1."
-                       },
-                       {
-                           "field":  "TargetImage / TargetProcessGuid",
-                           "explanation":  "The process receiving the new thread. Sensitive targets such as browser, authentication, security, and business application processes deserve role-aware triage."
-                       },
-                       {
-                           "field":  "StartAddress",
-                           "explanation":  "The thread start address. Addresses in unusual memory regions can support injection analysis, but require memory and module context to interpret correctly."
-                       },
-                       {
-                           "field":  "StartModule / StartFunction",
-                           "explanation":  "When available, these fields identify the module and exported function associated with the start address. Missing or unexpected module context can be notable."
-                       }
-                   ],
-    "false_positives":  [
-                            "Endpoint protection, EDR agents, debuggers, accessibility tools, and application instrumentation may create remote threads.",
-                            "Some application frameworks and automation products use cross-process techniques for legitimate integration.",
-                            "A single event without the source process, target role, or follow-on behavior is not sufficient to label as malicious."
-                        ],
-    "related_event_ids":  [
-                              "1",
-                              "7",
-                              "10"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1055",
-                              "technique_name":  "Process Injection"
-                          }
-                      ],
-    "detection_notes":  "T1055 injection is concrete when TargetImage is lsass.exe or explorer.exe and StartModule is empty while SourceImage runs from C:\\\\Users\\\\ or C:\\\\Temp\\\\. An empty StartModule with a remote StartAddress supports shellcode rather than a normal exported function.",
-    "kql_snippet":  "Sysmon\n| where EventID == 8\n| where TargetImage has_any (\"\\\\lsass.exe\", \"\\\\explorer.exe\", \"\\\\chrome.exe\", \"\\\\msedge.exe\")\n| project TimeGenerated, Computer, SourceImage, TargetImage, StartAddress, StartModule, StartFunction\n| order by TimeGenerated desc",
-    "spl_snippet":  "index=sysmon EventCode=8\n| search TargetImage IN (\"*\\\\lsass.exe\", \"*\\\\explorer.exe\", \"*\\\\chrome.exe\", \"*\\\\msedge.exe\")\n| table _time, host, SourceImage, TargetImage, StartAddress, StartModule, StartFunction",
-    "sample_log":  "UtcTime: 2026-07-10 03:20:18.000\nSourceImage: C:\\Users\\jsmith\\AppData\\Local\\Temp\\updater.exe\nTargetImage: C:\\Windows\\explorer.exe\nStartAddress: 0x000001F4A1230000\nStartModule: \nStartFunction: ",
-    "source_url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+  "id": "8",
+  "source": "sysmon",
+  "category": "Process",
+  "name": "CreateRemoteThread",
+  "priority": "P1",
+  "applicable_version": "Sysmon 1.0 and later; CreateRemoteThread logging must be enabled",
+  "last_reviewed": "2026-07-21",
+  "definition": "Sysmon Event ID 8 records a process creating a thread in another process and is a high-value telemetry source for investigating process injection and cross-process execution.",
+  "trigger_scenarios": "Sysmon generates the event when it observes a remote thread creation attempt. The event can be produced by benign debuggers and security tooling as well as by injection techniques.",
+  "key_fields": [
+    {
+      "field": "SourceImage / SourceProcessGuid",
+      "explanation": "The process that created the remote thread. Investigate whether it is expected to interact with the target process and correlate it to Event ID 1."
+    },
+    {
+      "field": "TargetImage / TargetProcessGuid",
+      "explanation": "The process receiving the new thread. Sensitive targets such as browser, authentication, security, and business application processes deserve role-aware triage."
+    },
+    {
+      "field": "StartAddress",
+      "explanation": "The thread start address. Addresses in unusual memory regions can support injection analysis, but require memory and module context to interpret correctly."
+    },
+    {
+      "field": "StartModule / StartFunction",
+      "explanation": "When available, these fields identify the module and exported function associated with the start address. Missing or unexpected module context can be notable."
+    }
+  ],
+  "false_positives": [
+    "Endpoint protection, EDR agents, debuggers, accessibility tools, and application instrumentation may create remote threads.",
+    "Some application frameworks and automation products use cross-process techniques for legitimate integration.",
+    "A single event without the source process, target role, or follow-on behavior is not sufficient to label as malicious."
+  ],
+  "related_event_ids": [
+    "1",
+    "7",
+    "10"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0005",
+      "tactic_name": "Defense Evasion",
+      "technique_id": "T1055",
+      "technique_name": "Process Injection",
+      "source_url": "https://attack.mitre.org/techniques/T1055/"
+    }
+  ],
+  "detection_notes": "T1055 injection is concrete when TargetImage is lsass.exe or explorer.exe and StartModule is empty while SourceImage runs from C:\\\\Users\\\\ or C:\\\\Temp\\\\. An empty StartModule with a remote StartAddress supports shellcode rather than a normal exported function.",
+  "kql_snippet": "Sysmon\n| where EventID == 8\n| where TargetImage has_any (\"\\\\lsass.exe\", \"\\\\explorer.exe\", \"\\\\chrome.exe\", \"\\\\msedge.exe\")\n| project TimeGenerated, Computer, SourceImage, TargetImage, StartAddress, StartModule, StartFunction\n| order by TimeGenerated desc",
+  "spl_snippet": "index=sysmon EventCode=8\n| search TargetImage IN (\"*\\\\lsass.exe\", \"*\\\\explorer.exe\", \"*\\\\chrome.exe\", \"*\\\\msedge.exe\")\n| table _time, host, SourceImage, TargetImage, StartAddress, StartModule, StartFunction",
+  "sample_log": "UtcTime: 2026-07-10 03:20:18.000\nSourceImage: C:\\Users\\jsmith\\AppData\\Local\\Temp\\updater.exe\nTargetImage: C:\\Windows\\explorer.exe\nStartAddress: 0x000001F4A1230000\nStartModule: \nStartFunction: ",
+  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Sysmon",
+    "channel": "Microsoft-Windows-Sysmon/Operational",
+    "level": "Informational"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Sysmon Event ID 8",
+      "query": "Event\n| where EventLog == \"Microsoft-Windows-Sysmon/Operational\" and EventID == 8\n| project TimeGenerated, Computer, RenderedDescription\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel Event table",
+      "assumptions": [
+        "The Sysmon Operational channel is collected into Event and retains RenderedDescription.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/event"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Sysmon Event ID 8",
+      "query": "index=sysmon source=\"WinEventLog:Microsoft-Windows-Sysmon/Operational\" EventCode=8\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Sysmon event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Sysmon Event ID 8",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 8",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Sysmon Operational channel is ingested into Cortex XDR.",
+        "Event ID 8 is not globally unique; confirm Provider is Microsoft-Windows-Sysmon before applying Sysmon field semantics."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Sysmon Event ID 8",
+      "query": "title: Sysmon Event ID 8\nstatus: experimental\nlogsource:\n    product: windows\n    service: sysmon\ndetection:\n    selection:\n        EventID: 8\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Sysmon log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "StartModule",
+      "value": "(empty)",
+      "meaning": "Sysmon could not map the remote thread start address to a loaded module.",
+      "security_relevance": "An address outside known loaded modules can be consistent with injected memory, but symbol resolution and telemetry limitations must be excluded.",
+      "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Sysmon Event ID 8 mean?",
+      "answer": "Sysmon Event ID 8 records one process creating a thread in another process and includes source, target, and remote start-address context."
+    },
+    {
+      "question": "Does CreateRemoteThread always mean process injection?",
+      "answer": "No. Security, accessibility, debugging, and management software can create remote threads; investigate the source-target pair, signer, path, start module, and surrounding process activity."
+    },
+    {
+      "question": "Why can StartModule or StartFunction be empty?",
+      "answer": "Sysmon derives these fields from the start address; they can be empty when the address cannot be resolved to a loaded module or exported function, which is useful but not conclusive injection evidence."
+    }
+  ],
+  "sources": [
+    {
+      "title": "Sysmon",
+      "url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Process Injection (T1055)",
+      "url": "https://attack.mitre.org/techniques/T1055/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

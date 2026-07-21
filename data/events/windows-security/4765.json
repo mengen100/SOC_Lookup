@@ -1,45 +1,161 @@
 {
-    "id":  "4765",
-    "source":  "windows_security",
-    "category":  "AccountMgmt",
-    "name":  "SID History was added to an account",
-    "priority":  "P1",
-    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
-    "last_reviewed":  "2026-07-10",
-    "definition":  "Windows Security Event ID 4765 records addition of SID History to an account, a rare operation with significant privilege implications.",
-    "trigger_scenarios":  "A domain controller logs the event when an SID is added to the sIDHistory attribute of an account, typically during approved domain migration.",
-    "key_fields":  [
-                       {
-                           "field":  "Target Account",
-                           "explanation":  "The account receiving SID History. Resolve its current domain role and group memberships."
-                       },
-                       {
-                           "field":  "SID History",
-                           "explanation":  "The historical SID added to the account. A privileged SID can grant inherited access across resources."
-                       },
-                       {
-                           "field":  "Subject",
-                           "explanation":  "The account performing the modification. This should normally be a controlled migration process."
-                       }
-                   ],
-    "false_positives":  [
-                            "Approved Active Directory migration projects legitimately add SID History.",
-                            "Test migrations can generate the event in lab or staging domains."
-                        ],
-    "related_event_ids":  [
-                              "4766",
-                              "4738",
-                              "4720"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1098",
-                              "technique_name":  "Account Manipulation"
-                          }
-                      ],
-    "detection_notes":  "T1098 SID-History Injection is indicated when SID History ends in -512 (Domain Admins) or -519 (Enterprise Admins). Those RID values grant inherited ACL access without current group membership; validate migration authorization and later 4624 access.  Use window=60 minutes to correlate the SID History change with subsequent logons.",
-    "kql_snippet":  "SecurityEvent\n| where EventID == 4765\n| project TimeGenerated, Computer, Account, TargetAccount, SidHistory\n| order by TimeGenerated desc",
-    "spl_snippet":  "index=wineventlog EventCode=4765\n| table _time, host, SubjectUserName, TargetUserName, SidHistory",
-    "sample_log":  "Subject: CORP\\migration.service\nTarget Account: CORP\\jsmith\nSID History: S-1-5-21-REDACTED-512",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4765"
+  "id": "4765",
+  "source": "windows_security",
+  "category": "AccountMgmt",
+  "name": "SID History was added to an account",
+  "priority": "P1",
+  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
+  "last_reviewed": "2026-07-21",
+  "definition": "Windows Security Event ID 4765 records addition of SID History to an account, a rare operation with significant privilege implications.",
+  "trigger_scenarios": "A domain controller logs the event when an SID is added to the sIDHistory attribute of an account, typically during approved domain migration.",
+  "key_fields": [
+    {
+      "field": "Target Account",
+      "explanation": "The account receiving SID History. Resolve its current domain role and group memberships."
+    },
+    {
+      "field": "SID History",
+      "explanation": "The historical SID added to the account. A privileged SID can grant inherited access across resources."
+    },
+    {
+      "field": "Subject",
+      "explanation": "The account performing the modification. This should normally be a controlled migration process."
+    }
+  ],
+  "false_positives": [
+    "Approved Active Directory migration projects legitimately add SID History.",
+    "Test migrations can generate the event in lab or staging domains."
+  ],
+  "related_event_ids": [
+    "4766",
+    "4738",
+    "4720"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0004",
+      "tactic_name": "Privilege Escalation",
+      "technique_id": "T1134.005",
+      "technique_name": "Access Token Manipulation: SID-History Injection",
+      "source_url": "https://attack.mitre.org/techniques/T1134/005/"
+    }
+  ],
+  "detection_notes": "T1134.005 SID-History Injection is high impact when SidHistory ends in RID 512 for Domain Admins or RID 519 for Enterprise Admins. Those SIDs can satisfy authorization checks without current group membership; validate the migration ticket and correlate the target account with subsequent 4624 logons in a window=60 minutes.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4765\n| project TimeGenerated, Computer, Account, TargetAccount, SidHistory\n| order by TimeGenerated desc",
+  "spl_snippet": "index=wineventlog EventCode=4765\n| table _time, host, SubjectUserName, TargetUserName, SidHistory",
+  "sample_log": "Subject: CORP\\migration.service\nTarget Account: CORP\\jsmith\nSID History: S-1-5-21-REDACTED-512",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4765",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Event ID 4765",
+      "query": "SecurityEvent\n| where EventID == 4765\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Event ID 4765",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4765\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Event ID 4765",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4765",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4765",
+      "query": "title: Windows Security Event ID 4765\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4765\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "SidHistory",
+      "value": "RID 512",
+      "meaning": "The relative identifier 512 denotes the Domain Admins group in a domain SID.",
+      "security_relevance": "Adding a SID ending in -512 can grant access evaluated through Domain Admins without current group membership and must be tied to an approved migration.",
+      "source_url": "https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/manage/understand-security-identifiers"
+    },
+    {
+      "field": "SidHistory",
+      "value": "RID 519",
+      "meaning": "The relative identifier 519 denotes the Enterprise Admins group in the forest-root domain.",
+      "security_relevance": "A SID ending in -519 carries forest-wide privilege implications and is critical unless explicitly authorized for migration.",
+      "source_url": "https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/manage/understand-security-identifiers"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4765 mean?",
+      "answer": "Event ID 4765 records that SID History was added to an account and identifies the actor, target account, and added SID."
+    },
+    {
+      "question": "Is SID History always malicious?",
+      "answer": "No. It supports access continuity during legitimate account and domain migrations, but unapproved additions can preserve privileges outside normal group membership."
+    },
+    {
+      "question": "Why are RID 512 and RID 519 important in SID History?",
+      "answer": "They identify Domain Admins and Enterprise Admins respectively when appended to the relevant domain SID, so their addition can confer highly privileged authorization through SID History."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4765: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4765",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Security identifiers",
+      "url": "https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/manage/understand-security-identifiers",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Access Token Manipulation: SID-History Injection (T1134.005)",
+      "url": "https://attack.mitre.org/techniques/T1134/005/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

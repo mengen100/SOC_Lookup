@@ -1,53 +1,158 @@
 {
-    "id":  "3",
-    "source":  "sysmon",
-    "category":  "Network",
-    "name":  "Network connection detected",
-    "priority":  "P1",
-    "applicable_version":  "Sysmon 1.0 and later; network connection logging must be enabled",
-    "last_reviewed":  "2026-07-10",
-    "definition":  "Sysmon Event ID 3 records network connections initiated by a process and links outbound activity to the responsible image, user, process GUID, and destination.",
-    "trigger_scenarios":  "Sysmon generates the event when a configured process establishes a TCP or UDP connection. The event is disabled by default in Sysmon and must be explicitly enabled in the configuration.",
-    "key_fields":  [
-                       {
-                           "field":  "Image / ProcessGuid",
-                           "explanation":  "The executable and stable process identifier responsible for the connection. ProcessGuid can be joined to Event ID 1 for command-line and parent-process context."
-                       },
-                       {
-                           "field":  "DestinationIp / DestinationHostname",
-                           "explanation":  "The remote address and hostname observed for the connection. Compare both values because name resolution and direct-IP connections provide different investigative clues."
-                       },
-                       {
-                           "field":  "DestinationPort",
-                           "explanation":  "The remote service port. Rare ports, ports that do not match the process role, and external administrative services are useful starting points."
-                       },
-                       {
-                           "field":  "Initiated",
-                           "explanation":  "Indicates whether the local process initiated the connection. Most outbound command-and-control hunting focuses on initiated connections."
-                       }
-                   ],
-    "false_positives":  [
-                            "Browsers, endpoint agents, update clients, and cloud applications make frequent external connections.",
-                            "CDNs and shared hosting can make an unfamiliar destination appear suspicious without additional context.",
-                            "Remote administration and monitoring platforms can legitimately use uncommon ports."
-                        ],
-    "related_event_ids":  [
-                              "1",
-                              "22"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1071",
-                              "technique_name":  "Application Layer Protocol"
-                          },
-                          {
-                              "technique_id":  "T1105",
-                              "technique_name":  "Ingress Tool Transfer"
-                          }
-                      ],
-    "detection_notes":  "T1071/T1105 is concrete when Initiated is true, DestinationPort is 443 or 80, and Image is powershell.exe, mshta.exe, or a binary under C:\\\\Users\\\\. Join ProcessGuid to Event ID 1; periodic connections to one DestinationIp are beacon candidates.",
-    "kql_snippet":  "Sysmon\n| where EventID == 3 and Initiated == \"true\"\n| where Image has_any (\"\\\\powershell.exe\", \"\\\\rundll32.exe\", \"\\\\mshta.exe\")\n| project TimeGenerated, Computer, User, Image, DestinationIp, DestinationHostname, DestinationPort, ProcessGuid\n| order by TimeGenerated desc",
-    "spl_snippet":  "index=sysmon EventCode=3 Initiated=true\n| search Image IN (\"*\\\\powershell.exe\", \"*\\\\rundll32.exe\", \"*\\\\mshta.exe\")\n| table _time, host, User, Image, DestinationIp, DestinationHostname, DestinationPort, ProcessGuid",
-    "sample_log":  "UtcTime: 2026-07-10 03:20:14.000\nProcessGuid: {11111111-2222-3333-4444-555555555555}\nImage: C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\nUser: CORP\\jsmith\nProtocol: tcp\nInitiated: true\nDestinationHostname: example.invalid\nDestinationIp: 203.0.113.10\nDestinationPort: 443",
-    "source_url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+  "id": "3",
+  "source": "sysmon",
+  "category": "Network",
+  "name": "Network connection detected",
+  "priority": "P1",
+  "applicable_version": "Sysmon 1.0 and later; network connection logging must be enabled",
+  "last_reviewed": "2026-07-21",
+  "definition": "Sysmon Event ID 3 records network connections initiated by a process and links outbound activity to the responsible image, user, process GUID, and destination.",
+  "trigger_scenarios": "Sysmon generates the event when a configured process establishes a TCP or UDP connection. The event is disabled by default in Sysmon and must be explicitly enabled in the configuration.",
+  "key_fields": [
+    {
+      "field": "Image / ProcessGuid",
+      "explanation": "The executable and stable process identifier responsible for the connection. ProcessGuid can be joined to Event ID 1 for command-line and parent-process context."
+    },
+    {
+      "field": "DestinationIp / DestinationHostname",
+      "explanation": "The remote address and hostname observed for the connection. Compare both values because name resolution and direct-IP connections provide different investigative clues."
+    },
+    {
+      "field": "DestinationPort",
+      "explanation": "The remote service port. Rare ports, ports that do not match the process role, and external administrative services are useful starting points."
+    },
+    {
+      "field": "Initiated",
+      "explanation": "Indicates whether the local process initiated the connection. Most outbound command-and-control hunting focuses on initiated connections."
+    }
+  ],
+  "false_positives": [
+    "Browsers, endpoint agents, update clients, and cloud applications make frequent external connections.",
+    "CDNs and shared hosting can make an unfamiliar destination appear suspicious without additional context.",
+    "Remote administration and monitoring platforms can legitimately use uncommon ports."
+  ],
+  "related_event_ids": [
+    "1",
+    "22"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0011",
+      "tactic_name": "Command and Control",
+      "technique_id": "T1071.001",
+      "technique_name": "Application Layer Protocol: Web Protocols",
+      "source_url": "https://attack.mitre.org/techniques/T1071/001/"
+    }
+  ],
+  "detection_notes": "T1071.001 Web Protocols triage becomes actionable when Initiated is true, DestinationPort is 443 or 80, and Image is a script host or an unsigned binary under C:\\\\Users\\\\. Neither the port nor process name is sufficient alone; join ProcessGuid to Event ID 1 and baseline repeated connections to the same DestinationIp before classifying beacon-like behavior.",
+  "kql_snippet": "Sysmon\n| where EventID == 3 and Initiated == \"true\"\n| where Image has_any (\"\\\\powershell.exe\", \"\\\\rundll32.exe\", \"\\\\mshta.exe\")\n| project TimeGenerated, Computer, User, Image, DestinationIp, DestinationHostname, DestinationPort, ProcessGuid\n| order by TimeGenerated desc",
+  "spl_snippet": "index=sysmon EventCode=3 Initiated=true\n| search Image IN (\"*\\\\powershell.exe\", \"*\\\\rundll32.exe\", \"*\\\\mshta.exe\")\n| table _time, host, User, Image, DestinationIp, DestinationHostname, DestinationPort, ProcessGuid",
+  "sample_log": "UtcTime: 2026-07-10 03:20:14.000\nProcessGuid: {11111111-2222-3333-4444-555555555555}\nImage: C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe\nUser: CORP\\jsmith\nProtocol: tcp\nInitiated: true\nDestinationHostname: example.invalid\nDestinationIp: 203.0.113.10\nDestinationPort: 443",
+  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Sysmon",
+    "channel": "Microsoft-Windows-Sysmon/Operational",
+    "level": "Informational"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Sysmon Event ID 3",
+      "query": "Event\n| where EventLog == \"Microsoft-Windows-Sysmon/Operational\" and EventID == 3\n| project TimeGenerated, Computer, RenderedDescription\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel Event table",
+      "assumptions": [
+        "The Sysmon Operational channel is collected into Event and retains RenderedDescription.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/event"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Sysmon Event ID 3",
+      "query": "index=sysmon source=\"WinEventLog:Microsoft-Windows-Sysmon/Operational\" EventCode=3\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Sysmon event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Sysmon Event ID 3",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 3",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Sysmon Operational channel is ingested into Cortex XDR.",
+        "Event ID 3 is not globally unique; confirm Provider is Microsoft-Windows-Sysmon before applying Sysmon field semantics."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Sysmon Event ID 3",
+      "query": "title: Sysmon Event ID 3\nstatus: experimental\nlogsource:\n    product: windows\n    service: sysmon\ndetection:\n    selection:\n        EventID: 3\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Sysmon log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "Initiated",
+      "value": "true",
+      "meaning": "The recorded process initiated the network connection.",
+      "security_relevance": "This direction helps separate an outbound client connection from an accepted connection, but it does not establish malicious intent.",
+      "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+    },
+    {
+      "field": "DestinationPort",
+      "value": "443",
+      "meaning": "The destination uses the conventional HTTPS port.",
+      "security_relevance": "Port 443 is common and not proof of web C2; combine it with Image, ProcessGuid, destination reputation, TLS or proxy telemetry, and timing.",
+      "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Sysmon Event ID 3 record?",
+      "answer": "Sysmon Event ID 3 records TCP or UDP network connections with process, user, source, destination, protocol, and connection-direction context when NetworkConnect logging is enabled."
+    },
+    {
+      "question": "Is Sysmon network connection logging enabled by default?",
+      "answer": "No. Microsoft states that Event ID 3 logging is disabled by default because of event volume and must be enabled through Sysmon configuration."
+    },
+    {
+      "question": "Does a connection to port 443 indicate command and control?",
+      "answer": "No. HTTPS is normal enterprise traffic; detection requires process identity, command line, destination, certificate or proxy context, frequency, and related DNS or process events."
+    }
+  ],
+  "sources": [
+    {
+      "title": "Sysmon",
+      "url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Application Layer Protocol: Web Protocols (T1071.001)",
+      "url": "https://attack.mitre.org/techniques/T1071/001/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }
