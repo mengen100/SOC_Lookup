@@ -5,7 +5,7 @@
   "name": "Trusted domain information was modified",
   "priority": "P2",
   "applicable_version": "Windows Server 2008 R2 and later",
-  "last_reviewed": "2026-07-13",
+  "last_reviewed": "2026-07-21",
   "definition": "Windows Security Event ID 4716 records modification of Active Directory trusted domain information.",
   "trigger_scenarios": "This event is generated on domain controllers when trust settings are modified, including trust type, direction, attributes, and SID filtering state.",
   "key_fields": [
@@ -33,13 +33,130 @@
   ],
   "attck_mapping": [
     {
+      "tactic_id": "TA0004",
+      "tactic_name": "Privilege Escalation",
       "technique_id": "T1484.002",
-      "technique_name": "Domain Policy Modification: Trust Modification"
+      "technique_name": "Domain or Tenant Policy Modification: Trust Modification",
+      "source_url": "https://attack.mitre.org/techniques/T1484/002/"
     }
   ],
-  "detection_notes": "Alert on threshold=1 unplanned 4716 because MITRE T1484.002 covers adversaries modifying domain trust settings to elevate privileges or evade defenses. Prioritize TdoDirection=3, TdoAttributes adding 0x8 forest transitive, 0x40 treat-as-external, 0x80 RC4 on MIT trusts, or 0x400 PIM trust, and any SidFilteringEnabled=Disabled value. Microsoft documents ANONYMOUS LOGON with Logon ID 0x3E6 as possible automatic trust password reset, so correlate with 4724/4742 before treating that specific pattern as malicious.",
+  "detection_notes": "T1484.002 Trust Modification is high priority when TdoDirection changes to 3 bidirectional, TdoAttributes adds 0x40 TRUST_ATTRIBUTE_TREAT_AS_EXTERNAL, or SidFilteringEnabled becomes Disabled. These values expand or relax the trust boundary; compare old and new settings, DomainSid, and the approved change. ANONYMOUS LOGON with Logon ID 0x3e6 can reflect automatic trust-password reset and must be correlated before escalation.",
   "kql_snippet": "SecurityEvent\n| where EventID == 4716\n| project TimeGenerated, Computer, Account",
   "spl_snippet": "index=wineventlog EventCode=4716 | table _time, host",
-  "sample_log": "EventID: 4716\nSubjectUserName: dadmin\nSubjectLogonId: 0x138eb0\nDomainSid: S-1-5-21-2226861337-2836268956-2433141405\nTdoType: 2\nTdoDirection: 3\nTdoAttributes: 64\nSidFilteringEnabled: Disabled",
-  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4716"
+  "sample_log": "EventID: 4716\nSubjectUserName: dadmin\nSubjectLogonId: 0x138eb0\nDomainSid: S-1-5-21-2226861337-2836268956-2433141405\nTdoType: 2 (Uplevel)\nTdoDirection: 3 (Bidirectional)\nTdoAttributes: 64 (0x40 TREAT_AS_EXTERNAL)\nSidFilteringEnabled: Disabled",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4716",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Event ID 4716",
+      "query": "SecurityEvent\n| where EventID == 4716\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Event ID 4716",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4716\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Event ID 4716",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4716",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4716",
+      "query": "title: Windows Security Event ID 4716\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4716\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "TdoDirection",
+      "value": "3",
+      "meaning": "TRUST_DIRECTION_BIDIRECTIONAL: both domains trust one another.",
+      "security_relevance": "Changing an existing trust to bidirectional expands authentication paths and requires explicit authorization.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4716"
+    },
+    {
+      "field": "TdoAttributes",
+      "value": "0x40",
+      "meaning": "TRUST_ATTRIBUTE_TREAT_AS_EXTERNAL: a cross-forest trust is treated like an external trust for SID-filtering purposes.",
+      "security_relevance": "Microsoft notes that this relaxes the stricter cross-forest filtering model, making an unexpected addition security-sensitive.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4716"
+    },
+    {
+      "field": "SidFilteringEnabled",
+      "value": "Disabled",
+      "meaning": "SID filtering is disabled for the trust.",
+      "security_relevance": "Disabling SID filtering can allow SIDs from the trusted side to influence authorization and requires immediate review against the trust design.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4716"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4716 mean?",
+      "answer": "Event ID 4716 records modification of Active Directory trusted-domain information and includes old and new trust settings when available."
+    },
+    {
+      "question": "Why is TdoAttributes 0x40 sensitive?",
+      "answer": "TRUST_ATTRIBUTE_TREAT_AS_EXTERNAL relaxes cross-forest SID-filtering treatment to the external-trust model, so an unexpected addition can change authorization boundaries."
+    },
+    {
+      "question": "Is an ANONYMOUS LOGON subject always malicious in 4716?",
+      "answer": "No. Microsoft documents that ANONYMOUS LOGON can appear during automatic trust-password reset; correlate that pattern with expected trust maintenance before escalating."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4716: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4716",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Domain or Tenant Policy Modification: Trust Modification (T1484.002)",
+      "url": "https://attack.mitre.org/techniques/T1484/002/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

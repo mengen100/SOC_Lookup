@@ -5,7 +5,7 @@
   "name": "The audit policy (SACL) on an object was changed",
   "priority": "P2",
   "applicable_version": "Windows Server 2008 R2 and later",
-  "last_reviewed": "2026-07-13",
+  "last_reviewed": "2026-07-21",
   "definition": "Windows Security Event ID 4715 records a change to the local audit policy security descriptor.",
   "trigger_scenarios": "This event is generated every time the local audit policy security descriptor changes and is logged regardless of the Audit Policy Change subcategory setting.",
   "key_fields": [
@@ -33,13 +33,123 @@
   ],
   "attck_mapping": [
     {
+      "tactic_id": "TA0005",
+      "tactic_name": "Defense Evasion",
       "technique_id": "T1562.002",
-      "technique_name": "Impair Defenses: Disable Windows Event Logging"
+      "technique_name": "Impair Defenses: Disable Windows Event Logging",
+      "source_url": "https://attack.mitre.org/techniques/T1562/002/"
     }
   ],
-  "detection_notes": "Use threshold=1 unplanned 4715 on high-value systems: Microsoft documents that this event is always logged when the local audit policy security descriptor changes. Compare OldSd and NewSd for removal of S: SACL entries, SA/FA audit flags, or rights such as WD/WO/0xf0007 assigned to unexpected trustees; removing those values impairs evidence collection and maps to T1562.002 Disable Windows Event Logging. Correlate SubjectLogonId with 4624 and any 4719 audit policy change before suppressing.",
+  "detection_notes": "Use threshold=1 for an unplanned 4715 on a high-value object. T1562.002 defense impairment is supported when OldSd contains SACL audit ACEs but NewSd becomes S:NO_ACCESS_CONTROL or removes SA/FA audit flags and relevant rights; compare the full SDDL and correlate SubjectLogonId with 4624 and nearby 4719 policy changes.",
   "kql_snippet": "SecurityEvent\n| where EventID == 4715\n| project TimeGenerated, Computer, Account",
   "spl_snippet": "index=wineventlog EventCode=4715 | table _time, host",
   "sample_log": "EventID: 4715\nSubjectUserName: dadmin\nSubjectLogonId: 0x11ae30\nOldSd: D:(A;;DCSWRPDTRC;;;BA)S:(AU;SAFA;DCLCRPCRSDWDWO;;;WD)\nNewSd: D:(A;;DCSWRPDTRC;;;BA)S:NO_ACCESS_CONTROL",
-  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4715"
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4715",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Event ID 4715",
+      "query": "SecurityEvent\n| where EventID == 4715\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Event ID 4715",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4715\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Event ID 4715",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4715",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4715",
+      "query": "title: Windows Security Event ID 4715\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4715\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "NewSd",
+      "value": "S:NO_ACCESS_CONTROL",
+      "meaning": "The new security descriptor contains no SACL access-control entries.",
+      "security_relevance": "On a high-value audited object, replacing a populated SACL with no audit controls removes object-access evidence and supports defense-impairment triage.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4715"
+    },
+    {
+      "field": "SDDL audit flag",
+      "value": "SA/FA",
+      "meaning": "SA and FA request successful-access and failed-access auditing in a SACL ACE.",
+      "security_relevance": "Removal of these flags from a relevant ACE can suppress the corresponding object-access audit outcomes.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4715"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4715 mean?",
+      "answer": "Event ID 4715 records that the audit policy security descriptor, or SACL, on an object changed and includes the old and new SDDL."
+    },
+    {
+      "question": "Does every SACL change disable logging?",
+      "answer": "No. Changes can add, remove, or refine auditing; compare OldSd and NewSd and identify which trustees, rights, inheritance flags, and success or failure audit flags changed."
+    },
+    {
+      "question": "Why is S:NO_ACCESS_CONTROL important?",
+      "answer": "It represents a security descriptor with no SACL access-control entries, so replacing a populated audit policy with this value can remove object-access audit coverage."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4715: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4715",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Impair Defenses: Disable Windows Event Logging (T1562.002)",
+      "url": "https://attack.mitre.org/techniques/T1562/002/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

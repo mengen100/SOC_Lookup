@@ -1,43 +1,136 @@
 {
-    "id":  "4689",
-    "source":  "windows_security",
-    "category":  "Process",
-    "name":  "A process has exited",
-    "priority":  "P2",
-    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
-    "last_reviewed":  "2026-07-11",
-    "definition":  "Event ID 4689 records process termination and completes host process-lifetime timelines.",
-    "trigger_scenarios":  "Windows logs it when an audited process exits.",
-    "key_fields":  [
-                       {
-                           "field":  "Process Name",
-                           "explanation":  "The terminated executable path."
-                       },
-                       {
-                           "field":  "Process ID",
-                           "explanation":  "Join to 4688, accounting for PID reuse."
-                       },
-                       {
-                           "field":  "Subject",
-                           "explanation":  "The security context of the ending process."
-                       }
-                   ],
-    "false_positives":  [
-                            "Routine process termination is high volume.",
-                            "Short-lived installers and scripts can create bursts."
-                        ],
-    "related_event_ids":  [
-                              "4688"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1070.004",
-                              "technique_name":  "Indicator Removal: File Deletion"
-                          }
-                      ],
-    "detection_notes":  "For T1070.004, use the 4688/4689 Process ID pair and a short lifetime such as under 60 seconds after wevtutil.exe, del.exe, or cipher.exe execution. PID reuse means the process name and close timestamp must match; termination alone is not evidence of cleanup.  Use timeout=60 seconds as an initial short-lifetime triage value.",
-    "kql_snippet":  "SecurityEvent\n| where EventID == 4689\n| project TimeGenerated, Computer, Account, Process, ProcessId",
-    "spl_snippet":  "index=wineventlog EventCode=4689 | table _time, host, Process_Name, Process_ID",
-    "sample_log":  "Process Name: C:\\Users\\Public\\tool.exe\nProcess ID: 4242",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4689"
+  "id": "4689",
+  "source": "windows_security",
+  "category": "Process",
+  "name": "A process has exited",
+  "priority": "P2",
+  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
+  "last_reviewed": "2026-07-21",
+  "definition": "Event ID 4689 records process termination and completes host process-lifetime timelines.",
+  "trigger_scenarios": "Windows logs it when an audited process exits.",
+  "key_fields": [
+    {
+      "field": "Process Name",
+      "explanation": "The terminated executable path."
+    },
+    {
+      "field": "Process ID",
+      "explanation": "Join to 4688, accounting for PID reuse."
+    },
+    {
+      "field": "Subject",
+      "explanation": "The security context of the ending process."
+    },
+    {
+      "field": "Exit Status",
+      "explanation": "The hexadecimal process exit result. Status 0x0 indicates successful termination but does not describe whether the process's prior activity was benign."
+    }
+  ],
+  "false_positives": [
+    "Routine process termination is high volume.",
+    "Short-lived installers and scripts can create bursts."
+  ],
+  "related_event_ids": [
+    "4688"
+  ],
+  "attck_mapping": [],
+  "detection_notes": "Event ID 4689 has no direct ATT&CK technique mapping because process termination alone is not indicator removal or file deletion. ExitStatus 0x0 means successful process termination; pair ProcessId and ProcessName with 4688 on the same host to calculate lifetime and review the process command line, while accounting for process-ID reuse.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4689\n| project TimeGenerated, Computer, Account, Process, ProcessId",
+  "spl_snippet": "index=wineventlog EventCode=4689 | table _time, host, Process_Name, Process_ID",
+  "sample_log": "Process Name: C:\\Users\\Public\\tool.exe\nProcess ID: 0x1092\nExit Status: 0x0",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4689",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Event ID 4689",
+      "query": "SecurityEvent\n| where EventID == 4689\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Event ID 4689",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4689\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Event ID 4689",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4689",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4689",
+      "query": "title: Windows Security Event ID 4689\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4689\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "ExitStatus",
+      "value": "0x0",
+      "meaning": "The process reported successful termination.",
+      "security_relevance": "The status helps explain termination but does not establish whether prior process activity was benign or malicious.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4689"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4689 mean?",
+      "answer": "Event ID 4689 records that a process exited and includes the subject, process identifier, process name, and exit status."
+    },
+    {
+      "question": "Does Event ID 4689 mean a file was deleted?",
+      "answer": "No. It records process termination, not file deletion; investigate deletion through file-system, object-access, Sysmon, or EDR telemetry."
+    },
+    {
+      "question": "How should 4689 be paired with process creation?",
+      "answer": "Match ProcessId and ProcessName to event 4688 on the same computer while accounting for process-ID reuse, then calculate runtime from the two timestamps."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4689: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4689",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

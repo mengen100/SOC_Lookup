@@ -1,45 +1,140 @@
 {
-    "id":  "4699",
-    "source":  "windows_security",
-    "category":  "ScheduledTask",
-    "name":  "A scheduled task was deleted",
-    "priority":  "P2",
-    "applicable_version":  "Windows Server 2016 and later; Windows 10 and later",
-    "last_reviewed":  "2026-07-11",
-    "definition":  "Event ID 4699 records deletion of a scheduled task.",
-    "trigger_scenarios":  "It is generated when Task Scheduler auditing records task removal.",
-    "key_fields":  [
-                       {
-                           "field":  "Task Name",
-                           "explanation":  "The deleted task path; preserve it for comparison with known baselines."
-                       },
-                       {
-                           "field":  "Subject",
-                           "explanation":  "The account deleting the task."
-                       },
-                       {
-                           "field":  "Task Content",
-                           "explanation":  "Where retained, identifies the removed command and trigger."
-                       }
-                   ],
-    "false_positives":  [
-                            "Software updaters remove obsolete tasks.",
-                            "Administrators clean up maintenance tasks."
-                        ],
-    "related_event_ids":  [
-                              "4698",
-                              "4702",
-                              "4688"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1070.004",
-                              "technique_name":  "Indicator Removal: File Deletion"
-                          }
-                      ],
-    "detection_notes":  "T1070.004 cleanup is indicated when a Task Name deleted by 4699 was created by 4698 or changed by 4702 within a short 60-minute window, especially when its captured Task Content references C:\\\\Users\\\\ or powershell.exe. Preserve prior Task Content before deletion.",
-    "kql_snippet":  "SecurityEvent\n| where EventID == 4699\n| project TimeGenerated, Computer, Account, TaskName",
-    "spl_snippet":  "index=wineventlog EventCode=4699 | table _time, host, SubjectUserName, TaskName",
-    "sample_log":  "Task Name: \\Microsoft\\Windows\\Update\\CacheRefresh\nSubject: CORP\\admin.ops",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4699"
+  "id": "4699",
+  "source": "windows_security",
+  "category": "ScheduledTask",
+  "name": "A scheduled task was deleted",
+  "priority": "P2",
+  "applicable_version": "Windows Server 2016 and later; Windows 10 and later",
+  "last_reviewed": "2026-07-21",
+  "definition": "Event ID 4699 records deletion of a scheduled task.",
+  "trigger_scenarios": "It is generated when Task Scheduler auditing records task removal.",
+  "key_fields": [
+    {
+      "field": "Task Name",
+      "explanation": "The deleted task path; preserve it for comparison with known baselines."
+    },
+    {
+      "field": "Subject",
+      "explanation": "The account deleting the task."
+    },
+    {
+      "field": "Task Content",
+      "explanation": "Where retained, identifies the removed command and trigger."
+    }
+  ],
+  "false_positives": [
+    "Software updaters remove obsolete tasks.",
+    "Administrators clean up maintenance tasks."
+  ],
+  "related_event_ids": [
+    "4698",
+    "4702",
+    "4688"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0005",
+      "tactic_name": "Defense Evasion",
+      "technique_id": "T1070.009",
+      "technique_name": "Indicator Removal: Clear Persistence",
+      "source_url": "https://attack.mitre.org/techniques/T1070/009/"
+    }
+  ],
+  "detection_notes": "T1070.009 Clear Persistence is indicated when TaskName deleted by 4699 matches a suspicious task previously created in 4698 or updated in 4702 and its TaskContent referenced powershell.exe or a C:\\Users\\ path. Use an environment-defined correlation window based on task retention, preserve the earlier XML, and distinguish attacker cleanup from approved software removal.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4699\n| project TimeGenerated, Computer, Account, TaskName",
+  "spl_snippet": "index=wineventlog EventCode=4699 | table _time, host, SubjectUserName, TaskName",
+  "sample_log": "Task Name: \\Microsoft\\Windows\\Update\\CacheRefresh\nSubject: CORP\\admin.ops",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4699",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Event ID 4699",
+      "query": "SecurityEvent\n| where EventID == 4699\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Event ID 4699",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4699\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Event ID 4699",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4699",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4699",
+      "query": "title: Windows Security Event ID 4699\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4699\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4699 mean?",
+      "answer": "Event ID 4699 records deletion of a scheduled task and identifies the actor and task name; newer event versions can include task XML content."
+    },
+    {
+      "question": "Are scheduled-task deletions malicious?",
+      "answer": "No. Software upgrades, uninstallers, Windows maintenance, and administrators routinely remove tasks; risk depends on who deleted what and whether the task was recently used for suspicious execution."
+    },
+    {
+      "question": "How can Event ID 4699 show clear-persistence behavior?",
+      "answer": "Correlate TaskName with 4698 creation and 4702 modification, preserve the earlier task XML, and determine whether an actor removed its own execution mechanism after use."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4699: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4699",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Indicator Removal: Clear Persistence (T1070.009)",
+      "url": "https://attack.mitre.org/techniques/T1070/009/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

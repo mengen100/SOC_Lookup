@@ -1,44 +1,125 @@
 {
-    "id":  "4647",
-    "source":  "windows_security",
-    "category":  "Logon",
-    "name":  "User initiated logoff",
-    "priority":  "P2",
-    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
-    "last_reviewed":  "2026-07-11",
-    "definition":  "Event ID 4647 records a user-initiated logoff and distinguishes an explicit sign-out from a session ending for another reason.",
-    "trigger_scenarios":  "Windows logs this event when an interactive user chooses to sign out.",
-    "key_fields":  [
-                       {
-                           "field":  "Subject",
-                           "explanation":  "The account initiating the logoff."
-                       },
-                       {
-                           "field":  "Logon ID",
-                           "explanation":  "Correlate with 4624, 4634, and process activity in the same session."
-                       },
-                       {
-                           "field":  "Computer",
-                           "explanation":  "The host where the session ended."
-                       }
-                   ],
-    "false_positives":  [
-                            "Normal user sign-outs are expected.",
-                            "Kiosk and shared-host workflows can produce frequent logoffs."
-                        ],
-    "related_event_ids":  [
-                              "4624",
-                              "4634"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1078",
-                              "technique_name":  "Valid Accounts"
-                          }
-                      ],
-    "detection_notes":  "Use 4647 to bound a T1078 Valid Accounts session after suspicious remote access. A privileged 4624 Type 10 session that lacks 4647 but ends with 4634 may indicate disconnect or forced termination; compare its Logon ID with 4688 before closing the timeline.",
-    "kql_snippet":  "SecurityEvent\n| where EventID == 4647\n| project TimeGenerated, Computer, Account, TargetLogonId",
-    "spl_snippet":  "index=wineventlog EventCode=4647 | table _time, host, SubjectUserName, TargetLogonId",
-    "sample_log":  "Subject: CORP\\jsmith\nLogon ID: 0x1a2b3c",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4647"
+  "id": "4647",
+  "source": "windows_security",
+  "category": "Logon",
+  "name": "User initiated logoff",
+  "priority": "P2",
+  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
+  "last_reviewed": "2026-07-21",
+  "definition": "Event ID 4647 records a user-initiated logoff and distinguishes an explicit sign-out from a session ending for another reason.",
+  "trigger_scenarios": "Windows logs this event when an interactive user chooses to sign out.",
+  "key_fields": [
+    {
+      "field": "Subject",
+      "explanation": "The account initiating the logoff."
+    },
+    {
+      "field": "Logon ID",
+      "explanation": "Correlate with 4624, 4634, and process activity in the same session."
+    },
+    {
+      "field": "Computer",
+      "explanation": "The host where the session ended."
+    }
+  ],
+  "false_positives": [
+    "Normal user sign-outs are expected.",
+    "Kiosk and shared-host workflows can produce frequent logoffs."
+  ],
+  "related_event_ids": [
+    "4624",
+    "4634"
+  ],
+  "attck_mapping": [],
+  "detection_notes": "Event ID 4647 has no direct ATT&CK technique mapping because a user-initiated logoff is session-lifecycle evidence, not an attack behavior. Use LogonId to pair it with 4624 and 4634; for a suspicious correlated 4624 Logon Type 10 session, the presence or absence of 4647 helps distinguish user logoff from disconnect or forced cleanup before reviewing associated 4688 activity.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4647\n| project TimeGenerated, Computer, Account, TargetLogonId",
+  "spl_snippet": "index=wineventlog EventCode=4647 | table _time, host, SubjectUserName, TargetLogonId",
+  "sample_log": "Subject: CORP\\jsmith\nLogon ID: 0x1a2b3c",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4647",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Event ID 4647",
+      "query": "SecurityEvent\n| where EventID == 4647\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Event ID 4647",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4647\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Event ID 4647",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4647",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4647",
+      "query": "title: Windows Security Event ID 4647\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4647\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4647 mean?",
+      "answer": "Event ID 4647 records that a user initiated a logoff and identifies the account and Logon ID for the session."
+    },
+    {
+      "question": "How is Event ID 4647 different from 4634?",
+      "answer": "Event ID 4647 explicitly records user initiation, while 4634 records termination of a logon session and can occur without an interactive user selecting logoff."
+    },
+    {
+      "question": "Does Event ID 4647 indicate malicious activity?",
+      "answer": "No. It is session-lifecycle telemetry; use Logon ID to bound a suspicious session and compare it with the corresponding 4624 logon, process activity, and 4634 termination."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4647: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4647",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

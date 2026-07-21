@@ -8,11 +8,11 @@ Detection guidance must name at least one concrete, observable field value: a st
 
 ### Event 4768
 
-Pre-Authentication Type = 0 for an account outside the reviewed exception list makes T1558.004 AS-REP Roasting possible: an attacker can request a TGT without a password and crack its encrypted portion offline. Alert on every non-exempt occurrence. In an AES-only domain, 0x17 (RC4) or DES is independently suspicious because it weakens offline cracking resistance. A burst of Failure Code 0x6 against distinct account names from one source is a T1110.003 password-spraying or enumeration precursor; correlate it with 4625 and 4771.
+PreAuthType 0 for an account outside the reviewed exception list makes T1558.004 AS-REP Roasting possible because a requester can obtain material for offline password cracking without proving knowledge of the password. In an AES-only domain, TicketEncryptionType 0x17 RC4 is an additional compatibility deviation. A burst of ResultCode 0x6 across distinct account names from one client supports account-enumeration triage, not a password-spraying verdict, because the named principal was not found.
 
 ### Event 4794
 
-4794 can expose a specific T1098/T1556 persistence technique: an attacker with domain-admin rights sets the DSRM password with ntdsutil and changes HKLM\\System\\CurrentControlSet\\Control\\Lsa\\DsrmAdminLogonBehavior to 1 or 2. A non-zero value permits the built-in DSRM local administrator to authenticate over the network to the domain controller. That local SAM account survives ordinary domain-password resets and some domain-account containment steps. Treat an unexpected 4794 as active persistence: verify the operator and change ticket, then inspect DsrmAdminLogonBehavior immediately. A non-zero unapproved value is a likely backdoor, not configuration drift.
+T1098 Account Manipulation applies when an unauthorized operator attempts to set the Directory Services Restore Mode administrator password. Treat one unexpected 4794 on a domain controller as high priority: Status 0x0 means the operation succeeded, so confirm SubjectUserName, SubjectLogonId, and Workstation against an approved recovery-maintenance change; nonzero status values still warrant review as attempted access.
 
 ## Negative example
 
@@ -24,3 +24,4 @@ Before revision, Event 4740 said: "Correlate 4740 with preceding 4625 and 4776 a
 - Does it explain why that exact value indicates an attack rather than normal activity?
 - Could the text before any trailing ATT&CK reference be turned directly into a detection rule?
 - Does it identify the ATT&CK technique and a useful follow-on correlation or response?
+- If no ATT&CK technique directly applies, does it explicitly say so and explain why the tempting mapping would be inaccurate?

@@ -1,45 +1,140 @@
 {
-    "id":  "4722",
-    "source":  "windows_security",
-    "category":  "AccountMgmt",
-    "name":  "A user account was enabled",
-    "priority":  "P2",
-    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
-    "last_reviewed":  "2026-07-11",
-    "definition":  "Event ID 4722 records enabling of a user account.",
-    "trigger_scenarios":  "Windows logs it when an administrator or workflow enables a local or domain account.",
-    "key_fields":  [
-                       {
-                           "field":  "Target Account",
-                           "explanation":  "The account enabled; dormant, disabled, and privileged accounts require context."
-                       },
-                       {
-                           "field":  "Subject",
-                           "explanation":  "The actor who enabled it."
-                       },
-                       {
-                           "field":  "Target SID",
-                           "explanation":  "A stable identity for correlating renamed accounts."
-                       }
-                   ],
-    "false_positives":  [
-                            "Onboarding and identity workflows enable valid accounts.",
-                            "Helpdesk staff re-enable accounts after lockout or leave."
-                        ],
-    "related_event_ids":  [
-                              "4720",
-                              "4725",
-                              "4738"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1098",
-                              "technique_name":  "Account Manipulation"
-                          }
-                      ],
-    "detection_notes":  "T1098 persistence is concrete when an account disabled by 4725 is re-enabled by 4722 and receives a Type 10 4624 within 60 minutes. The 60-minute sequence distinguishes ordinary onboarding from rapid restoration of a dormant access path.",
-    "kql_snippet":  "SecurityEvent\n| where EventID == 4722\n| project TimeGenerated, Computer, Account, TargetAccount, TargetSid",
-    "spl_snippet":  "index=wineventlog EventCode=4722 | table _time, host, SubjectUserName, TargetUserName, TargetSid",
-    "sample_log":  "Subject: CORP\\admin.ops\nTarget Account: CORP\\former.user\nTarget SID: S-1-5-21-REDACTED",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4722"
+  "id": "4722",
+  "source": "windows_security",
+  "category": "AccountMgmt",
+  "name": "A user account was enabled",
+  "priority": "P2",
+  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
+  "last_reviewed": "2026-07-21",
+  "definition": "Event ID 4722 records enabling of a user account.",
+  "trigger_scenarios": "Windows logs it when an administrator or workflow enables a local or domain account.",
+  "key_fields": [
+    {
+      "field": "Target Account",
+      "explanation": "The account enabled; dormant, disabled, and privileged accounts require context."
+    },
+    {
+      "field": "Subject",
+      "explanation": "The actor who enabled it."
+    },
+    {
+      "field": "Target SID",
+      "explanation": "A stable identity for correlating renamed accounts."
+    }
+  ],
+  "false_positives": [
+    "Onboarding and identity workflows enable valid accounts.",
+    "Helpdesk staff re-enable accounts after lockout or leave."
+  ],
+  "related_event_ids": [
+    "4720",
+    "4725",
+    "4738"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0003",
+      "tactic_name": "Persistence",
+      "technique_id": "T1098",
+      "technique_name": "Account Manipulation",
+      "source_url": "https://attack.mitre.org/techniques/T1098/"
+    }
+  ],
+  "detection_notes": "T1098 Account Manipulation is supported when a target account previously disabled in 4725 is re-enabled by 4722 and then used in a correlated 4624 Logon Type 10 session from an unexpected source. Use the environment's approved account-lifecycle timing rather than a universal threshold, and join SubjectLogonId to the enabling administrator's 4624 session.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4722\n| project TimeGenerated, Computer, Account, TargetAccount, TargetSid",
+  "spl_snippet": "index=wineventlog EventCode=4722 | table _time, host, SubjectUserName, TargetUserName, TargetSid",
+  "sample_log": "Subject: CORP\\admin.ops\nTarget Account: CORP\\former.user\nTarget SID: S-1-5-21-REDACTED",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4722",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Event ID 4722",
+      "query": "SecurityEvent\n| where EventID == 4722\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Event ID 4722",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4722\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Event ID 4722",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4722",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4722",
+      "query": "title: Windows Security Event ID 4722\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4722\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4722 mean?",
+      "answer": "Event ID 4722 records that a Windows user account was enabled and identifies the actor and target account."
+    },
+    {
+      "question": "Where is Event ID 4722 generated?",
+      "answer": "For a domain account it is generated on the authoritative domain controller; for a local account it is generated on the computer where the account was enabled."
+    },
+    {
+      "question": "Does enabling an account prove persistence?",
+      "answer": "No. Onboarding, leave return, and administrative recovery are common; investigate dormant, privileged, service, and recently disabled accounts against identity-management approvals."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4722: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4722",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Account Manipulation (T1098)",
+      "url": "https://attack.mitre.org/techniques/T1098/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }
