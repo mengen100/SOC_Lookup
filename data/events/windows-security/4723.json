@@ -1,45 +1,148 @@
 {
-    "id":  "4723",
-    "source":  "windows_security",
-    "category":  "AccountMgmt",
-    "name":  "An attempt was made to change an account\u0027s password",
-    "priority":  "P2",
-    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
-    "last_reviewed":  "2026-07-11",
-    "definition":  "Event ID 4723 records an attempt by an account to change its own password.",
-    "trigger_scenarios":  "It is generated for self-service password changes, including unsuccessful attempts.",
-    "key_fields":  [
-                       {
-                           "field":  "Subject",
-                           "explanation":  "The account attempting the change."
-                       },
-                       {
-                           "field":  "Target Account",
-                           "explanation":  "Usually the same account; a mismatch needs investigation."
-                       },
-                       {
-                           "field":  "Status",
-                           "explanation":  "0x0 indicates success; failures help diagnose stale or policy-rejected attempts."
-                       }
-                   ],
-    "false_positives":  [
-                            "Normal password rotation and self-service changes are expected.",
-                            "Password-expiry reminders can cause repeated attempts."
-                        ],
-    "related_event_ids":  [
-                              "4724",
-                              "4738",
-                              "4624"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1098",
-                              "technique_name":  "Account Manipulation"
-                          }
-                      ],
-    "detection_notes":  "A successful Status 0x0 4723 with a Subject/Target Account mismatch, followed by Type 10 4624 within 60 minutes, supports T1098 account manipulation. The normal self-service case has identical Subject and Target Account.",
-    "kql_snippet":  "SecurityEvent\n| where EventID == 4723\n| project TimeGenerated, Computer, Account, TargetAccount, Status",
-    "spl_snippet":  "index=wineventlog EventCode=4723 | table _time, host, SubjectUserName, TargetUserName, Status",
-    "sample_log":  "Subject: CORP\\jsmith\nTarget Account: CORP\\jsmith\nStatus: 0x0",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4723"
+  "id": "4723",
+  "source": "windows_security",
+  "category": "AccountMgmt",
+  "name": "An attempt was made to change an account's password",
+  "priority": "P2",
+  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
+  "last_reviewed": "2026-07-21",
+  "definition": "Event ID 4723 records an attempt by an account to change its own password.",
+  "trigger_scenarios": "It is generated for self-service password changes, including unsuccessful attempts.",
+  "key_fields": [
+    {
+      "field": "Subject",
+      "explanation": "The account attempting the change."
+    },
+    {
+      "field": "Target Account",
+      "explanation": "Usually the same account; a mismatch needs investigation."
+    },
+    {
+      "field": "Status",
+      "explanation": "0x0 indicates success; failures help diagnose stale or policy-rejected attempts."
+    }
+  ],
+  "false_positives": [
+    "Normal password rotation and self-service changes are expected.",
+    "Password-expiry reminders can cause repeated attempts."
+  ],
+  "related_event_ids": [
+    "4724",
+    "4738",
+    "4624"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0003",
+      "tactic_name": "Persistence",
+      "technique_id": "T1098",
+      "technique_name": "Account Manipulation",
+      "source_url": "https://attack.mitre.org/techniques/T1098/"
+    }
+  ],
+  "detection_notes": "T1098 Account Manipulation is supported when Status is 0x0 and SubjectUserName differs from TargetUserName, because the successful change affected another identity rather than the normal self-service account. Correlate SubjectLogonId with 4624 and review any following 4624 Logon Type 10 from a new source; failed status values require Windows error-code interpretation.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4723\n| project TimeGenerated, Computer, Account, TargetAccount, Status",
+  "spl_snippet": "index=wineventlog EventCode=4723 | table _time, host, SubjectUserName, TargetUserName, Status",
+  "sample_log": "Subject: CORP\\jsmith\nTarget Account: CORP\\jsmith\nStatus: 0x0",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4723",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success or Audit Failure"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Event ID 4723",
+      "query": "SecurityEvent\n| where EventID == 4723\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Event ID 4723",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4723\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Event ID 4723",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4723",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4723",
+      "query": "title: Windows Security Event ID 4723\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4723\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "Status",
+      "value": "0x0",
+      "meaning": "The password-change attempt succeeded.",
+      "security_relevance": "A successful change where SubjectUserName and TargetUserName differ can indicate an administrative or unauthorized credential change and requires workflow validation.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4723"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4723 mean?",
+      "answer": "Event ID 4723 records an attempt to change an account password and can represent success or failure."
+    },
+    {
+      "question": "How is 4723 different from 4724?",
+      "answer": "Event 4723 covers a password change using the existing credential flow, while 4724 covers an administrative password reset without the old password."
+    },
+    {
+      "question": "Which 4723 fields identify unusual account manipulation?",
+      "answer": "Compare SubjectUserName with TargetUserName, inspect Status, and correlate SubjectLogonId with the initiating logon and approved password-change workflow."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4723: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4723",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Account Manipulation (T1098)",
+      "url": "https://attack.mitre.org/techniques/T1098/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

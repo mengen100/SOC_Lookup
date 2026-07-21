@@ -1,50 +1,141 @@
 {
-    "id":  "4728",
-    "source":  "windows_security",
-    "category":  "GroupMgmt",
-    "name":  "A member was added to a security-enabled global group",
-    "priority":  "P2",
-    "applicable_version":  "Windows Server 2008 R2 and later",
-    "last_reviewed":  "2026-07-12",
-    "definition":  "Windows Security Event ID 4728 records that a user or computer account was added to a security-enabled global group in Active Directory, logging the Subject performing the change, the Member added, and the target Group.",
-    "trigger_scenarios":  "Any domain-level group membership addition for a security-enabled global group generates this event on a domain controller. It covers high-value targets such as Domain Admins, Enterprise Admins, Schema Admins, and other privileged role groups.",
-    "key_fields":  [
-                       {
-                           "field":  "Group\\Group Name / Group Domain",
-                           "explanation":  "The group receiving the new member. Additions to Domain Admins, Enterprise Admins, or Schema Admins in the expected domain are the highest-priority signals. Any group whose name ends in Admins or contains a privileged role keyword also warrants review."
-                       },
-                       {
-                           "field":  "Member\\Security ID / Account Name",
-                           "explanation":  "The account being added. Account Name is recorded as an LDAP distinguished name (e.g., CN=jsmith,OU=Users,DC=corp,DC=example). A member account that is newly created, dormant, or sourced from an external domain in a sensitive group is a T1098 Account Manipulation indicator."
-                       },
-                       {
-                           "field":  "Subject\\Account Name / Logon ID",
-                           "explanation":  "The identity that made the change. Correlate the Logon ID with the 4624 logon record to find the originating workstation and session type (Type 10 remote interactive from an unexpected source is particularly suspicious)."
-                       }
-                   ],
-    "false_positives":  [
-                            "Authorized provisioning workflows and help-desk processes regularly add accounts to groups as part of onboarding or role changes.",
-                            "Automated identity management systems may perform bulk group assignments during role migrations."
-                        ],
-    "related_event_ids":  [
-                              "4729",
-                              "4732",
-                              "4672",
-                              "4624"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1098",
-                              "technique_name":  "Account Manipulation"
-                          },
-                          {
-                              "technique_id":  "T1078",
-                              "technique_name":  "Valid Accounts"
-                          }
-                      ],
-    "detection_notes":  "T1098 is concrete when Group Name equals Domain Admins, Enterprise Admins, or Schema Admins and the same Subject Logon ID produces 4672 after a Type 10 4624. That sequence assigns privileged access rather than a routine role change.",
-    "kql_snippet":  "SecurityEvent\n| where EventID == 4728\n| where TargetUserName in (\"Domain Admins\", \"Enterprise Admins\", \"Schema Admins\")\n| project TimeGenerated, Computer, SubjectUserName, MemberName, TargetUserName",
-    "spl_snippet":  "index=wineventlog EventCode=4728\n| search TargetUserName IN (\"Domain Admins\", \"Enterprise Admins\", \"Schema Admins\")\n| table _time, host, SubjectUserName, MemberName, TargetUserName",
-    "sample_log":  "Subject:\n  Security ID: CORP\\attacker\n  Account Name: attacker\n  Account Domain: CORP\n  Logon ID: 0x2F4A10\nMember:\n  Security ID: CORP\\backdoor\n  Account Name: CN=backdoor,OU=Users,DC=corp,DC=example\nGroup:\n  Security ID: CORP\\Domain Admins\n  Group Name: Domain Admins\n  Group Domain: CORP",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4728"
+  "id": "4728",
+  "source": "windows_security",
+  "category": "GroupMgmt",
+  "name": "A member was added to a security-enabled global group",
+  "priority": "P2",
+  "applicable_version": "Windows Server 2008 R2 and later",
+  "last_reviewed": "2026-07-21",
+  "definition": "Windows Security Event ID 4728 records that a user or computer account was added to a security-enabled global group in Active Directory, logging the Subject performing the change, the Member added, and the target Group.",
+  "trigger_scenarios": "Any domain-level group membership addition for a security-enabled global group generates this event on a domain controller. It covers high-value targets such as Domain Admins, Enterprise Admins, Schema Admins, and other privileged role groups.",
+  "key_fields": [
+    {
+      "field": "Group\\Group Name / Group Domain",
+      "explanation": "The group receiving the new member. Additions to Domain Admins, Enterprise Admins, or Schema Admins in the expected domain are the highest-priority signals. Any group whose name ends in Admins or contains a privileged role keyword also warrants review."
+    },
+    {
+      "field": "Member\\Security ID / Account Name",
+      "explanation": "The account being added. Account Name is recorded as an LDAP distinguished name (e.g., CN=jsmith,OU=Users,DC=corp,DC=example). A member account that is newly created, dormant, or sourced from an external domain in a sensitive group is a T1098 Account Manipulation indicator."
+    },
+    {
+      "field": "Subject\\Account Name / Logon ID",
+      "explanation": "The identity that made the change. Correlate the Logon ID with the 4624 logon record to find the originating workstation and session type (Type 10 remote interactive from an unexpected source is particularly suspicious)."
+    }
+  ],
+  "false_positives": [
+    "Authorized provisioning workflows and help-desk processes regularly add accounts to groups as part of onboarding or role changes.",
+    "Automated identity management systems may perform bulk group assignments during role migrations."
+  ],
+  "related_event_ids": [
+    "4729",
+    "4732",
+    "4672",
+    "4624"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0004",
+      "tactic_name": "Privilege Escalation",
+      "technique_id": "T1098.007",
+      "technique_name": "Account Manipulation: Additional Local or Domain Groups",
+      "source_url": "https://attack.mitre.org/techniques/T1098/007/"
+    }
+  ],
+  "detection_notes": "T1098.007 Additional Local or Domain Groups applies when GroupName is Domain Admins, Enterprise Admins, Schema Admins, or another privileged global group and MemberSid is not approved. Use a local threshold=1 for those protected groups, then correlate SubjectLogonId with 4624 and the new member's later 4672 or Logon Type 10 activity.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4728\n| where TargetUserName in (\"Domain Admins\", \"Enterprise Admins\", \"Schema Admins\")\n| project TimeGenerated, Computer, SubjectUserName, MemberName, TargetUserName",
+  "spl_snippet": "index=wineventlog EventCode=4728\n| search TargetUserName IN (\"Domain Admins\", \"Enterprise Admins\", \"Schema Admins\")\n| table _time, host, SubjectUserName, MemberName, TargetUserName",
+  "sample_log": "Subject:\n  Security ID: CORP\\attacker\n  Account Name: attacker\n  Account Domain: CORP\n  Logon ID: 0x2F4A10\nMember:\n  Security ID: CORP\\backdoor\n  Account Name: CN=backdoor,OU=Users,DC=corp,DC=example\nGroup:\n  Security ID: CORP\\Domain Admins\n  Group Name: Domain Admins\n  Group Domain: CORP",
+  "source_url": "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/audit-security-group-management",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Event ID 4728",
+      "query": "SecurityEvent\n| where EventID == 4728\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Event ID 4728",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4728\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Event ID 4728",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4728",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4728",
+      "query": "title: Windows Security Event ID 4728\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4728\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4728 mean?",
+      "answer": "Event ID 4728 records that a member was added to a security-enabled global group and is produced by the Security Group Management audit subcategory."
+    },
+    {
+      "question": "Which group additions are highest priority?",
+      "answer": "Additions to Domain Admins and other environment-defined privileged global groups require immediate validation against identity governance approvals."
+    },
+    {
+      "question": "Why should MemberSid be retained?",
+      "answer": "MemberName can be unresolved, renamed, or formatted as a distinguished name; MemberSid provides a stable identifier for directory correlation."
+    }
+  ],
+  "sources": [
+    {
+      "title": "Audit Security Group Management",
+      "url": "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/audit-security-group-management",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Account Manipulation: Additional Local or Domain Groups (T1098.007)",
+      "url": "https://attack.mitre.org/techniques/T1098/007/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

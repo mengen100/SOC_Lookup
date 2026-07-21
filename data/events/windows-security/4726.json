@@ -1,42 +1,137 @@
 {
-    "id":  "4726",
-    "source":  "windows_security",
-    "category":  "AccountMgmt",
-    "name":  "A user account was deleted",
-    "priority":  "P2",
-    "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
-    "last_reviewed":  "2026-07-12",
-    "definition":  "Windows Security Event ID 4726 records that an Active Directory or local user account object was deleted, logging the Subject who performed the deletion and the Target Account that was removed.",
-    "trigger_scenarios":  "Any deletion of a user account in Active Directory or on a local machine generates this event. Legitimate causes include off-boarding through HR-driven identity management, automated account lifecycle workflows, or privileged AD administration. Adversary use involves destroying accounts to prevent recovery, to disrupt operations, or to conceal earlier account-based activity.",
-    "key_fields":  [
-                       {
-                           "field":  "Target Account\\Account Name / Security ID",
-                           "explanation":  "The identity of the account that was deleted. Deletion of an account whose name matches a domain admin, service account, or known operational identity is a direct T1531 Account Access Removal signal: those accounts protect resources or enable recovery, so removing them constitutes deliberate access disruption."
-                       },
-                       {
-                           "field":  "Subject\\Account Name / Logon ID",
-                           "explanation":  "The identity that performed the deletion. Correlate the Logon ID with the originating 4624 logon to identify the source workstation; a deletion made from an unusual source IP or by an account that does not normally manage directory objects warrants investigation."
-                       }
-                   ],
-    "false_positives":  [
-                            "Automated identity lifecycle systems routinely delete accounts for terminated employees.",
-                            "Test accounts and temporary project accounts are deleted as part of normal cleanup workflows.",
-                            "Migration projects may bulk-delete legacy accounts after migration is confirmed complete."
-                        ],
-    "related_event_ids":  [
-                              "4720",
-                              "4722",
-                              "4725"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1531",
-                              "technique_name":  "Account Access Removal"
-                          }
-                      ],
-    "detection_notes":  "T1531 is concrete when more than five unique Target Accounts are deleted by one Subject Logon ID in a 10-minute window, a published Splunk detection threshold. One deletion of a privileged account remains actionable; join the Subject Logon ID to 4624 because 4726 does not log source IP.  Use window=10 minutes for the published bulk-deletion correlation.",
-    "kql_snippet":  "SecurityEvent\n| where EventID == 4726\n| project TimeGenerated, Computer, SubjectUserName, TargetUserName, TargetSid\n| order by TimeGenerated desc",
-    "spl_snippet":  "index=wineventlog EventCode=4726\n| stats dc(TargetUserName) as deleted_count by SubjectUserName, span(_time, 10m)\n| where deleted_count \u003e 5\n| table _time, SubjectUserName, deleted_count",
-    "sample_log":  "Subject:\n  Security ID: CORP\\svc-iam\n  Account Name: svc-iam\n  Account Domain: CORP\n  Logon ID: 0x8B2140\nTarget Account:\n  Security ID: CORP\\da-backup\n  Account Name: da-backup\n  Account Domain: CORP\nAdditional Information:\n  Privileges: -",
-    "source_url":  "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4726"
+  "id": "4726",
+  "source": "windows_security",
+  "category": "AccountMgmt",
+  "name": "A user account was deleted",
+  "priority": "P2",
+  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
+  "last_reviewed": "2026-07-21",
+  "definition": "Windows Security Event ID 4726 records that an Active Directory or local user account object was deleted, logging the Subject who performed the deletion and the Target Account that was removed.",
+  "trigger_scenarios": "Any deletion of a user account in Active Directory or on a local machine generates this event. Legitimate causes include off-boarding through HR-driven identity management, automated account lifecycle workflows, or privileged AD administration. Adversary use involves destroying accounts to prevent recovery, to disrupt operations, or to conceal earlier account-based activity.",
+  "key_fields": [
+    {
+      "field": "Target Account\\Account Name / Security ID",
+      "explanation": "The identity of the account that was deleted. Deletion of an account whose name matches a domain admin, service account, or known operational identity is a direct T1531 Account Access Removal signal: those accounts protect resources or enable recovery, so removing them constitutes deliberate access disruption."
+    },
+    {
+      "field": "Subject\\Account Name / Logon ID",
+      "explanation": "The identity that performed the deletion. Correlate the Logon ID with the originating 4624 logon to identify the source workstation; a deletion made from an unusual source IP or by an account that does not normally manage directory objects warrants investigation."
+    }
+  ],
+  "false_positives": [
+    "Automated identity lifecycle systems routinely delete accounts for terminated employees.",
+    "Test accounts and temporary project accounts are deleted as part of normal cleanup workflows.",
+    "Migration projects may bulk-delete legacy accounts after migration is confirmed complete."
+  ],
+  "related_event_ids": [
+    "4720",
+    "4722",
+    "4725"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0040",
+      "tactic_name": "Impact",
+      "technique_id": "T1531",
+      "technique_name": "Account Access Removal",
+      "source_url": "https://attack.mitre.org/techniques/T1531/"
+    }
+  ],
+  "detection_notes": "T1531 Account Access Removal is supported when one SubjectLogonId deletes multiple TargetUserName values or deletes a privileged account outside the identity lifecycle workflow. Use a documented local threshold=1 for Tier-0 and break-glass accounts; join SubjectLogonId to 4624 because 4726 does not provide a source network address.",
+  "kql_snippet": "SecurityEvent\n| where EventID == 4726\n| project TimeGenerated, Computer, SubjectUserName, TargetUserName, TargetSid\n| order by TimeGenerated desc",
+  "spl_snippet": "index=wineventlog EventCode=4726\n| stats dc(TargetUserName) as deleted_count by SubjectUserName, span(_time, 10m)\n| where deleted_count > 5\n| table _time, SubjectUserName, deleted_count",
+  "sample_log": "Subject:\n  Security ID: CORP\\svc-iam\n  Account Name: svc-iam\n  Account Domain: CORP\n  Logon ID: 0x8B2140\nTarget Account:\n  Security ID: CORP\\da-backup\n  Account Name: da-backup\n  Account Domain: CORP\nAdditional Information:\n  Privileges: -",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4726",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Event ID 4726",
+      "query": "SecurityEvent\n| where EventID == 4726\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Event ID 4726",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4726\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Event ID 4726",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4726",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4726",
+      "query": "title: Windows Security Event ID 4726\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4726\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4726 mean?",
+      "answer": "Event ID 4726 records deletion of a Windows user account and identifies the actor and deleted account."
+    },
+    {
+      "question": "Where is 4726 generated?",
+      "answer": "A domain account deletion is logged on the authoritative domain controller; a local account deletion is logged on the affected computer."
+    },
+    {
+      "question": "Which account deletions deserve immediate review?",
+      "answer": "Unexpected deletion of privileged, service, backup, emergency, or recently active accounts should be reviewed regardless of volume."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4726: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4726",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Account Access Removal (T1531)",
+      "url": "https://attack.mitre.org/techniques/T1531/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

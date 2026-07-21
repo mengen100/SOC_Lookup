@@ -5,7 +5,7 @@
   "name": "Special groups have been assigned to a new logon",
   "priority": "P2",
   "applicable_version": "Windows Server 2008 R2 and later",
-  "last_reviewed": "2026-07-13",
+  "last_reviewed": "2026-07-21",
   "definition": "Windows Security Event ID 4964 records a logon by an account that is a member of a configured Special Group.",
   "trigger_scenarios": "This event occurs when a member of a group SID listed in HKLM\\System\\CurrentControlSet\\Control\\Lsa\\Audit\\SpecialGroups logs on.",
   "key_fields": [
@@ -33,13 +33,123 @@
   ],
   "attck_mapping": [
     {
+      "tactic_id": "TA0001",
+      "tactic_name": "Initial Access",
       "technique_id": "T1078.002",
-      "technique_name": "Valid Accounts: Domain Accounts"
+      "technique_name": "Valid Accounts: Domain Accounts",
+      "source_url": "https://attack.mitre.org/techniques/T1078/002/"
     }
   ],
-  "detection_notes": "Use threshold=1 for Special Group logons to non-administrative workstations or unusual servers. Microsoft documents the SpecialGroups registry path HKLM\\System\\CurrentControlSet\\Control\\Lsa\\Audit and SID list examples such as S-1-5-32-544; when SidList contains an administrative SID and TargetLogonId correlates to 4624 Logon Type 10 or Type 3 from an unusual source, treat it as T1078.002 Valid Accounts: Domain Accounts. Correlate TargetLogonGuid with 4648 or 4769 when present.",
+  "detection_notes": "T1078.002 Domain Accounts applies when SidList contains a monitored administrative SID such as S-1-5-32-544 and TargetLogonId joins to a 4624 Logon Type 10 or Type 3 from an unexpected source. Use threshold=1 for SpecialGroups logons on nonadministrative workstations or unusual servers and validate the configured HKLM\\System\\CurrentControlSet\\Control\\Lsa\\Audit\\SpecialGroups list.",
   "kql_snippet": "SecurityEvent\n| where EventID == 4964\n| project TimeGenerated, Computer, Account",
   "spl_snippet": "index=wineventlog EventCode=4964 | table _time, host",
   "sample_log": "EventID: 4964\nTargetUserName: dadmin\nTargetLogonId: 0x139faf\nTargetLogonGuid: {B03B6192-09AE-E77F-DD10-2DC430766040}\nSidList: %{S-1-5-32-544}",
-  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4964"
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4964",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Event ID 4964",
+      "query": "SecurityEvent\n| where EventID == 4964\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Apply the event-specific field and correlation guidance on this page after retrieving the base events."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Event ID 4964",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4964\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and field aliases vary by Splunk deployment and Windows add-on version.",
+        "Map provider fields from the raw event before adding event-specific filtering or aggregation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Event ID 4964",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4964",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4964",
+      "query": "title: Windows Security Event ID 4964\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4964\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the field conditions and correlations documented on this page in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "SpecialGroups registry path",
+      "value": "HKLM\\System\\CurrentControlSet\\Control\\Lsa\\Audit\\SpecialGroups",
+      "meaning": "The configured SID list determines which group memberships cause Event ID 4964 at logon.",
+      "security_relevance": "Detection coverage depends on this local list; verify configuration before interpreting absence of the event.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4964"
+    },
+    {
+      "field": "SidList",
+      "value": "S-1-5-32-544",
+      "meaning": "This well-known SID identifies the built-in Administrators group.",
+      "security_relevance": "A logon carrying an explicitly monitored administrative SID deserves source, logon-type, and account validation.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4964"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4964 mean?",
+      "answer": "Event ID 4964 records that a new logon token contains membership in one or more groups configured in the SpecialGroups registry audit list."
+    },
+    {
+      "question": "Does Windows generate 4964 for every administrator logon by default?",
+      "answer": "No. The SpecialGroups registry value must contain the SIDs that the organization wants to monitor."
+    },
+    {
+      "question": "How should 4964 be correlated?",
+      "answer": "Join TargetLogonId to 4624 and evaluate the account, source address, host, and Logon Type; use TargetLogonGuid for related Kerberos or explicit-credential activity when populated."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4964: Microsoft Windows security auditing event reference",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4964",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Valid Accounts: Domain Accounts (T1078.002)",
+      "url": "https://attack.mitre.org/techniques/T1078/002/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }
