@@ -20,8 +20,49 @@ export interface KeyField {
 }
 
 export interface AttackMapping {
+  tactic_id?: string;
+  tactic_name?: string;
   technique_id: string;
   technique_name: string;
+  source_url?: string;
+}
+
+export interface TechnicalMetadata {
+  provider: string;
+  channel: string;
+  level: string;
+  audit_keyword?: string;
+}
+
+export type DetectionQueryLanguage = "kql" | "spl" | "xql" | "sigma";
+
+export interface DetectionQuery {
+  language: DetectionQueryLanguage;
+  title: string;
+  query: string;
+  data_source: string;
+  assumptions: string[];
+  source_url?: string;
+}
+
+export interface EventValueReference {
+  field: string;
+  value: string;
+  meaning: string;
+  security_relevance: string;
+  source_url: string;
+}
+
+export interface EventFaq {
+  question: string;
+  answer: string;
+}
+
+export interface EventSourceReference {
+  title: string;
+  url: string;
+  publisher: string;
+  source_type: "vendor" | "attack" | "detection-rule";
 }
 
 export interface EventPageRecord extends SkeletonEvent {
@@ -33,6 +74,11 @@ export interface EventPageRecord extends SkeletonEvent {
   false_positives: string[];
   related_event_ids: string[];
   attck_mapping?: AttackMapping[];
+  technical_metadata?: TechnicalMetadata;
+  queries?: DetectionQuery[];
+  value_references?: EventValueReference[];
+  faqs?: EventFaq[];
+  sources?: EventSourceReference[];
   detection_notes: string;
   kql_snippet?: string;
   spl_snippet?: string;
