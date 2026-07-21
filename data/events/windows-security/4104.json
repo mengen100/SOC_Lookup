@@ -5,7 +5,12 @@
     "name":  "PowerShell Script Block Logging",
     "priority":  "P1",
     "applicable_version":  "Windows PowerShell 5.0 and later with Script Block Logging enabled",
-    "last_reviewed":  "2026-07-10",
+    "last_reviewed":  "2026-07-21",
+    "technical_metadata":  {
+                               "provider":  "Microsoft-Windows-PowerShell",
+                               "channel":  "Microsoft-Windows-PowerShell/Operational",
+                               "level":  "Verbose"
+                           },
     "definition":  "PowerShell Event ID 4104 records script block content and is one of the highest-value Windows telemetry sources for detecting malicious PowerShell execution.",
     "trigger_scenarios":  "The PowerShell operational log records this event when Script Block Logging is enabled through policy or configuration. Large scripts can be split across multiple events sharing a ScriptBlockId.",
     "key_fields":  [
@@ -38,14 +43,121 @@
                           ],
     "attck_mapping":  [
                           {
+                              "tactic_id":  "TA0002",
+                              "tactic_name":  "Execution",
                               "technique_id":  "T1059.001",
-                              "technique_name":  "Command and Scripting Interpreter: PowerShell"
-                          },
-                          {
-                              "technique_id":  "T1027",
-                              "technique_name":  "Obfuscated Files or Information"
+                              "technique_name":  "PowerShell",
+                              "source_url":  "https://attack.mitre.org/techniques/T1059/001/"
                           }
                       ],
+    "queries":  [
+                    {
+                        "language":  "kql",
+                        "title":  "Suspicious PowerShell script block content",
+                        "query":  "Event\n| where EventLog == \"Microsoft-Windows-PowerShell/Operational\" and EventID == 4104\n| where RenderedDescription has_any (\"FromBase64String\", \"DownloadString\", \"Invoke-Expression\", \"-EncodedCommand\")\n| project TimeGenerated, Computer, UserName, RenderedDescription",
+                        "data_source":  "Microsoft Sentinel Event table",
+                        "assumptions":  [
+                                            "PowerShell Script Block Logging is enabled and the connector retains RenderedDescription.",
+                                            "Long script blocks must be reconstructed by ScriptBlockId and message sequence before final triage."
+                                        ],
+                        "source_url":  "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/event"
+                    },
+                    {
+                        "language":  "spl",
+                        "title":  "Suspicious PowerShell script block content",
+                        "query":  "index=wineventlog source=\"WinEventLog:Microsoft-Windows-PowerShell/Operational\" EventCode=4104\n| search ScriptBlockText IN (\"*FromBase64String*\", \"*DownloadString*\", \"*Invoke-Expression*\", \"*-EncodedCommand*\")\n| table _time, host, UserId, ScriptBlockId, Path, ScriptBlockText",
+                        "data_source":  "Splunk PowerShell Operational event data",
+                        "assumptions":  [
+                                            "The Splunk field extraction exposes ScriptBlockText, ScriptBlockId, Path, and UserId from event XML.",
+                                            "Script block fragments are reassembled before content is classified."
+                                        ]
+                    },
+                    {
+                        "language":  "xql",
+                        "title":  "Retrieve PowerShell script-block events",
+                        "query":  "dataset = microsoft_windows_raw\n| filter edr_event_id = 4104",
+                        "data_source":  "Cortex XDR microsoft_windows_raw",
+                        "assumptions":  [
+                                            "The PowerShell Operational channel is collected into Cortex XDR.",
+                                            "Confirm the Microsoft-Windows-PowerShell provider and inspect raw ScriptBlockText because parsed raw-field names can vary by collection path."
+                                        ],
+                        "source_url":  "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+                    },
+                    {
+                        "language":  "sigma",
+                        "title":  "Suspicious PowerShell script block primitives",
+                        "query":  "title: Suspicious PowerShell Script Block Primitives\nstatus: experimental\nlogsource:\n    product: windows\n    service: powershell\ndetection:\n    selection:\n        EventID: 4104\n        ScriptBlockText|contains:\n            - 'FromBase64String'\n            - 'DownloadString'\n            - 'Invoke-Expression'\n    condition: selection\nfalsepositives:\n    - Administrative and security automation using the same APIs\nlevel: medium\ntags:\n    - attack.execution\n    - attack.t1059.001",
+                        "data_source":  "Sigma Windows PowerShell log source",
+                        "assumptions":  [
+                                            "The backend maps the powershell service and ScriptBlockText field to Event ID 4104 data.",
+                                            "The strings are hunt seeds and require context, not stand-alone proof of malicious execution."
+                                        ],
+                        "source_url":  "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+                    }
+                ],
+    "value_references":  [
+                              {
+                                  "field":  "EventId",
+                                  "value":  "4104 / 0x1008",
+                                  "meaning":  "PowerShell Script Block Logging event identifier in decimal and hexadecimal form.",
+                                  "security_relevance":  "It selects script content rather than module pipeline execution or engine lifecycle events.",
+                                  "source_url":  "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging?view=powershell-5.1"
+                              },
+                              {
+                                  "field":  "Level",
+                                  "value":  "Verbose",
+                                  "meaning":  "The documented level for Script Block Logging Event ID 4104.",
+                                  "security_relevance":  "Collectors configured to exclude verbose events can silently lose this high-value telemetry.",
+                                  "source_url":  "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging?view=powershell-5.1"
+                              },
+                              {
+                                  "field":  "ScriptBlockLogging policy path",
+                                  "value":  "HKLM:\\Software\\Policies\\Microsoft\\Windows\\PowerShell\\ScriptBlockLogging",
+                                  "meaning":  "Registry policy location documented for enabling Script Block Logging.",
+                                  "security_relevance":  "Confirm this policy and collection coverage before interpreting the absence of Event ID 4104 as an absence of PowerShell execution.",
+                                  "source_url":  "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging?view=powershell-5.1"
+                              }
+                          ],
+    "faqs":  [
+                  {
+                      "question":  "What does PowerShell Event ID 4104 record?",
+                      "answer":  "Event ID 4104 records the content of script blocks processed by PowerShell when Script Block Logging is enabled, in the Microsoft-Windows-PowerShell/Operational channel."
+                  },
+                  {
+                      "question":  "Why can one PowerShell script produce multiple Event ID 4104 records?",
+                      "answer":  "Large script blocks can be divided across event messages. Analysts should group and order the messages using the script block identifier and sequence fields before evaluating the full content."
+                  },
+                  {
+                      "question":  "Does FromBase64String in Event ID 4104 prove malicious PowerShell?",
+                      "answer":  "No. It is a useful encoded-content hunting primitive, but legitimate automation can use it; the surrounding script, user, host application, path, parent process, network activity, and change context determine risk."
+                  }
+              ],
+    "sources":  [
+                     {
+                         "title":  "about_Logging: PowerShell Script Block Logging",
+                         "url":  "https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_logging?view=powershell-5.1",
+                         "publisher":  "Microsoft",
+                         "source_type":  "vendor"
+                     },
+                     {
+                         "title":  "Command and Scripting Interpreter: PowerShell (T1059.001)",
+                         "url":  "https://attack.mitre.org/techniques/T1059/001/",
+                         "publisher":  "MITRE ATT&CK",
+                         "source_type":  "attack"
+                     },
+                     {
+                         "title":  "XDR Collector datasets",
+                         "url":  "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+                         "publisher":  "Palo Alto Networks",
+                         "source_type":  "vendor"
+                     },
+                     {
+                         "title":  "Sigma Rules Specification",
+                         "url":  "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+                         "publisher":  "SigmaHQ",
+                         "source_type":  "detection-rule"
+                     }
+                 ],
     "detection_notes":  "For T1059.001 and T1027, ScriptBlockText containing FromBase64String plus -EncodedCommand is a concrete encoded-PowerShell chain. Reassemble fragments by ScriptBlockId before triage; a Path under C:\\\\Users\\\\ or C:\\\\ProgramData\\\\ combined with IEX or DownloadString is materially different from signed automation.",
     "kql_snippet":  "Event\n| where Source == \"Microsoft-Windows-PowerShell\" and EventID == 4104\n| where RenderedDescription has_any (\"FromBase64String\", \"IEX\", \"DownloadString\", \"Invoke-WebRequest\")\n| project TimeGenerated, Computer, UserName, RenderedDescription\n| order by TimeGenerated desc",
     "spl_snippet":  "index=wineventlog source=\"WinEventLog:Microsoft-Windows-PowerShell/Operational\" EventCode=4104\n| search ScriptBlockText IN (\"*FromBase64String*\", \"*DownloadString*\", \"*Invoke-WebRequest*\")\n| table _time, host, UserId, ScriptBlockId, Path, ScriptBlockText",

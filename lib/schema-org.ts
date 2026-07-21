@@ -42,28 +42,60 @@ export function buildEventStructuredData(event: EventPageRecord) {
     { "@type": "ListItem", position: 2, name: collectionName, item: absoluteUrl(collectionHref) },
     { "@type": "ListItem", position: 3, name: `Event ID ${event.id}`, item: url },
   ];
+  const attackAbout = event.attck_mapping
+    ?.filter((mapping) => mapping.source_url)
+    .map((mapping) => ({
+      "@type": "Thing",
+      name: `${mapping.technique_id} ${mapping.technique_name}`,
+      sameAs: mapping.source_url,
+    }));
+  const graph: Array<Record<string, unknown>> = [
+    {
+      "@type": "TechArticle",
+      "@id": `${url}#article`,
+      headline: eventPageTitle(event),
+      description: eventDescription(event),
+      datePublished: event.last_reviewed,
+      dateModified: event.last_reviewed,
+      author: {
+        "@type": "Organization",
+        name: SITE_NAME,
+        url: `${SITE_URL}/`,
+      },
+      publisher: {
+        "@type": "Organization",
+        name: SITE_NAME,
+        url: `${SITE_URL}/`,
+      },
+      mainEntityOfPage: url,
+      url,
+      about: attackAbout && attackAbout.length > 0 ? attackAbout : [event.category, collectionName, "SOC analysis"],
+    },
+  ];
+
+  if (event.faqs && event.faqs.length > 0) {
+    graph.push({
+      "@type": "FAQPage",
+      "@id": `${url}#faq`,
+      mainEntity: event.faqs.map((faq) => ({
+        "@type": "Question",
+        name: faq.question,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: faq.answer,
+        },
+      })),
+    });
+  }
+
+  graph.push({
+    "@type": "BreadcrumbList",
+    "@id": `${url}#breadcrumb`,
+    itemListElement,
+  });
 
   return {
     "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "TechArticle",
-        headline: eventPageTitle(event),
-        description: eventDescription(event),
-        datePublished: event.last_reviewed,
-        dateModified: event.last_reviewed,
-        author: {
-          "@type": "Organization",
-          name: SITE_NAME,
-        },
-        mainEntityOfPage: url,
-        url,
-        about: [event.category, collectionName, "SOC analysis"],
-      },
-      {
-        "@type": "BreadcrumbList",
-        itemListElement,
-      },
-    ],
+    "@graph": graph,
   };
 }

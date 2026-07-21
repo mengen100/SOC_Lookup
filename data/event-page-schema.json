@@ -103,17 +103,198 @@
       "description": "MITRE ATT&CK technique mapping; use an empty array when there is no reliable mapping.",
       "items": {
         "type": "object",
+        "additionalProperties": false,
         "required": [
           "technique_id",
           "technique_name"
         ],
         "properties": {
+          "tactic_id": {
+            "type": "string",
+            "pattern": "^TA[0-9]{4}$"
+          },
+          "tactic_name": {
+            "type": "string",
+            "minLength": 1
+          },
           "technique_id": {
             "type": "string",
+            "pattern": "^T[0-9]{4}(\\.[0-9]{3})?$",
             "description": "Example: T1110.003."
           },
           "technique_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_url": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      }
+    },
+    "technical_metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "channel",
+        "level"
+      ],
+      "properties": {
+        "provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "channel": {
+          "type": "string",
+          "minLength": 1
+        },
+        "level": {
+          "type": "string",
+          "minLength": 1
+        },
+        "audit_keyword": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "queries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "language",
+          "title",
+          "query",
+          "data_source",
+          "assumptions"
+        ],
+        "properties": {
+          "language": {
+            "type": "string",
+            "enum": [
+              "kql",
+              "spl",
+              "xql",
+              "sigma"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "query": {
+            "type": "string",
+            "minLength": 1
+          },
+          "data_source": {
+            "type": "string",
+            "minLength": 1
+          },
+          "assumptions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "source_url": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      }
+    },
+    "value_references": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "field",
+          "value",
+          "meaning",
+          "security_relevance",
+          "source_url"
+        ],
+        "properties": {
+          "field": {
+            "type": "string",
+            "minLength": 1
+          },
+          "value": {
+            "type": "string",
+            "minLength": 1
+          },
+          "meaning": {
+            "type": "string",
+            "minLength": 1
+          },
+          "security_relevance": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_url": {
+            "type": "string",
+            "format": "uri"
+          }
+        }
+      }
+    },
+    "faqs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "question",
+          "answer"
+        ],
+        "properties": {
+          "question": {
+            "type": "string",
+            "minLength": 1
+          },
+          "answer": {
             "type": "string"
+          }
+        }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "title",
+          "url",
+          "publisher",
+          "source_type"
+        ],
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "publisher": {
+            "type": "string",
+            "minLength": 1
+          },
+          "source_type": {
+            "type": "string",
+            "enum": [
+              "vendor",
+              "attack",
+              "detection-rule"
+            ]
           }
         }
       }

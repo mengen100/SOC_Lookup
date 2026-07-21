@@ -5,7 +5,13 @@
     "name":  "An account failed to log on",
     "priority":  "P1",
     "applicable_version":  "Windows Server 2008 R2 and later; Windows 7 and later",
-    "last_reviewed":  "2026-07-10",
+    "last_reviewed":  "2026-07-21",
+    "technical_metadata":  {
+                               "provider":  "Microsoft-Windows-Security-Auditing",
+                               "channel":  "Security",
+                               "level":  "Information",
+                               "audit_keyword":  "Audit Failure"
+                           },
     "definition":  "Windows Security Event ID 4625 records an unsuccessful logon attempt and is a core source for investigating brute-force activity, password spraying, and account lockout reports.",
     "trigger_scenarios":  "The event is generated when Windows authentication fails for an interactive, network, remote desktop, service, or other logon attempt. The Logon Type field identifies the authentication context.",
     "key_fields":  [
@@ -38,18 +44,140 @@
                           ],
     "attck_mapping":  [
                           {
+                              "tactic_id":  "TA0006",
+                              "tactic_name":  "Credential Access",
                               "technique_id":  "T1110.001",
-                              "technique_name":  "Brute Force: Password Guessing"
+                              "technique_name":  "Password Guessing",
+                              "source_url":  "https://attack.mitre.org/techniques/T1110/001/"
                           },
                           {
+                              "tactic_id":  "TA0006",
+                              "tactic_name":  "Credential Access",
                               "technique_id":  "T1110.003",
-                              "technique_name":  "Brute Force: Password Spraying"
-                          },
-                          {
-                              "technique_id":  "T1078",
-                              "technique_name":  "Valid Accounts"
+                              "technique_name":  "Password Spraying",
+                              "source_url":  "https://attack.mitre.org/techniques/T1110/003/"
                           }
                       ],
+    "queries":  [
+                    {
+                        "language":  "kql",
+                        "title":  "Repeated bad-password failures by source",
+                        "query":  "SecurityEvent\n| where EventID == 4625 and SubStatus == \"0xC000006A\"\n| summarize FailedAccounts=dcount(TargetAccount), Attempts=count() by IpAddress, bin(TimeGenerated, 5m)\n| where Attempts > 10 and FailedAccounts > 3",
+                        "data_source":  "Microsoft Sentinel SecurityEvent table",
+                        "assumptions":  [
+                                            "The 10-attempt and 3-account values are starting thresholds that must be tuned to the environment.",
+                                            "The connector maps the Windows XML fields to SubStatus, TargetAccount, and IpAddress."
+                                        ],
+                        "source_url":  "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+                    },
+                    {
+                        "language":  "spl",
+                        "title":  "Repeated bad-password failures by source",
+                        "query":  "index=wineventlog source=\"WinEventLog:Security\" EventCode=4625 SubStatus=0xC000006A\n| bin _time span=5m\n| stats dc(TargetUserName) as failed_accounts count as attempts by _time, IpAddress\n| where attempts > 10 AND failed_accounts > 3",
+                        "data_source":  "Splunk Windows Security event data",
+                        "assumptions":  [
+                                            "Field aliases vary by Splunk add-on; map TargetUserName, IpAddress, and SubStatus to the local data model.",
+                                            "The thresholds are tuning examples, not Microsoft defaults."
+                                        ]
+                    },
+                    {
+                        "language":  "xql",
+                        "title":  "Retrieve failed-logon events",
+                        "query":  "dataset = microsoft_windows_raw\n| filter edr_event_id = 4625",
+                        "data_source":  "Cortex XDR microsoft_windows_raw",
+                        "assumptions":  [
+                                            "Windows Security logs are ingested through a Cortex XDR Windows event collection path.",
+                                            "Inspect the raw Status, SubStatus, LogonType, and IpAddress values because parsed raw-field names can vary by collection path."
+                                        ],
+                        "source_url":  "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+                    },
+                    {
+                        "language":  "sigma",
+                        "title":  "Windows failed logon with a valid account and bad password",
+                        "query":  "title: Windows Failed Logon With Bad Password\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4625\n        SubStatus: '0xC000006A'\n    condition: selection\nfalsepositives:\n    - Mistyped passwords and stale service credentials\nlevel: medium\ntags:\n    - attack.credential-access\n    - attack.t1110.001",
+                        "data_source":  "Sigma Windows Security log source",
+                        "assumptions":  [
+                                            "This single-event rule identifies candidates; password guessing and spraying require aggregation in the target SIEM."
+                                        ],
+                        "source_url":  "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+                    }
+                ],
+    "value_references":  [
+                              {
+                                  "field":  "SubStatus",
+                                  "value":  "0xC000006A",
+                                  "meaning":  "The account name is valid, but the supplied password is wrong.",
+                                  "security_relevance":  "Repeated occurrences against one account support password-guessing triage; the same source across many accounts supports password-spray triage.",
+                                  "source_url":  "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4625"
+                              },
+                              {
+                                  "field":  "SubStatus",
+                                  "value":  "0xC0000064",
+                                  "meaning":  "The supplied account name does not exist.",
+                                  "security_relevance":  "A sequence of nonexistent names can indicate username enumeration rather than guessing against known accounts.",
+                                  "source_url":  "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4625"
+                              },
+                              {
+                                  "field":  "LogonType",
+                                  "value":  "3",
+                                  "meaning":  "Network logon, commonly generated by access to resources such as SMB shares.",
+                                  "security_relevance":  "Use it to separate network authentication failures from interactive and remote-interactive attempts.",
+                                  "source_url":  "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4625"
+                              },
+                              {
+                                  "field":  "LogonType",
+                                  "value":  "10",
+                                  "meaning":  "RemoteInteractive logon, typically Remote Desktop or Terminal Services.",
+                                  "security_relevance":  "It isolates failed remote desktop authentication for RDP-focused investigations.",
+                                  "source_url":  "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4625"
+                              }
+                          ],
+    "faqs":  [
+                  {
+                      "question":  "What does Windows Event ID 4625 mean?",
+                      "answer":  "Event ID 4625 records a failed Windows logon attempt on the computer where access was attempted. Status, SubStatus, LogonType, and source network fields explain the failure context."
+                  },
+                  {
+                      "question":  "Does one Event ID 4625 prove a brute-force attack?",
+                      "answer":  "No. A single failure is commonly caused by a mistyped or stale password; detection requires correlation by account, source, failure code, logon type, time window, and any subsequent successful logon."
+                  },
+                  {
+                      "question":  "Which 4625 value is most useful for password guessing?",
+                      "answer":  "SubStatus 0xC000006A identifies a valid account with a bad password, while 0xC0000064 identifies an unknown account and is more consistent with username enumeration."
+                  }
+              ],
+    "sources":  [
+                     {
+                         "title":  "4625(F): An account failed to log on",
+                         "url":  "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4625",
+                         "publisher":  "Microsoft",
+                         "source_type":  "vendor"
+                     },
+                     {
+                         "title":  "Brute Force: Password Guessing (T1110.001)",
+                         "url":  "https://attack.mitre.org/techniques/T1110/001/",
+                         "publisher":  "MITRE ATT&CK",
+                         "source_type":  "attack"
+                     },
+                     {
+                         "title":  "Brute Force: Password Spraying (T1110.003)",
+                         "url":  "https://attack.mitre.org/techniques/T1110/003/",
+                         "publisher":  "MITRE ATT&CK",
+                         "source_type":  "attack"
+                     },
+                     {
+                         "title":  "XDR Collector datasets",
+                         "url":  "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+                         "publisher":  "Palo Alto Networks",
+                         "source_type":  "vendor"
+                     },
+                     {
+                         "title":  "Sigma Rules Specification",
+                         "url":  "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+                         "publisher":  "SigmaHQ",
+                         "source_type":  "detection-rule"
+                     }
+                 ],
     "detection_notes":  "T1110.001/T1110.003 detection should separate Sub Status 0xC000006A (valid account, bad password) from 0xC0000064 (unknown account). More than 10 failures in a 5-minute window from one Source Network Address against many accounts is a starting spray threshold, while Logon Type 10 isolates RDP and Type 3 isolates SMB. Correlate a following 4624 success.",
     "kql_snippet":  "SecurityEvent\n| where EventID == 4625\n| summarize FailedCount = count() by TargetAccount = Account, IpAddress, bin(TimeGenerated, 5m)\n| where FailedCount \u003e 10\n| order by FailedCount desc",
     "spl_snippet":  "index=wineventlog EventCode=4625\n| bucket _time span=5m\n| stats count as FailedCount by _time, Account_Name, Source_Network_Address\n| where FailedCount \u003e 10",

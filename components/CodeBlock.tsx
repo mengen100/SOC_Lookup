@@ -9,7 +9,7 @@ export function CodeBlock({ label, code }: CodeBlockProps) {
   }
 
   return (
-    <figure className="overflow-hidden rounded border border-line bg-[#101820]">
+    <figure className="min-w-0 max-w-full overflow-hidden rounded border border-line bg-[#101820]">
       <figcaption className="border-b border-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-normal text-[#b8c7c2]">
         {label}
       </figcaption>

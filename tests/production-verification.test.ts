@@ -26,8 +26,8 @@ function successfulResponses(): Map<string, string> {
 
   return new Map([
     ["/", htmlPage("/", ["WebSite"])],
-    ["/windows-events/4625/", htmlPage("/windows-events/4625/", ["TechArticle", "BreadcrumbList"])],
-    ["/sysmon-events/1/", htmlPage("/sysmon-events/1/", ["TechArticle", "BreadcrumbList"])],
+    ["/windows-events/4625/", htmlPage("/windows-events/4625/", ["TechArticle", "FAQPage", "BreadcrumbList"])],
+    ["/sysmon-events/1/", htmlPage("/sysmon-events/1/", ["TechArticle", "FAQPage", "BreadcrumbList"])],
     ["/tools/timestamp-converter/", htmlPage("/tools/timestamp-converter/")],
     ["/tools/sigma-converter/", htmlPage("/tools/sigma-converter/")],
     ["/tools/cvss-calculator/", htmlPage("/tools/cvss-calculator/")],
