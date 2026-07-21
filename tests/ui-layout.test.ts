@@ -27,3 +27,24 @@ test("links common investigations to existing event guides", () => {
     assert.ok(homepage.includes(route), `Missing common-investigation route: ${route}`);
   }
 });
+
+test("renders enriched event sections with semantic and responsive structure", () => {
+  const eventPage = fs.readFileSync(path.join(projectRoot, "components", "EventPage.tsx"), "utf8");
+  const metadata = fs.readFileSync(path.join(projectRoot, "components", "EventMetadataTable.tsx"), "utf8");
+  const values = fs.readFileSync(path.join(projectRoot, "components", "EventValueTable.tsx"), "utf8");
+  const queries = fs.readFileSync(path.join(projectRoot, "components", "DetectionQueries.tsx"), "utf8");
+  const faq = fs.readFileSync(path.join(projectRoot, "components", "EventFaq.tsx"), "utf8");
+
+  assert.match(eventPage, /<section id="quick-summary"/);
+  assert.match(eventPage, /<EventMetadataTable event=\{event\}/);
+  assert.match(eventPage, /<DetectionQueries event=\{event\}/);
+  assert.match(metadata, /overflow-x-auto/);
+  assert.match(metadata, /<table/);
+  assert.match(values, /overflow-x-auto/);
+  assert.match(values, /<table/);
+  assert.match(queries, /event\.queries/);
+  assert.match(queries, /event\.kql_snippet/);
+  assert.match(queries, /event\.spl_snippet/);
+  assert.match(faq, /faq\.question/);
+  assert.match(faq, /faq\.answer/);
+});
