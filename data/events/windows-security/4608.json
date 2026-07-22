@@ -3,7 +3,7 @@
   "source": "windows_security",
   "priority": "P3",
   "applicable_version": "Windows Server 2008 and later where the audit subcategory is enabled",
-  "last_reviewed": "2026-07-13",
+  "last_reviewed": "2026-07-22",
   "category": "System",
   "name": "Windows is starting up",
   "definition": "Windows Security Event ID 4608 records startup of LSASS and initialization of the auditing subsystem.",
@@ -33,13 +33,122 @@
   ],
   "attck_mapping": [
     {
+      "tactic_id": "TA0040",
+      "tactic_name": "Impact",
       "technique_id": "T1529",
-      "technique_name": "System Shutdown/Reboot"
+      "technique_name": "System Shutdown/Reboot",
+      "source_url": "https://attack.mitre.org/techniques/T1529/"
     }
   ],
   "detection_notes": "Use threshold=1 unexpected 4608 outside a maintenance window on servers where reboot should be rare. Microsoft documents 4608 as LSASS/auditing subsystem startup; if no matching 4609 or approved reboot exists and the host later shows cleared logs or service changes, the sequence can support T1529 System Shutdown/Reboot. Correlate TimeCreated with 4616 time changes, 1102 audit-log clears, and service-start events.",
   "kql_snippet": "SecurityEvent\n| where EventID == 4608\n| project TimeGenerated, Computer",
   "spl_snippet": "index=wineventlog EventCode=4608 | table _time, host",
   "sample_log": "EventID: 4608\nComputer: DC01\nTimeCreated: 2026-07-13T03:10:00Z",
-  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4608"
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4608",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Security Event ID 4608",
+      "query": "SecurityEvent\n| where EventID == 4608\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Map raw XML fields to the event-specific fields documented on this page."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Security Event ID 4608",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4608\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source and field aliases vary by deployment.",
+        "Apply event-specific field conditions after validating local extraction."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Security Event ID 4608",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4608",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The applicable Windows event channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4608",
+      "query": "title: Windows Security Event ID 4608\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4608\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the documented conditions and correlations in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "EventID",
+      "value": "4608",
+      "meaning": "Windows startup and initialization of the LSA security subsystem.",
+      "security_relevance": "Interpret EventID with the complete event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4608"
+    },
+    {
+      "field": "TimeCreated",
+      "value": "UTC timestamp",
+      "meaning": "The startup time used for reboot and audit-gap correlation.",
+      "security_relevance": "Interpret TimeCreated with the complete event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4608"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4608 mean?",
+      "answer": "Windows and the Local Security Authority security subsystem started."
+    },
+    {
+      "question": "Does Event ID 4608 always indicate malicious activity?",
+      "answer": "No. It is expected after every normal system startup."
+    },
+    {
+      "question": "How should Event ID 4608 be investigated?",
+      "answer": "Compare TimeCreated with maintenance records, boot telemetry, audit gaps, and preceding shutdown or crash evidence."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4608: Windows is starting up",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4608",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "System Shutdown/Reboot (T1529)",
+      "url": "https://attack.mitre.org/techniques/T1529/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

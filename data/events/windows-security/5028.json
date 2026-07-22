@@ -1,6 +1,6 @@
 {
   "source": "windows_security",
-  "last_reviewed": "2026-07-13",
+  "last_reviewed": "2026-07-22",
   "id": "5028",
   "category": "Firewall",
   "name": "Windows Firewall Service unable to parse new security policy",
@@ -33,13 +33,122 @@
   ],
   "attck_mapping": [
     {
+      "tactic_id": "TA0112",
+      "tactic_name": "Defense Impairment",
       "technique_id": "T1686.003",
-      "technique_name": "Disable or Modify System Firewall: Windows Host Firewall"
+      "technique_name": "Disable or Modify System Firewall: Windows Host Firewall",
+      "source_url": "https://attack.mitre.org/techniques/T1686/003/"
     }
   ],
   "detection_notes": "Escalate 5028 to T1686.003 when threshold=1 failure coincides with netsh, PowerShell firewall cmdlets, registry policy changes, or 5027 on the same host. ErrorCode 2147942413 is Microsoft’s documented example for the policy parse failure; the security question is whether a new restrictive firewall policy failed to apply, leaving remote-service ports exposed under the previously enforced policy.",
   "kql_snippet": "SecurityEvent\n| where EventID == 5028\n| project TimeGenerated, Computer, ErrorCode",
   "spl_snippet": "index=wineventlog EventCode=5028\n| table _time, host, ErrorCode",
   "sample_log": "The Windows Firewall Service was unable to parse the new security policy.\nErrorCode: 2147942413\nComputer: WEB01",
-  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-5028"
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-5028",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Security Event ID 5028",
+      "query": "SecurityEvent\n| where EventID == 5028\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Map raw XML fields to the event-specific fields documented on this page."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Security Event ID 5028",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=5028\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source and field aliases vary by deployment.",
+        "Apply event-specific field conditions after validating local extraction."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Security Event ID 5028",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 5028",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The applicable Windows event channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 5028",
+      "query": "title: Windows Security Event ID 5028\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 5028\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the documented conditions and correlations in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "ErrorCode",
+      "value": "2147942413",
+      "meaning": "The error-code example in Microsoft's event reference; actual deployments can report other codes.",
+      "security_relevance": "Interpret ErrorCode with the complete event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-5028"
+    },
+    {
+      "field": "EventID",
+      "value": "5028",
+      "meaning": "Windows Firewall Service could not parse a new security policy.",
+      "security_relevance": "Interpret EventID with the complete event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-5028"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 5028 mean?",
+      "answer": "Windows Firewall Service could not parse a new security policy."
+    },
+    {
+      "question": "Does Event ID 5028 always indicate malicious activity?",
+      "answer": "No. Invalid or incompatible administrative policy can cause it."
+    },
+    {
+      "question": "How should Event ID 5028 be investigated?",
+      "answer": "Decode ErrorCode, compare the proposed and active policies, and correlate with policy-editing commands and related firewall failures."
+    }
+  ],
+  "sources": [
+    {
+      "title": "5028: Windows Firewall Service unable to parse new security policy",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-5028",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Disable or Modify System Firewall: Windows Host Firewall (T1686.003)",
+      "url": "https://attack.mitre.org/techniques/T1686/003/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

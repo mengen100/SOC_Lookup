@@ -1,6 +1,6 @@
 {
   "source": "windows_security",
-  "last_reviewed": "2026-07-13",
+  "last_reviewed": "2026-07-22",
   "id": "4692",
   "category": "DPAPI",
   "name": "Backup of data protection master key was attempted",
@@ -33,13 +33,122 @@
   ],
   "attck_mapping": [
     {
+      "tactic_id": "TA0006",
+      "tactic_name": "Credential Access",
       "technique_id": "T1555",
-      "technique_name": "Credentials from Password Stores"
+      "technique_name": "Credentials from Password Stores",
+      "source_url": "https://attack.mitre.org/techniques/T1555/"
     }
   ],
   "detection_notes": "Do not treat every 4692 as malicious: Microsoft says it is typically informational and tied to DPAPI master-key backup. Escalate T1555 only when the Subject account, RecoveryServer, or FailureReason departs from baseline, such as FailureReason not equal to 0x0 or a privileged account backing up many MasterKeyId values. Because Microsoft places user master-key files under %APPDATA%\\Roaming\\Microsoft\\Windows\\Protect\\%SID%, correlate suspicious 4692 with file access to that AppData Protect path and Credential Manager events 5376 or 5377.",
   "kql_snippet": "SecurityEvent\n| where EventID == 4692\n| project TimeGenerated, Computer, SubjectUserName, SubjectLogonId, MasterKeyId, RecoveryServer, FailureReason",
   "spl_snippet": "index=wineventlog EventCode=4692\n| table _time, host, SubjectUserName, SubjectLogonId, MasterKeyId, RecoveryServer, FailureReason",
   "sample_log": "Subject: CORP\\svc-backup\nLogon ID: 0x30c08\nMasterKeyId: 16cfaea0-dbe3-4d92-9523-d494edb546bc\nRecoveryServer: DC01.contoso.local\nFailureReason: 0x0",
-  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4692"
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4692",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Security Event ID 4692",
+      "query": "SecurityEvent\n| where EventID == 4692\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Map raw XML fields to the event-specific fields documented on this page."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Security Event ID 4692",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4692\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source and field aliases vary by deployment.",
+        "Apply event-specific field conditions after validating local extraction."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Security Event ID 4692",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4692",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The applicable Windows event channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4692",
+      "query": "title: Windows Security Event ID 4692\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4692\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the documented conditions and correlations in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "StatusCode",
+      "value": "0x0",
+      "meaning": "Microsoft documents 0x0 as the typical success status for DPAPI master-key backup.",
+      "security_relevance": "Interpret StatusCode with the complete event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4692"
+    },
+    {
+      "field": "RecoveryKeyId",
+      "value": "identifier",
+      "meaning": "Identifies the recovery key used for the backup operation.",
+      "security_relevance": "Interpret RecoveryKeyId with the complete event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4692"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4692 mean?",
+      "answer": "A backup of a DPAPI master key was attempted."
+    },
+    {
+      "question": "Does Event ID 4692 always indicate malicious activity?",
+      "answer": "No. Domain-joined systems periodically back up DPAPI master keys for account recovery."
+    },
+    {
+      "question": "How should Event ID 4692 be investigated?",
+      "answer": "Inspect status, recovery server and key identifiers and correlate unusual volume or actors with profile and credential activity."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4692: Backup of data protection master key was attempted",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4692",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Credentials from Password Stores (T1555)",
+      "url": "https://attack.mitre.org/techniques/T1555/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

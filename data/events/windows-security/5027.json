@@ -1,6 +1,6 @@
 {
   "source": "windows_security",
-  "last_reviewed": "2026-07-13",
+  "last_reviewed": "2026-07-22",
   "id": "5027",
   "category": "Firewall",
   "name": "Windows Firewall Service unable to retrieve security policy",
@@ -33,13 +33,122 @@
   ],
   "attck_mapping": [
     {
+      "tactic_id": "TA0112",
+      "tactic_name": "Defense Impairment",
       "technique_id": "T1686.003",
-      "technique_name": "Disable or Modify System Firewall: Windows Host Firewall"
+      "technique_name": "Disable or Modify System Firewall: Windows Host Firewall",
+      "source_url": "https://attack.mitre.org/techniques/T1686/003/"
     }
   ],
   "detection_notes": "Microsoft says 5027 is usually configuration-related, so escalate to T1686.003 when threshold=1 occurrence is paired with firewall policy changes, 5028 parse failures, or 5030/5035 service-start failures on the same host. ErrorCode 2147942413 is the Microsoft example and should be retained for troubleshooting; the attack signal is that the Windows Firewall Service cannot retrieve local policy, potentially leaving an older or attacker-favorable policy enforced while remote access rules are changed elsewhere.",
   "kql_snippet": "SecurityEvent\n| where EventID == 5027\n| project TimeGenerated, Computer, ErrorCode",
   "spl_snippet": "index=wineventlog EventCode=5027\n| table _time, host, ErrorCode",
   "sample_log": "The Windows Firewall Service was unable to retrieve the security policy from the local storage.\nErrorCode: 2147942413\nComputer: WEB01",
-  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-5027"
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-5027",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Security Event ID 5027",
+      "query": "SecurityEvent\n| where EventID == 5027\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Map raw XML fields to the event-specific fields documented on this page."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Security Event ID 5027",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=5027\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source and field aliases vary by deployment.",
+        "Apply event-specific field conditions after validating local extraction."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Security Event ID 5027",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 5027",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The applicable Windows event channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 5027",
+      "query": "title: Windows Security Event ID 5027\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 5027\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the documented conditions and correlations in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "ErrorCode",
+      "value": "2147942413",
+      "meaning": "The error-code example in Microsoft's event reference; retain the actual code for troubleshooting.",
+      "security_relevance": "Interpret ErrorCode with the complete event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-5027"
+    },
+    {
+      "field": "EventID",
+      "value": "5027",
+      "meaning": "Windows Firewall Service could not retrieve its security policy.",
+      "security_relevance": "Interpret EventID with the complete event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-5027"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 5027 mean?",
+      "answer": "Windows Firewall Service could not retrieve its security policy."
+    },
+    {
+      "question": "Does Event ID 5027 always indicate malicious activity?",
+      "answer": "No. Microsoft describes this as commonly configuration-related."
+    },
+    {
+      "question": "How should Event ID 5027 be investigated?",
+      "answer": "Decode ErrorCode and correlate with firewall policy changes, service failures and the last successfully applied policy."
+    }
+  ],
+  "sources": [
+    {
+      "title": "5027: Windows Firewall Service unable to retrieve security policy",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-5027",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Disable or Modify System Firewall: Windows Host Firewall (T1686.003)",
+      "url": "https://attack.mitre.org/techniques/T1686/003/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

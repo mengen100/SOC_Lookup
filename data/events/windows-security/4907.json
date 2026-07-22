@@ -3,7 +3,7 @@
   "source": "windows_security",
   "priority": "P3",
   "applicable_version": "Windows Server 2008 and later where the audit subcategory is enabled",
-  "last_reviewed": "2026-07-13",
+  "last_reviewed": "2026-07-22",
   "category": "Policy",
   "name": "Auditing settings on object were changed",
   "definition": "Windows Security Event ID 4907 records a change to the SACL auditing settings on a file or registry object.",
@@ -33,13 +33,122 @@
   ],
   "attck_mapping": [
     {
-      "technique_id": "T1562.002",
-      "technique_name": "Impair Defenses: Disable Windows Event Logging"
+      "tactic_id": "TA0112",
+      "tactic_name": "Defense Impairment",
+      "technique_id": "T1685.001",
+      "technique_name": "Disable or Modify Tools: Disable or Modify Windows Event Log",
+      "source_url": "https://attack.mitre.org/techniques/T1685/001/"
     }
   ],
-  "detection_notes": "Alert when Object Name is C:\\Windows\\System32, C:\\ProgramData\\, C:\\Users\\Public, or a critical registry key and NewSd removes SACL audit entries such as SA/FA that were present in OldSd. Microsoft documents 4907 as object SACL-change telemetry and excludes Active Directory objects; removing auditing from high-value file or registry paths impairs evidence collection and supports T1562.002 Disable Windows Event Logging. Correlate Process ID to 4688 and compare with 4670 permission changes.",
+  "detection_notes": "Alert when Object Name is C:\\Windows\\System32, C:\\ProgramData\\, C:\\Users\\Public, or a critical registry key and NewSd removes SACL audit entries such as SA/FA that were present in OldSd. Microsoft documents 4907 as object SACL-change telemetry and excludes Active Directory objects; removing auditing from high-value file or registry paths impairs evidence collection and supports T1685.001 Disable or Modify Windows Event Log. Correlate Process ID to 4688 and compare with 4670 permission changes.",
   "kql_snippet": "SecurityEvent\n| where EventID == 4907\n| project TimeGenerated, Computer, Account, ObjectName, OldSd, NewSd, ProcessName",
   "spl_snippet": "index=wineventlog EventCode=4907 | table _time, host, Account_Name, Object_Name, OldSd, NewSd, Process_Name",
   "sample_log": "EventID: 4907\nObject Type: File\nObject Name: C:\\ProgramData\\SecurityAgent\\logs\nOldSd: S:(AU;SAFA;FA;;;WD)\nNewSd: S:NO_ACCESS_CONTROL\nProcess Name: C:\\Windows\\System32\\icacls.exe",
-  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4907"
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4907",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Security Event ID 4907",
+      "query": "SecurityEvent\n| where EventID == 4907\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Map raw XML fields to the event-specific fields documented on this page."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Security Event ID 4907",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4907\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source and field aliases vary by deployment.",
+        "Apply event-specific field conditions after validating local extraction."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Security Event ID 4907",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4907",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The applicable Windows event channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4907",
+      "query": "title: Windows Security Event ID 4907\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4907\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the documented conditions and correlations in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "OldSd",
+      "value": "SDDL",
+      "meaning": "The previous system access control list for comparison.",
+      "security_relevance": "Interpret OldSd with the complete event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4907"
+    },
+    {
+      "field": "NewSd",
+      "value": "SDDL",
+      "meaning": "The new SACL; removed SA or FA audit entries can reduce visibility.",
+      "security_relevance": "Interpret NewSd with the complete event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4907"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4907 mean?",
+      "answer": "Auditing settings on a non-Active-Directory object were changed."
+    },
+    {
+      "question": "Does Event ID 4907 always indicate malicious activity?",
+      "answer": "No. Administrators and software can legitimately change object SACLs."
+    },
+    {
+      "question": "How should Event ID 4907 be investigated?",
+      "answer": "Compare OldSd and NewSd, identify removed audit entries and correlate ProcessId with process creation."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4907: Auditing settings on object were changed",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4907",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Disable or Modify Tools: Disable or Modify Windows Event Log (T1685.001)",
+      "url": "https://attack.mitre.org/techniques/T1685/001/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

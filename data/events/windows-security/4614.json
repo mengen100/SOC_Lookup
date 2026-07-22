@@ -1,6 +1,6 @@
 {
   "source": "windows_security",
-  "last_reviewed": "2026-07-13",
+  "last_reviewed": "2026-07-22",
   "id": "4614",
   "category": "LSA",
   "name": "A notification package has been loaded by the SAM",
@@ -33,13 +33,122 @@
   ],
   "attck_mapping": [
     {
+      "tactic_id": "TA0006",
+      "tactic_name": "Credential Access",
       "technique_id": "T1556.002",
-      "technique_name": "Modify Authentication Process: Password Filter DLL"
+      "technique_name": "Modify Authentication Process: Password Filter DLL",
+      "source_url": "https://attack.mitre.org/techniques/T1556/002/"
     }
   ],
   "detection_notes": "T1556.002 is concrete when 4614 reports a Notification Package Name that was newly added to HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa\\Notification Packages. Microsoft states these packages are password filters loaded or called when passwords are set or changed, so a malicious package can observe password-change material; correlate with 4657 for the registry value write and with file telemetry for the corresponding DLL under C:\\Windows\\System32.",
   "kql_snippet": "SecurityEvent\n| where EventID == 4614\n| project TimeGenerated, Computer, NotificationPackageName",
   "spl_snippet": "index=wineventlog EventCode=4614\n| table _time, host, NotificationPackageName",
   "sample_log": "Notification Package Name: pfilter\nComputer: DC01",
-  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4614"
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4614",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Security Event ID 4614",
+      "query": "SecurityEvent\n| where EventID == 4614\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Map raw XML fields to the event-specific fields documented on this page."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Security Event ID 4614",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4614\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source and field aliases vary by deployment.",
+        "Apply event-specific field conditions after validating local extraction."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Security Event ID 4614",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4614",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The applicable Windows event channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4614",
+      "query": "title: Windows Security Event ID 4614\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4614\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the documented conditions and correlations in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "NotificationPackageName",
+      "value": "DLL name",
+      "meaning": "The SAM notification or password-filter package loaded by Windows.",
+      "security_relevance": "Interpret NotificationPackageName with the complete event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4614"
+    },
+    {
+      "field": "RegistryPath",
+      "value": "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa\\Notification Packages",
+      "meaning": "The configuration location used to validate approved notification packages.",
+      "security_relevance": "Interpret RegistryPath with the complete event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4614"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4614 mean?",
+      "answer": "A notification package was loaded by the Security Account Manager."
+    },
+    {
+      "question": "Does Event ID 4614 always indicate malicious activity?",
+      "answer": "No. Approved password filters and identity products can install notification packages."
+    },
+    {
+      "question": "How should Event ID 4614 be investigated?",
+      "answer": "Validate the package against the registry baseline, file path, signer and recent registry or file creation events."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4614: A notification package has been loaded by the SAM",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4614",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Modify Authentication Process: Password Filter DLL (T1556.002)",
+      "url": "https://attack.mitre.org/techniques/T1556/002/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

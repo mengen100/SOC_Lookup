@@ -225,6 +225,7 @@ test("connects each completed event to a specific ATT&CK technique in detection 
     "windows_security:4616",
     "windows_security:4647",
     "windows_security:4689",
+    "windows_security:4609",
     "sysmon:5",
   ]);
 

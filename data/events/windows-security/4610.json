@@ -1,6 +1,6 @@
 {
   "source": "windows_security",
-  "last_reviewed": "2026-07-13",
+  "last_reviewed": "2026-07-22",
   "id": "4610",
   "category": "LSA",
   "name": "An authentication package has been loaded by the LSA",
@@ -33,13 +33,122 @@
   ],
   "attck_mapping": [
     {
+      "tactic_id": "TA0003",
+      "tactic_name": "Persistence",
       "technique_id": "T1547.002",
-      "technique_name": "Boot or Logon Autostart Execution: Authentication Package"
+      "technique_name": "Boot or Logon Autostart Execution: Authentication Package",
+      "source_url": "https://attack.mitre.org/techniques/T1547/002/"
     }
   ],
   "detection_notes": "Treat Authentication Package Name values other than C:\\Windows\\system32\\msv1_0.DLL : MICROSOFT_AUTHENTICATION_PACKAGE_V1_0 as T1547.002 candidates because Microsoft documents that value as the default Windows 10 authentication package. Correlate the 4610 with registry auditing on HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa\\Authentication Packages and file creation or signing telemetry for the referenced DLL; a non-Microsoft DLL loaded by LSASS at boot gives persistence before user logon.",
   "kql_snippet": "SecurityEvent\n| where EventID == 4610\n| where AuthenticationPackageName !contains \"MICROSOFT_AUTHENTICATION_PACKAGE_V1_0\"\n| project TimeGenerated, Computer, AuthenticationPackageName",
   "spl_snippet": "index=wineventlog EventCode=4610 NOT AuthenticationPackageName=\"*MICROSOFT_AUTHENTICATION_PACKAGE_V1_0*\"\n| table _time, host, AuthenticationPackageName",
   "sample_log": "Authentication Package Name: C:\\Windows\\System32\\evilap.dll : EVIL_AUTH_PACKAGE\nComputer: DC01",
-  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4610"
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4610",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Security Event ID 4610",
+      "query": "SecurityEvent\n| where EventID == 4610\n| project TimeGenerated, Computer, Account, EventData\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Map raw XML fields to the event-specific fields documented on this page."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Security Event ID 4610",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4610\n| table _time, host, user, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source and field aliases vary by deployment.",
+        "Apply event-specific field conditions after validating local extraction."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Security Event ID 4610",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4610",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The applicable Windows event channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4610",
+      "query": "title: Windows Security Event ID 4610\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4610\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the documented conditions and correlations in the destination SIEM."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "AuthenticationPackageName",
+      "value": "msv1_0",
+      "meaning": "Microsoft documents MSV1_0 as a standard Windows authentication package.",
+      "security_relevance": "Interpret AuthenticationPackageName with the complete event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4610"
+    },
+    {
+      "field": "RegistryPath",
+      "value": "HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa\\Authentication Packages",
+      "meaning": "The LSA configuration location used to validate approved packages.",
+      "security_relevance": "Interpret RegistryPath with the complete event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4610"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4610 mean?",
+      "answer": "An authentication package was loaded by the Local Security Authority."
+    },
+    {
+      "question": "Does Event ID 4610 always indicate malicious activity?",
+      "answer": "No. Standard Microsoft authentication packages load during normal startup."
+    },
+    {
+      "question": "How should Event ID 4610 be investigated?",
+      "answer": "Validate package name, path, signer and registry configuration, then correlate new DLL and registry activity."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4610: An authentication package has been loaded by the LSA",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4610",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Boot or Logon Autostart Execution: Authentication Package (T1547.002)",
+      "url": "https://attack.mitre.org/techniques/T1547/002/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }
