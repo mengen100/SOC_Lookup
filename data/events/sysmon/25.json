@@ -5,7 +5,7 @@
   "name": "Process tampering",
   "priority": "P2",
   "applicable_version": "Sysmon 13.0 and later",
-  "last_reviewed": "2026-07-12",
+  "last_reviewed": "2026-07-22",
   "definition": "Sysmon Event ID 25 records that a running process's memory image was tampered with in a way that Sysmon's process-image integrity check detected, logging the affected process's Image, ProcessGuid, and the Type of tampering observed.",
   "trigger_scenarios": "Sysmon generates Event ID 25 when it detects that a monitored process's loaded executable image has been replaced or has its disk-to-memory mapping severed. This occurs during process-image replacement techniques such as process herpaderping, where an attacker overwrites the on-disk image after mapping it to obscure the file from scanning, or when a process's section object is backed by a different file than the one visible on disk.",
   "key_fields": [
@@ -33,13 +33,121 @@
   ],
   "attck_mapping": [
     {
-      "technique_id": "T1055",
-      "technique_name": "Process Injection"
+      "tactic_id": "TA0004",
+      "tactic_name": "Privilege Escalation",
+      "technique_id": "T1055.012",
+      "technique_name": "Process Injection: Process Hollowing",
+      "source_url": "https://attack.mitre.org/techniques/T1055/012/"
     }
   ],
-  "detection_notes": "T1055 ProcessTampering is generated for process image change/hollowing detections. The real fields are Type and Image: Type = \"Image is replaced\" for an Image under C:\\\\Users\\\\ or C:\\\\Temp\\\\ is a concrete hollowing signal; join ProcessGuid to Event ID 1 and Event ID 8.",
+  "detection_notes": "T1055.012 Process Hollowing is generated for process image change/hollowing detections. The real fields are Type and Image: Type = \"Image is replaced\" for an Image under C:\\\\Users\\\\ or C:\\\\Temp\\\\ is a concrete hollowing signal; join ProcessGuid to Event ID 1 and Event ID 8.",
   "kql_snippet": "Sysmon\n| where EventID == 25\n| where Type == \"Image is replaced\"\n| project TimeGenerated, Computer, User, Image, ProcessGuid, ProcessId, Type",
   "spl_snippet": "index=sysmon EventCode=25 Type=\"Image is replaced\"\n| table _time, host, User, Image, ProcessGuid, ProcessId, Type",
   "sample_log": "UtcTime: 2026-07-12 09:55:12.440\nProcessGuid: {bbbbbbbb-cccc-dddd-eeee-ffffffffffff}\nProcessId: 3904\nImage: C:\\Windows\\System32\\svchost.exe\nType: Image is replaced\nUser: CORP\\jsmith",
-  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Sysmon",
+    "channel": "Microsoft-Windows-Sysmon/Operational",
+    "level": "Informational"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Sysmon Event ID 25",
+      "query": "Event\n| where EventLog == \"Microsoft-Windows-Sysmon/Operational\" and EventID == 25\n| project TimeGenerated, Computer, EventID, RenderedDescription\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel Event table",
+      "assumptions": [
+        "The Sysmon Operational channel is collected into Event.",
+        "Map raw XML fields to the documented fields."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/event"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Sysmon Event ID 25",
+      "query": "index=sysmon source=\"WinEventLog:Microsoft-Windows-Sysmon/Operational\" EventCode=25\n| table _time, host, EventCode, Message",
+      "data_source": "Splunk Windows Sysmon event data",
+      "assumptions": [
+        "Index and parsed field names vary by deployment.",
+        "Add the documented event-specific conditions after field validation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Sysmon Event ID 25",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 25",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "Confirm the Sysmon provider because event IDs are not globally unique.",
+        "Inspect raw fields because parsed names vary."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Sysmon Event ID 25",
+      "query": "title: Sysmon Event ID 25\nstatus: experimental\nlogsource:\n    product: windows\n    service: sysmon\ndetection:\n    selection:\n        EventID: 25\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Sysmon log source",
+      "assumptions": [
+        "This retrieves the event and is not a standalone malicious-behavior detection."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "EventID",
+      "value": "25",
+      "meaning": "Sysmon detected a process image change associated with hiding techniques.",
+      "security_relevance": "Interpret EventID with the full event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+    },
+    {
+      "field": "Type",
+      "value": "Image is replaced",
+      "meaning": "The ProcessTampering type indicating replacement of the process image.",
+      "security_relevance": "Interpret Type with the full event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Sysmon Event ID 25 mean?",
+      "answer": "Sysmon detected process-image tampering such as hollowing or herpaderp behavior."
+    },
+    {
+      "question": "Does Event ID 25 always indicate malicious activity?",
+      "answer": "It is high-signal but still requires validation against security software and unusual platform behavior."
+    },
+    {
+      "question": "How should Event ID 25 be investigated?",
+      "answer": "Review Type and Image and correlate ProcessGuid with process creation, memory and thread telemetry."
+    }
+  ],
+  "sources": [
+    {
+      "title": "25: Process tampering",
+      "url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+      "publisher": "Microsoft Sysinternals",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Process Injection: Process Hollowing (T1055.012)",
+      "url": "https://attack.mitre.org/techniques/T1055/012/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

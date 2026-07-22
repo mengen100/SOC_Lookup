@@ -3,7 +3,7 @@
   "source": "windows_security",
   "priority": "P3",
   "applicable_version": "Windows Server 2008 and later where the audit subcategory is enabled",
-  "last_reviewed": "2026-07-13",
+  "last_reviewed": "2026-07-22",
   "category": "AccountManagement",
   "name": "A member was added to a security-enabled universal group",
   "definition": "Windows Security Event ID 4756 records addition of a member to a security-enabled universal group.",
@@ -33,13 +33,121 @@
   ],
   "attck_mapping": [
     {
-      "technique_id": "T1098",
-      "technique_name": "Account Manipulation"
+      "tactic_id": "TA0003",
+      "tactic_name": "Persistence",
+      "technique_id": "T1098.007",
+      "technique_name": "Account Manipulation: Additional Local or Domain Groups",
+      "source_url": "https://attack.mitre.org/techniques/T1098/007/"
     }
   ],
-  "detection_notes": "Use threshold=1 for additions to privileged universal groups or groups granting cross-domain access, especially when Expiration time is blank or unexpectedly long. Microsoft documents 4756 as the universal-group equivalent of 4732; adding a Member Security ID to a universal security group can extend access across trusting domains and supports T1098 Account Manipulation. Correlate Subject Logon ID with 4624/4688 and validate the provisioning request.",
+  "detection_notes": "Use threshold=1 for additions to privileged universal groups or groups granting cross-domain access, especially when Expiration time is blank or unexpectedly long. Microsoft documents 4756 as the universal-group equivalent of 4732; adding a Member Security ID to a universal security group can extend access across trusting domains and supports T1098.007 Additional Local or Domain Groups. Correlate Subject Logon ID with 4624/4688 and validate the provisioning request.",
   "kql_snippet": "SecurityEvent\n| where EventID == 4756\n| project TimeGenerated, Computer, Account, MemberName, GroupName, GroupDomain",
   "spl_snippet": "index=wineventlog EventCode=4756 | table _time, host, Account_Name, Member_Account_Name, Group_Name, Group_Domain",
   "sample_log": "EventID: 4756\nSubject Account Name: admin.ops\nSubject Logon ID: 0x27a79\nMember Security ID: S-1-5-21-111-222-333-1109\nMember Account Name: CN=svc-sync,CN=Users,DC=corp,DC=local\nGroup Name: Forest-App-Admins\nGroup Domain: CORP\nExpiration time: -",
-  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/audit-security-group-management"
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4756",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Security Event ID 4756",
+      "query": "SecurityEvent\n| where EventID == 4756\n| project TimeGenerated, Computer, EventID, RenderedDescription\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Map raw XML fields to the documented fields."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Security Event ID 4756",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4756\n| table _time, host, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index and parsed field names vary by deployment.",
+        "Add the documented event-specific conditions after field validation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Security Event ID 4756",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4756",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested.",
+        "Inspect raw fields because parsed names vary."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4756",
+      "query": "title: Windows Security Event ID 4756\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4756\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This retrieves the event and is not a standalone malicious-behavior detection."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "MemberSid",
+      "value": "SID",
+      "meaning": "The principal added to the universal security group.",
+      "security_relevance": "Interpret MemberSid with the full event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4756"
+    },
+    {
+      "field": "ExpirationTime",
+      "value": "-",
+      "meaning": "A blank or dash value means no temporary membership expiry is represented.",
+      "security_relevance": "Interpret ExpirationTime with the full event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4756"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4756 mean?",
+      "answer": "A member was added to a security-enabled universal group."
+    },
+    {
+      "question": "Does Event ID 4756 always indicate malicious activity?",
+      "answer": "No. Normal provisioning and role management generate it."
+    },
+    {
+      "question": "How should Event ID 4756 be investigated?",
+      "answer": "Assess group privilege and cross-domain reach, validate expiration and approval, and correlate the subject logon with process activity."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4756: A member was added to a security-enabled universal group",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4756",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Account Manipulation: Additional Local or Domain Groups (T1098.007)",
+      "url": "https://attack.mitre.org/techniques/T1098/007/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

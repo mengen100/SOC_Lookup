@@ -1,43 +1,151 @@
 {
-    "id":  "21",
-    "source":  "sysmon",
-    "category":  "WMI",
-    "name":  "WmiEvent - WmiEventConsumerToFilter activity detected",
-    "priority":  "P2",
-    "applicable_version":  "Sysmon with this event enabled",
-    "last_reviewed":  "2026-07-13",
-    "definition":  "Sysmon Event ID 21 records WMI consumer-to-filter binding activity.",
-    "trigger_scenarios":  "Sysmon emits this event when a WMI consumer is bound to a filter. Microsoft documents that the event records the consumer name and filter path.",
-    "key_fields":  [
-                       {
-                           "field":  "Consumer",
-                           "explanation":  "The bound consumer name recorded by Sysmon. This should match a recent or existing Event 20 consumer."
-                       },
-                       {
-                           "field":  "Filter",
-                           "explanation":  "The filter path recorded by Sysmon. A path in root\\\\subscription that references a new Event 19 filter completes the WMI subscription chain."
-                       },
-                       {
-                           "field":  "Operation",
-                           "explanation":  "Use the operation context to distinguish new bindings from expected management changes, then correlate to the filter and consumer records."
-                       }
-                   ],
-    "false_positives":  [
-                            "Approved administration, management agents, and deployment tools can generate this telemetry.",
-                            "Baseline expected hosts, signed binaries, and change windows before suppression."
-                        ],
-    "related_event_ids":  [
-                              "1"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1546.003",
-                              "technique_name":  "Event Triggered Execution: Windows Management Instrumentation Event Subscription"
-                          }
-                      ],
-    "detection_notes":  "Alert when Filter points to root\\\\subscription and Consumer links to an unapproved Event 20 consumer whose Destination executes from C:\\\\Users\\\\, C:\\\\ProgramData\\\\, or C:\\\\Windows\\\\Temp, because Event 21 is the binding that turns a passive WMI filter into an executable subscription chain. Microsoft documents Event 21 as recording the consumer name and filter path; MITRE T1546.003 describes WMI subscriptions as filters, consumers, and bindings that execute code on events. Correlate Consumer and Filter values with Events 19 and 20, then remove the binding before deleting only isolated artifacts.",
-    "kql_snippet":  "Sysmon\n| where EventID == 21\n| project TimeGenerated, Computer, Image, ProcessGuid",
-    "spl_snippet":  "index=sysmon EventCode=21 | table _time, host, Image, ProcessGuid",
-    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nConsumer: UpdaterConsumer\nFilter: root\\\\subscription:__EventFilter.Name=\"UpdaterFilter\"\nOperation: Created",
-    "source_url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+  "id": "21",
+  "source": "sysmon",
+  "category": "WMI",
+  "name": "WmiEvent - WmiEventConsumerToFilter activity detected",
+  "priority": "P2",
+  "applicable_version": "Sysmon with this event enabled",
+  "last_reviewed": "2026-07-22",
+  "definition": "Sysmon Event ID 21 records WMI consumer-to-filter binding activity.",
+  "trigger_scenarios": "Sysmon emits this event when a WMI consumer is bound to a filter. Microsoft documents that the event records the consumer name and filter path.",
+  "key_fields": [
+    {
+      "field": "Consumer",
+      "explanation": "The bound consumer name recorded by Sysmon. This should match a recent or existing Event 20 consumer."
+    },
+    {
+      "field": "Filter",
+      "explanation": "The filter path recorded by Sysmon. A path in root\\\\subscription that references a new Event 19 filter completes the WMI subscription chain."
+    },
+    {
+      "field": "Operation",
+      "explanation": "Use the operation context to distinguish new bindings from expected management changes, then correlate to the filter and consumer records."
+    }
+  ],
+  "false_positives": [
+    "Approved administration, management agents, and deployment tools can generate this telemetry.",
+    "Baseline expected hosts, signed binaries, and change windows before suppression."
+  ],
+  "related_event_ids": [
+    "1"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0003",
+      "tactic_name": "Persistence",
+      "technique_id": "T1546.003",
+      "technique_name": "Event Triggered Execution: Windows Management Instrumentation Event Subscription",
+      "source_url": "https://attack.mitre.org/techniques/T1546/003/"
+    }
+  ],
+  "detection_notes": "Alert when Filter points to root\\\\subscription and Consumer links to an unapproved Event 20 consumer whose Destination executes from C:\\\\Users\\\\, C:\\\\ProgramData\\\\, or C:\\\\Windows\\\\Temp, because Event 21 is the binding that turns a passive WMI filter into an executable subscription chain. Microsoft documents Event 21 as recording the consumer name and filter path; MITRE T1546.003 describes WMI subscriptions as filters, consumers, and bindings that execute code on events. Correlate Consumer and Filter values with Events 19 and 20, then remove the binding before deleting only isolated artifacts.",
+  "kql_snippet": "Sysmon\n| where EventID == 21\n| project TimeGenerated, Computer, Image, ProcessGuid",
+  "spl_snippet": "index=sysmon EventCode=21 | table _time, host, Image, ProcessGuid",
+  "sample_log": "UtcTime: 2026-07-13 01:00:00.000\nConsumer: UpdaterConsumer\nFilter: root\\\\subscription:__EventFilter.Name=\"UpdaterFilter\"\nOperation: Created",
+  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Sysmon",
+    "channel": "Microsoft-Windows-Sysmon/Operational",
+    "level": "Informational"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Sysmon Event ID 21",
+      "query": "Event\n| where EventLog == \"Microsoft-Windows-Sysmon/Operational\" and EventID == 21\n| project TimeGenerated, Computer, EventID, RenderedDescription\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel Event table",
+      "assumptions": [
+        "The Sysmon Operational channel is collected into Event.",
+        "Map raw XML fields to the documented fields."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/event"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Sysmon Event ID 21",
+      "query": "index=sysmon source=\"WinEventLog:Microsoft-Windows-Sysmon/Operational\" EventCode=21\n| table _time, host, EventCode, Message",
+      "data_source": "Splunk Windows Sysmon event data",
+      "assumptions": [
+        "Index and parsed field names vary by deployment.",
+        "Add the documented event-specific conditions after field validation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Sysmon Event ID 21",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 21",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "Confirm the Sysmon provider because event IDs are not globally unique.",
+        "Inspect raw fields because parsed names vary."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Sysmon Event ID 21",
+      "query": "title: Sysmon Event ID 21\nstatus: experimental\nlogsource:\n    product: windows\n    service: sysmon\ndetection:\n    selection:\n        EventID: 21\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Sysmon log source",
+      "assumptions": [
+        "This retrieves the event and is not a standalone malicious-behavior detection."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "EventID",
+      "value": "21",
+      "meaning": "A WMI consumer was bound to an event filter.",
+      "security_relevance": "Interpret EventID with the full event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+    },
+    {
+      "field": "Filter",
+      "value": "WMI path",
+      "meaning": "The filter path paired with the Consumer reference.",
+      "security_relevance": "Interpret Filter with the full event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Sysmon Event ID 21 mean?",
+      "answer": "A WMI event consumer was bound to a filter."
+    },
+    {
+      "question": "Does Event ID 21 always indicate malicious activity?",
+      "answer": "No. Legitimate permanent WMI subscriptions require such bindings."
+    },
+    {
+      "question": "How should Event ID 21 be investigated?",
+      "answer": "Resolve both Filter and Consumer to Events 19 and 20 and verify the complete chain against baseline."
+    }
+  ],
+  "sources": [
+    {
+      "title": "21: WmiEvent - WmiEventConsumerToFilter activity detected",
+      "url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+      "publisher": "Microsoft Sysinternals",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Event Triggered Execution: Windows Management Instrumentation Event Subscription (T1546.003)",
+      "url": "https://attack.mitre.org/techniques/T1546/003/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

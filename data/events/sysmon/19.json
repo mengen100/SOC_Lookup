@@ -1,43 +1,151 @@
 {
-    "id":  "19",
-    "source":  "sysmon",
-    "category":  "WMI",
-    "name":  "WmiEvent - WmiEventFilter activity detected",
-    "priority":  "P2",
-    "applicable_version":  "Sysmon with this event enabled",
-    "last_reviewed":  "2026-07-13",
-    "definition":  "Sysmon Event ID 19 records WMI event filter registration activity.",
-    "trigger_scenarios":  "Sysmon emits this event when a WMI event filter is registered. Microsoft documents that the event records the WMI namespace, filter name, and filter expression.",
-    "key_fields":  [
-                       {
-                           "field":  "EventNamespace",
-                           "explanation":  "The namespace where the filter is registered. root\\\\subscription is the standard namespace for permanent WMI event subscriptions and should be tightly baselined."
-                       },
-                       {
-                           "field":  "Name",
-                           "explanation":  "The WMI filter name recorded by Sysmon. New or randomized names outside the approved management baseline can identify persistence setup."
-                       },
-                       {
-                           "field":  "Query",
-                           "explanation":  "The filter expression recorded by Sysmon. Queries such as SELECT * FROM __InstanceCreationEvent define the trigger that can later execute a bound consumer."
-                       }
-                   ],
-    "false_positives":  [
-                            "Approved administration, management agents, and deployment tools can generate this telemetry.",
-                            "Baseline expected hosts, signed binaries, and change windows before suppression."
-                        ],
-    "related_event_ids":  [
-                              "1"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1546.003",
-                              "technique_name":  "Event Triggered Execution: Windows Management Instrumentation Event Subscription"
-                          }
-                      ],
-    "detection_notes":  "Alert when EventNamespace=root\\\\subscription and Query contains SELECT * FROM __InstanceCreationEvent, __InstanceModificationEvent, or __TimerEvent with a WQL polling window=60 seconds or another short WITHIN value outside the approved management baseline. Microsoft documents Event 19 as recording the WMI namespace, filter name, and filter expression; MITRE T1546.003 describes WMI event subscriptions as filters, consumers, and bindings that execute code when an event occurs. Correlate the filter Name with Sysmon Events 20 and 21 to prove the subscription chain before containment.",
-    "kql_snippet":  "Sysmon\n| where EventID == 19\n| project TimeGenerated, Computer, Image, ProcessGuid",
-    "spl_snippet":  "index=sysmon EventCode=19 | table _time, host, Image, ProcessGuid",
-    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nEventNamespace: root\\\\subscription\nName: UpdaterFilter\nQuery: SELECT * FROM __InstanceCreationEvent WITHIN 60 WHERE TargetInstance ISA 'Win32_Process'",
-    "source_url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+  "id": "19",
+  "source": "sysmon",
+  "category": "WMI",
+  "name": "WmiEvent - WmiEventFilter activity detected",
+  "priority": "P2",
+  "applicable_version": "Sysmon with this event enabled",
+  "last_reviewed": "2026-07-22",
+  "definition": "Sysmon Event ID 19 records WMI event filter registration activity.",
+  "trigger_scenarios": "Sysmon emits this event when a WMI event filter is registered. Microsoft documents that the event records the WMI namespace, filter name, and filter expression.",
+  "key_fields": [
+    {
+      "field": "EventNamespace",
+      "explanation": "The namespace where the filter is registered. root\\\\subscription is the standard namespace for permanent WMI event subscriptions and should be tightly baselined."
+    },
+    {
+      "field": "Name",
+      "explanation": "The WMI filter name recorded by Sysmon. New or randomized names outside the approved management baseline can identify persistence setup."
+    },
+    {
+      "field": "Query",
+      "explanation": "The filter expression recorded by Sysmon. Queries such as SELECT * FROM __InstanceCreationEvent define the trigger that can later execute a bound consumer."
+    }
+  ],
+  "false_positives": [
+    "Approved administration, management agents, and deployment tools can generate this telemetry.",
+    "Baseline expected hosts, signed binaries, and change windows before suppression."
+  ],
+  "related_event_ids": [
+    "1"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0003",
+      "tactic_name": "Persistence",
+      "technique_id": "T1546.003",
+      "technique_name": "Event Triggered Execution: Windows Management Instrumentation Event Subscription",
+      "source_url": "https://attack.mitre.org/techniques/T1546/003/"
+    }
+  ],
+  "detection_notes": "Alert when EventNamespace=root\\\\subscription and Query contains SELECT * FROM __InstanceCreationEvent, __InstanceModificationEvent, or __TimerEvent with a WQL polling window=60 seconds or another short WITHIN value outside the approved management baseline. Microsoft documents Event 19 as recording the WMI namespace, filter name, and filter expression; MITRE T1546.003 describes WMI event subscriptions as filters, consumers, and bindings that execute code when an event occurs. Correlate the filter Name with Sysmon Events 20 and 21 to prove the subscription chain before containment.",
+  "kql_snippet": "Sysmon\n| where EventID == 19\n| project TimeGenerated, Computer, Image, ProcessGuid",
+  "spl_snippet": "index=sysmon EventCode=19 | table _time, host, Image, ProcessGuid",
+  "sample_log": "UtcTime: 2026-07-13 01:00:00.000\nEventNamespace: root\\\\subscription\nName: UpdaterFilter\nQuery: SELECT * FROM __InstanceCreationEvent WITHIN 60 WHERE TargetInstance ISA 'Win32_Process'",
+  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Sysmon",
+    "channel": "Microsoft-Windows-Sysmon/Operational",
+    "level": "Informational"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Sysmon Event ID 19",
+      "query": "Event\n| where EventLog == \"Microsoft-Windows-Sysmon/Operational\" and EventID == 19\n| project TimeGenerated, Computer, EventID, RenderedDescription\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel Event table",
+      "assumptions": [
+        "The Sysmon Operational channel is collected into Event.",
+        "Map raw XML fields to the documented fields."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/event"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Sysmon Event ID 19",
+      "query": "index=sysmon source=\"WinEventLog:Microsoft-Windows-Sysmon/Operational\" EventCode=19\n| table _time, host, EventCode, Message",
+      "data_source": "Splunk Windows Sysmon event data",
+      "assumptions": [
+        "Index and parsed field names vary by deployment.",
+        "Add the documented event-specific conditions after field validation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Sysmon Event ID 19",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 19",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "Confirm the Sysmon provider because event IDs are not globally unique.",
+        "Inspect raw fields because parsed names vary."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Sysmon Event ID 19",
+      "query": "title: Sysmon Event ID 19\nstatus: experimental\nlogsource:\n    product: windows\n    service: sysmon\ndetection:\n    selection:\n        EventID: 19\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Sysmon log source",
+      "assumptions": [
+        "This retrieves the event and is not a standalone malicious-behavior detection."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "EventNamespace",
+      "value": "root\\subscription",
+      "meaning": "The standard namespace for permanent WMI event subscriptions.",
+      "security_relevance": "Interpret EventNamespace with the full event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+    },
+    {
+      "field": "Query",
+      "value": "WQL expression",
+      "meaning": "The event filter expression that determines when the subscription triggers.",
+      "security_relevance": "Interpret Query with the full event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Sysmon Event ID 19 mean?",
+      "answer": "A WMI event filter was registered."
+    },
+    {
+      "question": "Does Event ID 19 always indicate malicious activity?",
+      "answer": "No. Management and monitoring products can install permanent subscriptions."
+    },
+    {
+      "question": "How should Event ID 19 be investigated?",
+      "answer": "Inspect namespace, name and query and correlate matching consumer and binding Events 20 and 21."
+    }
+  ],
+  "sources": [
+    {
+      "title": "19: WmiEvent - WmiEventFilter activity detected",
+      "url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+      "publisher": "Microsoft Sysinternals",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Event Triggered Execution: Windows Management Instrumentation Event Subscription (T1546.003)",
+      "url": "https://attack.mitre.org/techniques/T1546/003/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

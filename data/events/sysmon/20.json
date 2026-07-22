@@ -1,43 +1,151 @@
 {
-    "id":  "20",
-    "source":  "sysmon",
-    "category":  "WMI",
-    "name":  "WmiEvent - WmiEventConsumer activity detected",
-    "priority":  "P2",
-    "applicable_version":  "Sysmon with this event enabled",
-    "last_reviewed":  "2026-07-13",
-    "definition":  "Sysmon Event ID 20 records WMI event consumer registration activity.",
-    "trigger_scenarios":  "Sysmon emits this event when a WMI event consumer is registered. Microsoft documents that the event records the consumer name, log, and destination.",
-    "key_fields":  [
-                       {
-                           "field":  "Name",
-                           "explanation":  "The WMI consumer name recorded by Sysmon. Correlate it with the Event 21 consumer path to prove a complete subscription."
-                       },
-                       {
-                           "field":  "Destination",
-                           "explanation":  "The destination recorded for the consumer. Command execution destinations that reference powershell.exe, cmd.exe, or C:\\\\Users\\\\ paths are high-risk because the consumer can execute attacker content."
-                       },
-                       {
-                           "field":  "Log",
-                           "explanation":  "The log field recorded by Sysmon for the consumer and useful for identifying scripted, command-line, or log-backed consumers."
-                       }
-                   ],
-    "false_positives":  [
-                            "Approved administration, management agents, and deployment tools can generate this telemetry.",
-                            "Baseline expected hosts, signed binaries, and change windows before suppression."
-                        ],
-    "related_event_ids":  [
-                              "1"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1546.003",
-                              "technique_name":  "Event Triggered Execution: Windows Management Instrumentation Event Subscription"
-                          }
-                      ],
-    "detection_notes":  "Alert when Destination references powershell.exe, cmd.exe, wscript.exe, mshta.exe, or a payload under C:\\\\Users\\\\, C:\\\\ProgramData\\\\, or C:\\\\Windows\\\\Temp. Microsoft documents Event 20 as recording consumer name, log, and destination, and MITRE T1546.003 covers WMI consumers used to execute code from event subscriptions. Correlate the consumer Name with Event 19 filter registration and Event 21 binding to determine whether the executable destination is armed for persistence.",
-    "kql_snippet":  "Sysmon\n| where EventID == 20\n| project TimeGenerated, Computer, Image, ProcessGuid",
-    "spl_snippet":  "index=sysmon EventCode=20 | table _time, host, Image, ProcessGuid",
-    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nName: UpdaterConsumer\nLog: CommandLineEventConsumer\nDestination: powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\\\\ProgramData\\\\updater.ps1",
-    "source_url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+  "id": "20",
+  "source": "sysmon",
+  "category": "WMI",
+  "name": "WmiEvent - WmiEventConsumer activity detected",
+  "priority": "P2",
+  "applicable_version": "Sysmon with this event enabled",
+  "last_reviewed": "2026-07-22",
+  "definition": "Sysmon Event ID 20 records WMI event consumer registration activity.",
+  "trigger_scenarios": "Sysmon emits this event when a WMI event consumer is registered. Microsoft documents that the event records the consumer name, log, and destination.",
+  "key_fields": [
+    {
+      "field": "Name",
+      "explanation": "The WMI consumer name recorded by Sysmon. Correlate it with the Event 21 consumer path to prove a complete subscription."
+    },
+    {
+      "field": "Destination",
+      "explanation": "The destination recorded for the consumer. Command execution destinations that reference powershell.exe, cmd.exe, or C:\\\\Users\\\\ paths are high-risk because the consumer can execute attacker content."
+    },
+    {
+      "field": "Log",
+      "explanation": "The log field recorded by Sysmon for the consumer and useful for identifying scripted, command-line, or log-backed consumers."
+    }
+  ],
+  "false_positives": [
+    "Approved administration, management agents, and deployment tools can generate this telemetry.",
+    "Baseline expected hosts, signed binaries, and change windows before suppression."
+  ],
+  "related_event_ids": [
+    "1"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0003",
+      "tactic_name": "Persistence",
+      "technique_id": "T1546.003",
+      "technique_name": "Event Triggered Execution: Windows Management Instrumentation Event Subscription",
+      "source_url": "https://attack.mitre.org/techniques/T1546/003/"
+    }
+  ],
+  "detection_notes": "Alert when Destination references powershell.exe, cmd.exe, wscript.exe, mshta.exe, or a payload under C:\\\\Users\\\\, C:\\\\ProgramData\\\\, or C:\\\\Windows\\\\Temp. Microsoft documents Event 20 as recording consumer name, log, and destination, and MITRE T1546.003 covers WMI consumers used to execute code from event subscriptions. Correlate the consumer Name with Event 19 filter registration and Event 21 binding to determine whether the executable destination is armed for persistence.",
+  "kql_snippet": "Sysmon\n| where EventID == 20\n| project TimeGenerated, Computer, Image, ProcessGuid",
+  "spl_snippet": "index=sysmon EventCode=20 | table _time, host, Image, ProcessGuid",
+  "sample_log": "UtcTime: 2026-07-13 01:00:00.000\nName: UpdaterConsumer\nLog: CommandLineEventConsumer\nDestination: powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\\\\ProgramData\\\\updater.ps1",
+  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Sysmon",
+    "channel": "Microsoft-Windows-Sysmon/Operational",
+    "level": "Informational"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Sysmon Event ID 20",
+      "query": "Event\n| where EventLog == \"Microsoft-Windows-Sysmon/Operational\" and EventID == 20\n| project TimeGenerated, Computer, EventID, RenderedDescription\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel Event table",
+      "assumptions": [
+        "The Sysmon Operational channel is collected into Event.",
+        "Map raw XML fields to the documented fields."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/event"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Sysmon Event ID 20",
+      "query": "index=sysmon source=\"WinEventLog:Microsoft-Windows-Sysmon/Operational\" EventCode=20\n| table _time, host, EventCode, Message",
+      "data_source": "Splunk Windows Sysmon event data",
+      "assumptions": [
+        "Index and parsed field names vary by deployment.",
+        "Add the documented event-specific conditions after field validation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Sysmon Event ID 20",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 20",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "Confirm the Sysmon provider because event IDs are not globally unique.",
+        "Inspect raw fields because parsed names vary."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Sysmon Event ID 20",
+      "query": "title: Sysmon Event ID 20\nstatus: experimental\nlogsource:\n    product: windows\n    service: sysmon\ndetection:\n    selection:\n        EventID: 20\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Sysmon log source",
+      "assumptions": [
+        "This retrieves the event and is not a standalone malicious-behavior detection."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "EventID",
+      "value": "20",
+      "meaning": "A WMI event consumer was registered.",
+      "security_relevance": "Interpret EventID with the full event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+    },
+    {
+      "field": "Destination",
+      "value": "command or script",
+      "meaning": "The consumer destination that executes or handles the triggered event.",
+      "security_relevance": "Interpret Destination with the full event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Sysmon Event ID 20 mean?",
+      "answer": "A WMI event consumer was registered."
+    },
+    {
+      "question": "Does Event ID 20 always indicate malicious activity?",
+      "answer": "No. Enterprise management software can install legitimate consumers."
+    },
+    {
+      "question": "How should Event ID 20 be investigated?",
+      "answer": "Review destination and name and correlate the consumer with Events 19 and 21 to reconstruct the subscription."
+    }
+  ],
+  "sources": [
+    {
+      "title": "20: WmiEvent - WmiEventConsumer activity detected",
+      "url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+      "publisher": "Microsoft Sysinternals",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Event Triggered Execution: Windows Management Instrumentation Event Subscription (T1546.003)",
+      "url": "https://attack.mitre.org/techniques/T1546/003/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

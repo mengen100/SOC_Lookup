@@ -1,6 +1,6 @@
 {
   "source": "windows_security",
-  "last_reviewed": "2026-07-13",
+  "last_reviewed": "2026-07-22",
   "id": "6145",
   "category": "GroupPolicy",
   "name": "Errors occurred while processing security policy in GPOs",
@@ -33,13 +33,121 @@
   ],
   "attck_mapping": [
     {
+      "tactic_id": "TA0112",
+      "tactic_name": "Defense Impairment",
       "technique_id": "T1484.001",
-      "technique_name": "Domain or Tenant Policy Modification: Group Policy Modification"
+      "technique_name": "Domain or Tenant Policy Modification: Group Policy Modification",
+      "source_url": "https://attack.mitre.org/techniques/T1484/001/"
     }
   ],
   "detection_notes": "Use threshold=1 for 6145 on critical servers because ErrorCode 1332 is Microsoft’s example for unresolved account/SID mappings and GPOList names the policies that failed. In T1484.001 triage, a malformed or tampered GPO Security Settings section can prevent intended controls from applying; inspect each GROUP_POLICY_GUID in GPOList, compare SYSVOL policy files to change history, and correlate with recent GPO edits or 4719 audit-policy changes.",
   "kql_snippet": "SecurityEvent\n| where EventID == 6145\n| project TimeGenerated, Computer, ErrorCode, GPOList",
   "spl_snippet": "index=wineventlog EventCode=6145\n| table _time, host, ErrorCode, GPOList",
   "sample_log": "ErrorCode: 1332\nGPOList: {6AC1786C-016F-11D2-945F-00C04fB984F9} Default Domain Controllers Policy {31B2F340-016D-11D2-945F-00C04FB984F9} Default Domain Policy\nComputer: DC01",
-  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-6145"
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-6145",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Security Event ID 6145",
+      "query": "SecurityEvent\n| where EventID == 6145\n| project TimeGenerated, Computer, EventID, RenderedDescription\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Map raw XML fields to the documented fields."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Security Event ID 6145",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=6145\n| table _time, host, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index and parsed field names vary by deployment.",
+        "Add the documented event-specific conditions after field validation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Security Event ID 6145",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 6145",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested.",
+        "Inspect raw fields because parsed names vary."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 6145",
+      "query": "title: Windows Security Event ID 6145\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 6145\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This retrieves the event and is not a standalone malicious-behavior detection."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "ErrorCode",
+      "value": "1332",
+      "meaning": "Microsoft's example error for an unresolved account-to-SID mapping.",
+      "security_relevance": "Interpret ErrorCode with the full event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-6145"
+    },
+    {
+      "field": "GPOList",
+      "value": "GUID list",
+      "meaning": "Identifies the Group Policy objects whose security settings processing failed.",
+      "security_relevance": "Interpret GPOList with the full event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-6145"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 6145 mean?",
+      "answer": "Windows encountered errors while applying security settings from one or more GPOs."
+    },
+    {
+      "question": "Does Event ID 6145 always indicate malicious activity?",
+      "answer": "No. Replication, malformed policy and account-resolution problems can cause it."
+    },
+    {
+      "question": "How should Event ID 6145 be investigated?",
+      "answer": "Decode ErrorCode, inspect every GPO GUID, compare SYSVOL and directory state, and validate recent policy changes."
+    }
+  ],
+  "sources": [
+    {
+      "title": "6145: Errors occurred while processing security policy in GPOs",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-6145",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Domain or Tenant Policy Modification: Group Policy Modification (T1484.001)",
+      "url": "https://attack.mitre.org/techniques/T1484/001/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

@@ -1,43 +1,151 @@
 {
-    "id":  "17",
-    "source":  "sysmon",
-    "category":  "Pipe",
-    "name":  "PipeEvent - Pipe Created",
-    "priority":  "P2",
-    "applicable_version":  "Sysmon with this event enabled",
-    "last_reviewed":  "2026-07-13",
-    "definition":  "Sysmon Event ID 17 records named pipe creation.",
-    "trigger_scenarios":  "Sysmon emits this event when a named pipe is created. Microsoft documents that malware often uses named pipes for interprocess communication.",
-    "key_fields":  [
-                       {
-                           "field":  "PipeName",
-                           "explanation":  "The created named pipe. MITRE's IPC detection strategy uses anomalous PipeName patterns, including examples such as \\\\.\\\\pipe\\\\svcctl, as an environment-specific detection element."
-                       },
-                       {
-                           "field":  "Image / ProcessGuid",
-                           "explanation":  "Identifies the process that created the named pipe and provides a stable join key to Sysmon Event ID 1 for command-line and parent-process context."
-                       },
-                       {
-                           "field":  "RuleName",
-                           "explanation":  "Shows the Sysmon rule that matched, if rule names are configured, and helps explain why this pipe was captured."
-                       }
-                   ],
-    "false_positives":  [
-                            "Approved administration, management agents, and deployment tools can generate this telemetry.",
-                            "Baseline expected hosts, signed binaries, and change windows before suppression."
-                        ],
-    "related_event_ids":  [
-                              "1"
-                          ],
-    "attck_mapping":  [
-                          {
-                              "technique_id":  "T1559",
-                              "technique_name":  "Inter-Process Communication"
-                          }
-                      ],
-    "detection_notes":  "Alert when PipeName matches a rare or high-risk environment-specific pattern such as \\\\.\\\\pipe\\\\svcctl and the creating Image is a user-writable path like C:\\\\Users\\\\ or C:\\\\ProgramData\\\\ rather than an approved service binary. Microsoft documents Event 17 as named pipe creation and notes that malware often uses named pipes for IPC; MITRE DET0493 explicitly calls PipeNamePattern a mutable detection element for T1559 Inter-Process Communication. Correlate ProcessGuid to Event 1 and compare the parent/child chain with the local named-pipe baseline before suppressing.",
-    "kql_snippet":  "Sysmon\n| where EventID == 17\n| project TimeGenerated, Computer, Image, ProcessGuid",
-    "spl_snippet":  "index=sysmon EventCode=17 | table _time, host, Image, ProcessGuid",
-    "sample_log":  "UtcTime: 2026-07-13 01:00:00.000\nPipeName: \\\\.\\\\pipe\\\\svcctl\nImage: C:\\\\Users\\\\Public\\\\svc.exe\nProcessGuid: {REDACTED}\nRuleName: suspicious_pipe",
-    "source_url":  "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+  "id": "17",
+  "source": "sysmon",
+  "category": "Pipe",
+  "name": "PipeEvent - Pipe Created",
+  "priority": "P2",
+  "applicable_version": "Sysmon with this event enabled",
+  "last_reviewed": "2026-07-22",
+  "definition": "Sysmon Event ID 17 records named pipe creation.",
+  "trigger_scenarios": "Sysmon emits this event when a named pipe is created. Microsoft documents that malware often uses named pipes for interprocess communication.",
+  "key_fields": [
+    {
+      "field": "PipeName",
+      "explanation": "The created named pipe. MITRE's IPC detection strategy uses anomalous PipeName patterns, including examples such as \\\\.\\\\pipe\\\\svcctl, as an environment-specific detection element."
+    },
+    {
+      "field": "Image / ProcessGuid",
+      "explanation": "Identifies the process that created the named pipe and provides a stable join key to Sysmon Event ID 1 for command-line and parent-process context."
+    },
+    {
+      "field": "RuleName",
+      "explanation": "Shows the Sysmon rule that matched, if rule names are configured, and helps explain why this pipe was captured."
+    }
+  ],
+  "false_positives": [
+    "Approved administration, management agents, and deployment tools can generate this telemetry.",
+    "Baseline expected hosts, signed binaries, and change windows before suppression."
+  ],
+  "related_event_ids": [
+    "1"
+  ],
+  "attck_mapping": [
+    {
+      "tactic_id": "TA0002",
+      "tactic_name": "Execution",
+      "technique_id": "T1559",
+      "technique_name": "Inter-Process Communication",
+      "source_url": "https://attack.mitre.org/techniques/T1559/"
+    }
+  ],
+  "detection_notes": "Alert when PipeName matches a rare or high-risk environment-specific pattern such as \\\\.\\\\pipe\\\\svcctl and the creating Image is a user-writable path like C:\\\\Users\\\\ or C:\\\\ProgramData\\\\ rather than an approved service binary. Microsoft documents Event 17 as named pipe creation and notes that malware often uses named pipes for IPC; MITRE DET0493 explicitly calls PipeNamePattern a mutable detection element for T1559 Inter-Process Communication. Correlate ProcessGuid to Event 1 and compare the parent/child chain with the local named-pipe baseline before suppressing.",
+  "kql_snippet": "Sysmon\n| where EventID == 17\n| project TimeGenerated, Computer, Image, ProcessGuid",
+  "spl_snippet": "index=sysmon EventCode=17 | table _time, host, Image, ProcessGuid",
+  "sample_log": "UtcTime: 2026-07-13 01:00:00.000\nPipeName: \\\\.\\\\pipe\\\\svcctl\nImage: C:\\\\Users\\\\Public\\\\svc.exe\nProcessGuid: {REDACTED}\nRuleName: suspicious_pipe",
+  "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Sysmon",
+    "channel": "Microsoft-Windows-Sysmon/Operational",
+    "level": "Informational"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Sysmon Event ID 17",
+      "query": "Event\n| where EventLog == \"Microsoft-Windows-Sysmon/Operational\" and EventID == 17\n| project TimeGenerated, Computer, EventID, RenderedDescription\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel Event table",
+      "assumptions": [
+        "The Sysmon Operational channel is collected into Event.",
+        "Map raw XML fields to the documented fields."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/event"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Sysmon Event ID 17",
+      "query": "index=sysmon source=\"WinEventLog:Microsoft-Windows-Sysmon/Operational\" EventCode=17\n| table _time, host, EventCode, Message",
+      "data_source": "Splunk Windows Sysmon event data",
+      "assumptions": [
+        "Index and parsed field names vary by deployment.",
+        "Add the documented event-specific conditions after field validation."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Sysmon Event ID 17",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 17",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "Confirm the Sysmon provider because event IDs are not globally unique.",
+        "Inspect raw fields because parsed names vary."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Sysmon Event ID 17",
+      "query": "title: Sysmon Event ID 17\nstatus: experimental\nlogsource:\n    product: windows\n    service: sysmon\ndetection:\n    selection:\n        EventID: 17\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Sysmon log source",
+      "assumptions": [
+        "This retrieves the event and is not a standalone malicious-behavior detection."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "EventID",
+      "value": "17",
+      "meaning": "A named pipe was created.",
+      "security_relevance": "Interpret EventID with the full event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+    },
+    {
+      "field": "PipeName",
+      "value": "\\\\.\\pipe\\name",
+      "meaning": "The named-pipe path to compare with the host and application baseline.",
+      "security_relevance": "Interpret PipeName with the full event and correlated activity; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Sysmon Event ID 17 mean?",
+      "answer": "A process created a named pipe."
+    },
+    {
+      "question": "Does Event ID 17 always indicate malicious activity?",
+      "answer": "No. Windows and applications use named pipes extensively for IPC."
+    },
+    {
+      "question": "How should Event ID 17 be investigated?",
+      "answer": "Baseline PipeName by Image and host role and join ProcessGuid to Event 1 before escalating."
+    }
+  ],
+  "sources": [
+    {
+      "title": "17: PipeEvent - Pipe Created",
+      "url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+      "publisher": "Microsoft Sysinternals",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Inter-Process Communication (T1559)",
+      "url": "https://attack.mitre.org/techniques/T1559/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }
