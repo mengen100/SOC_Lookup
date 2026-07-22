@@ -6,7 +6,7 @@ Status values: `done`, `needs-rework`, `pending`.
 
 The content status below tracks the original event-guide completion. GEO enrichment adds structured technical metadata, sourced ATT&CK mappings, KQL/SPL/XQL/Sigma queries, documented values, visible FAQs, and complete source lists.
 
-- Enriched: 65 / 108
+- Enriched: 80 / 108
 - [done] windows_security:4104
 - [done] windows_security:4625
 - [done] windows_security:4688
@@ -72,6 +72,21 @@ The content status below tracks the original event-guide completion. GEO enrichm
 - [done] sysmon:12
 - [done] sysmon:13
 - [done] sysmon:16
+- [done] windows_security:4670
+- [done] windows_security:4700
+- [done] windows_security:4701
+- [done] windows_security:4770
+- [done] windows_security:4778
+- [done] windows_security:4779
+- [done] sysmon:4
+- [done] sysmon:9
+- [done] sysmon:14
+- [done] sysmon:15
+- [done] sysmon:24
+- [done] sysmon:26
+- [done] sysmon:27
+- [done] sysmon:28
+- [done] sysmon:255
 - All other event records: pending GEO enrichment
 
 ## windows_security

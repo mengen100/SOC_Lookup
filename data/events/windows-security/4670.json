@@ -3,7 +3,7 @@
   "source": "windows_security",
   "priority": "P3",
   "applicable_version": "Windows Server 2008 and later where the audit subcategory is enabled",
-  "last_reviewed": "2026-07-13",
+  "last_reviewed": "2026-07-22",
   "category": "ObjectAccess",
   "name": "Permissions on an object were changed",
   "definition": "Windows Security Event ID 4670 records that permissions on a file system, registry, or security token object changed.",
@@ -33,13 +33,123 @@
   ],
   "attck_mapping": [
     {
+      "tactic_id": "TA0005",
+      "tactic_name": "Defense Evasion",
       "technique_id": "T1222.001",
-      "technique_name": "File and Directory Permissions Modification"
+      "technique_name": "File and Directory Permissions Modification",
+      "source_url": "https://attack.mitre.org/techniques/T1222/001/"
     }
   ],
   "detection_notes": "Alert when Object Name is C:\\Windows\\System32, C:\\ProgramData\\, C:\\Users\\Public, or a critical registry key and NewSd adds WD (Everyone), grants FA, or includes owner/permission rights such as WO/WD/0xf0007 not present in OldSd. Microsoft documents Object Type, Object Name, OldSd/NewSd, and SDDL rights for 4670; broadening DACLs on executable or service paths supports T1222.001 File and Directory Permissions Modification. Correlate Handle ID with 4663 and Process ID with 4688.",
   "kql_snippet": "SecurityEvent\n| where EventID == 4670\n| project TimeGenerated, Computer, Account, ObjectType, ObjectName, OldSd, NewSd, ProcessName",
   "spl_snippet": "index=wineventlog EventCode=4670 | table _time, host, Account_Name, Object_Type, Object_Name, OldSd, NewSd, Process_Name",
   "sample_log": "EventID: 4670\nObject Type: File\nObject Name: C:\\ProgramData\\svc\\agent.exe\nHandle ID: 0x3f0\nOldSd: D:(A;;FR;;;BU)\nNewSd: D:(A;;FA;;;WD)\nProcess Name: C:\\Windows\\System32\\icacls.exe",
-  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4670"
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4670",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Security-Auditing",
+    "channel": "Security",
+    "level": "Information",
+    "audit_keyword": "Audit Success"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Windows Security Event ID 4670",
+      "query": "SecurityEvent\n| where EventID == 4670\n| project TimeGenerated, Computer, EventID, RenderedDescription\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel SecurityEvent table",
+      "assumptions": [
+        "The Windows Security Events connector populates SecurityEvent.",
+        "Map raw XML fields to the event-specific fields described on this page."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/securityevent"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Windows Security Event ID 4670",
+      "query": "index=wineventlog source=\"WinEventLog:Security\" EventCode=4670\n| table _time, host, EventCode, Message",
+      "data_source": "Splunk Windows Security event data",
+      "assumptions": [
+        "Index, source, and parsed field names vary by deployment.",
+        "Apply the documented field conditions after validating local field extraction."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Windows Security Event ID 4670",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 4670",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "The Windows Security channel is ingested into Cortex XDR.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Windows Security Event ID 4670",
+      "query": "title: Windows Security Event ID 4670\nstatus: experimental\nlogsource:\n    product: windows\n    service: security\ndetection:\n    selection:\n        EventID: 4670\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Security log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the event-specific conditions and correlations documented on this page."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "Object Type",
+      "value": "File",
+      "meaning": "The object is a file or directory whose security descriptor changed.",
+      "security_relevance": "Interpret Object Type with the other documented fields and correlated events; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4670"
+    },
+    {
+      "field": "NewSd",
+      "value": "SDDL",
+      "meaning": "The new security descriptor can be compared with OldSd to identify added rights.",
+      "security_relevance": "Interpret NewSd with the other documented fields and correlated events; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4670"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Windows Event ID 4670 mean?",
+      "answer": "Permissions on an audited object changed."
+    },
+    {
+      "question": "Does Event ID 4670 always indicate malicious activity?",
+      "answer": "No. Administrators, installers, and policy systems legitimately update permissions."
+    },
+    {
+      "question": "How should Event ID 4670 be investigated?",
+      "answer": "Compare OldSd and NewSd, identify ObjectName and ObjectType, and correlate HandleId with 4663 and ProcessId with 4688."
+    }
+  ],
+  "sources": [
+    {
+      "title": "4670: Permissions on an object were changed",
+      "url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4670",
+      "publisher": "Microsoft",
+      "source_type": "vendor"
+    },
+    {
+      "title": "File and Directory Permissions Modification (T1222.001)",
+      "url": "https://attack.mitre.org/techniques/T1222/001/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

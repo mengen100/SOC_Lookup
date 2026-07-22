@@ -3,7 +3,7 @@
   "source": "sysmon",
   "priority": "P3",
   "applicable_version": "Sysmon with this event enabled",
-  "last_reviewed": "2026-07-13",
+  "last_reviewed": "2026-07-22",
   "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
   "category": "Service",
   "name": "Sysmon service error report",
@@ -33,12 +33,121 @@
   ],
   "attck_mapping": [
     {
+      "tactic_id": "TA0005",
+      "tactic_name": "Defense Evasion",
       "technique_id": "T1562.001",
-      "technique_name": "Impair Defenses: Disable or Modify Tools"
+      "technique_name": "Impair Defenses: Disable or Modify Tools",
+      "source_url": "https://attack.mitre.org/techniques/T1562/001/"
     }
   ],
   "detection_notes": "Use threshold=1 on high-value hosts when Event 255 contains ID=DriverCommunication, RuleEngine, ServiceThread, or another error that creates a telemetry gap. Microsoft documents Event 255 for Sysmon internal errors and notes security/integrity conditions may be involved; treat it as T1562.001 only when it follows service stop, configuration change, driver unload, or unexplained loss of Events 1/3/11. Correlate with Events 4 and 16 and verify whether the Sysmon schema/configuration version changed before escalating.",
   "kql_snippet": "Sysmon\n| where EventID == 255\n| project TimeGenerated, Computer, EventID, RenderedDescription",
   "spl_snippet": "index=sysmon EventCode=255 | table _time, host, Message",
-  "sample_log": "UtcTime: 2026-07-13 03:08:00.000\nID: RuleEngine\nDescription: Registry rule version 4.22 is incompatible with Sysmon rule version 4.30\nComputer: HOST01"
+  "sample_log": "UtcTime: 2026-07-13 03:08:00.000\nID: RuleEngine\nDescription: Registry rule version 4.22 is incompatible with Sysmon rule version 4.30\nComputer: HOST01",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Sysmon",
+    "channel": "Microsoft-Windows-Sysmon/Operational",
+    "level": "Informational"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Sysmon Event ID 255",
+      "query": "Event\n| where EventLog == \"Microsoft-Windows-Sysmon/Operational\" and EventID == 255\n| project TimeGenerated, Computer, EventID, RenderedDescription\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel Event table",
+      "assumptions": [
+        "The Sysmon Operational channel is collected into Event.",
+        "Map raw XML fields to the event-specific fields described on this page."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/event"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Sysmon Event ID 255",
+      "query": "index=sysmon source=\"WinEventLog:Microsoft-Windows-Sysmon/Operational\" EventCode=255\n| table _time, host, EventCode, Message",
+      "data_source": "Splunk Sysmon event data",
+      "assumptions": [
+        "Index, source, and parsed field names vary by deployment.",
+        "Apply the documented field conditions after validating local field extraction."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Sysmon Event ID 255",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 255",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "Confirm Provider is Microsoft-Windows-Sysmon because event IDs are not globally unique.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Sysmon Event ID 255",
+      "query": "title: Sysmon Event ID 255\nstatus: experimental\nlogsource:\n    product: windows\n    service: sysmon\ndetection:\n    selection:\n        EventID: 255\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Sysmon log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the event-specific conditions and correlations documented on this page."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "EventID",
+      "value": "255",
+      "meaning": "Sysmon reported an internal error.",
+      "security_relevance": "Interpret EventID with the other documented fields and correlated events; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+    },
+    {
+      "field": "Description",
+      "value": "error text",
+      "meaning": "The actual error description is required to distinguish load, bug, and integrity conditions.",
+      "security_relevance": "Interpret Description with the other documented fields and correlated events; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Sysmon Event ID 255 mean?",
+      "answer": "Sysmon encountered an internal error caused by load, a software defect, or a security or integrity condition."
+    },
+    {
+      "question": "Does Event ID 255 always indicate malicious activity?",
+      "answer": "No. Operational overload and product defects can generate it."
+    },
+    {
+      "question": "How should Event ID 255 be investigated?",
+      "answer": "Review the exact error description, Sysmon version, host load, configuration, and nearby Events 4 and 16."
+    }
+  ],
+  "sources": [
+    {
+      "title": "255: Sysmon service error report",
+      "url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+      "publisher": "Microsoft Sysinternals",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Impair Defenses: Disable or Modify Tools (T1562.001)",
+      "url": "https://attack.mitre.org/techniques/T1562/001/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }

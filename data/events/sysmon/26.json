@@ -3,7 +3,7 @@
   "source": "sysmon",
   "priority": "P3",
   "applicable_version": "Sysmon with this event enabled",
-  "last_reviewed": "2026-07-13",
+  "last_reviewed": "2026-07-22",
   "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
   "category": "File",
   "name": "FileDeleteDetected",
@@ -34,12 +34,121 @@
   ],
   "attck_mapping": [
     {
+      "tactic_id": "TA0005",
+      "tactic_name": "Defense Evasion",
       "technique_id": "T1070.004",
-      "technique_name": "Indicator Removal: File Deletion"
+      "technique_name": "Indicator Removal: File Deletion",
+      "source_url": "https://attack.mitre.org/techniques/T1070/004/"
     }
   ],
   "detection_notes": "Alert when TargetFilename under C:\\Users\\, C:\\ProgramData\\, C:\\Windows\\Temp, or AppData is deleted by cmd.exe, powershell.exe, or an unapproved process shortly after Event 11 file creation. Microsoft documents Event 26 as file deletion without archived preservation; MITRE T1070.004 covers deletion of dropped tools and intrusion artifacts. Correlate ProcessGuid to Event 1 and use any Hashes/IsExecutable data before the artifact is lost.",
   "kql_snippet": "Sysmon\n| where EventID == 26\n| project TimeGenerated, Computer, Image, TargetFilename, Hashes, ProcessGuid",
   "spl_snippet": "index=sysmon EventCode=26 | table _time, host, Image, TargetFilename, Hashes, ProcessGuid",
-  "sample_log": "UtcTime: 2026-07-13 03:05:00.000\nImage: C:\\Windows\\System32\\cmd.exe\nTargetFilename: C:\\Windows\\Temp\\stage.exe\nHashes: SHA256=REDACTED\nIsExecutable: true\nProcessGuid: {REDACTED}"
+  "sample_log": "UtcTime: 2026-07-13 03:05:00.000\nImage: C:\\Windows\\System32\\cmd.exe\nTargetFilename: C:\\Windows\\Temp\\stage.exe\nHashes: SHA256=REDACTED\nIsExecutable: true\nProcessGuid: {REDACTED}",
+  "technical_metadata": {
+    "provider": "Microsoft-Windows-Sysmon",
+    "channel": "Microsoft-Windows-Sysmon/Operational",
+    "level": "Informational"
+  },
+  "queries": [
+    {
+      "language": "kql",
+      "title": "Retrieve Sysmon Event ID 26",
+      "query": "Event\n| where EventLog == \"Microsoft-Windows-Sysmon/Operational\" and EventID == 26\n| project TimeGenerated, Computer, EventID, RenderedDescription\n| order by TimeGenerated desc",
+      "data_source": "Microsoft Sentinel Event table",
+      "assumptions": [
+        "The Sysmon Operational channel is collected into Event.",
+        "Map raw XML fields to the event-specific fields described on this page."
+      ],
+      "source_url": "https://learn.microsoft.com/en-us/azure/azure-monitor/reference/tables/event"
+    },
+    {
+      "language": "spl",
+      "title": "Retrieve Sysmon Event ID 26",
+      "query": "index=sysmon source=\"WinEventLog:Microsoft-Windows-Sysmon/Operational\" EventCode=26\n| table _time, host, EventCode, Message",
+      "data_source": "Splunk Sysmon event data",
+      "assumptions": [
+        "Index, source, and parsed field names vary by deployment.",
+        "Apply the documented field conditions after validating local field extraction."
+      ]
+    },
+    {
+      "language": "xql",
+      "title": "Retrieve Sysmon Event ID 26",
+      "query": "dataset = microsoft_windows_raw\n| filter edr_event_id = 26",
+      "data_source": "Cortex XDR microsoft_windows_raw",
+      "assumptions": [
+        "Confirm Provider is Microsoft-Windows-Sysmon because event IDs are not globally unique.",
+        "Inspect raw provider fields because parsed names vary by collection path."
+      ],
+      "source_url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets"
+    },
+    {
+      "language": "sigma",
+      "title": "Sysmon Event ID 26",
+      "query": "title: Sysmon Event ID 26\nstatus: experimental\nlogsource:\n    product: windows\n    service: sysmon\ndetection:\n    selection:\n        EventID: 26\n    condition: selection\nfalsepositives:\n    - Legitimate administrative or system activity\nlevel: informational",
+      "data_source": "Sigma Windows Sysmon log source",
+      "assumptions": [
+        "This rule retrieves the event and is not a standalone malicious-behavior detection.",
+        "Add the event-specific conditions and correlations documented on this page."
+      ],
+      "source_url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md"
+    }
+  ],
+  "value_references": [
+    {
+      "field": "EventID",
+      "value": "26",
+      "meaning": "A file deletion was detected without archiving the deleted file.",
+      "security_relevance": "Interpret EventID with the other documented fields and correlated events; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+    },
+    {
+      "field": "TargetFilename",
+      "value": "file path",
+      "meaning": "The deleted file path used for triage and correlation.",
+      "security_relevance": "Interpret TargetFilename with the other documented fields and correlated events; this value alone is not proof of compromise.",
+      "source_url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon"
+    }
+  ],
+  "faqs": [
+    {
+      "question": "What does Sysmon Event ID 26 mean?",
+      "answer": "A file was deleted and logged without preserving an archive copy."
+    },
+    {
+      "question": "Does Event ID 26 always indicate malicious activity?",
+      "answer": "No. Applications and users delete files continuously."
+    },
+    {
+      "question": "How should Event ID 26 be investigated?",
+      "answer": "Review TargetFilename, Image, hashes when available, and ProcessGuid-linked creation and execution activity."
+    }
+  ],
+  "sources": [
+    {
+      "title": "26: FileDeleteDetected",
+      "url": "https://learn.microsoft.com/en-us/sysinternals/downloads/sysmon",
+      "publisher": "Microsoft Sysinternals",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Indicator Removal: File Deletion (T1070.004)",
+      "url": "https://attack.mitre.org/techniques/T1070/004/",
+      "publisher": "MITRE ATT&CK",
+      "source_type": "attack"
+    },
+    {
+      "title": "XDR Collector datasets",
+      "url": "https://docs-cortex.paloaltonetworks.com/r/Cortex-XDR/Cortex-XDR-5.x-Documentation/XDR-Collector-datasets",
+      "publisher": "Palo Alto Networks",
+      "source_type": "vendor"
+    },
+    {
+      "title": "Sigma Rules Specification",
+      "url": "https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-rules-specification.md",
+      "publisher": "SigmaHQ",
+      "source_type": "detection-rule"
+    }
+  ]
 }
