@@ -384,6 +384,25 @@ test("requires migrated GEO records to satisfy enriched content validation", () 
   assert.deepEqual(errors, [], `GEO migration validation errors:\n${errors.join("\n")}`);
 });
 
+test("preserves source-verified distinctions in search-priority guides", () => {
+  const events = ["4625", "4688", "4104", "4769"].map((id) => getEventByRoute("windows-events", id));
+  assert.ok(events.every(Boolean));
+  const [logon, process, script, ticket] = events as EventPageRecord[];
+
+  for (const code of ["0xC000006D", "0xC000006A", "0xC0000064", "0xC0000234", "0xC0000072"]) {
+    assert.ok(logon.value_references?.some((reference) => reference.value === code), `4625 missing ${code}`);
+  }
+  for (const token of ["%%1936", "%%1937", "%%1938"]) {
+    assert.ok(process.value_references?.some((reference) => reference.value === token), `4688 missing ${token}`);
+  }
+  assert.ok(script.key_fields.some((field) => field.field === "MessageNumber / MessageTotal"));
+  assert.equal(script.key_fields.some((field) => field.field.includes("HostApplication")), false);
+  assert.ok(script.faqs?.some((faq) => faq.answer.includes("EnableScriptBlockLogging")));
+  assert.ok(ticket.value_references?.some((reference) => reference.field === "TicketOptions" && reference.value === "0x40810000"));
+  assert.equal(ticket.value_references?.some((reference) => reference.field === "FailureCode"), false);
+  assert.match(ticket.sample_log, /Service Name: [^\n/:]+\n/);
+});
+
 test("returns completed events by public route", () => {
   const windowsEvent = getEventByRoute("windows-events", "4625");
   const sysmonEvent = getEventByRoute("sysmon-events", "1");

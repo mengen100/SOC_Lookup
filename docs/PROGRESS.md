@@ -197,6 +197,10 @@ The content status below tracks the original event-guide completion. GEO enrichm
 - [done] windows_security:5828 - Netlogon denied a vulnerable secure channel connection (trust)
 - [done] windows_security:6145 - Errors occurred while processing security policy in GPOs
 
+## Search-driven maintenance: 2026-10-01
+
+Windows Security 4625, 4688, 4104, and 4769 were re-reviewed against Microsoft documentation and ATT&CK for query-specific guidance. Corrected PowerShell payload and Kerberos service-account distinctions; see `seo-audit-2026-10-01.md` for source evidence. These are revisions to done records, not new event IDs. Total remains 108 done.
+
 ## sysmon
 - [done] sysmon:1 - Process creation
 - [done] sysmon:2 - A process changed a file creation time

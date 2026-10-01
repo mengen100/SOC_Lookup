@@ -4,8 +4,8 @@
   "category": "Kerberos",
   "name": "A Kerberos service ticket was requested",
   "priority": "P1",
-  "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
-  "last_reviewed": "2026-07-21",
+  "applicable_version": "Active Directory domain controllers running Windows Server 2008 or later; additional encryption fields depend on installed updates",
+  "last_reviewed": "2026-10-01",
   "technical_metadata": {
     "provider": "Microsoft-Windows-Security-Auditing",
     "channel": "Security",
@@ -21,7 +21,7 @@
     },
     {
       "field": "Service Name",
-      "explanation": "The SPN for the requested service. Requests for many distinct or high-value service accounts can reveal enumeration or ticket collection."
+      "explanation": "ServiceName identifies the account or computer owning the requested service, not the full SPN. Distinct counts measure service accounts, not every SPN registered to them."
     },
     {
       "field": "Client Address",
@@ -97,11 +97,18 @@
   ],
   "value_references": [
     {
+      "field": "TicketOptions",
+      "value": "0x40810000",
+      "meaning": "Forwardable, Renewable, and Canonicalize flags are set.",
+      "security_relevance": "A common option mask, not a Kerberoasting verdict. Correlate successful RC4 tickets and requester behavior.",
+      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4769"
+    },
+    {
       "field": "TicketEncryptionType",
       "value": "0x17",
       "meaning": "RC4-HMAC was used for the issued service ticket.",
       "security_relevance": "RC4 service tickets are relevant to Kerberoasting triage because their encrypted material can be targeted for offline password cracking; legacy compatibility must be excluded.",
-      "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4769"
+      "source_url": "https://learn.microsoft.com/en-us/windows-server/security/kerberos/detect-remediate-rc4-kerberos"
     },
     {
       "field": "TicketEncryptionType",
@@ -118,7 +125,7 @@
       "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4769"
     },
     {
-      "field": "FailureCode",
+      "field": "Status (Failure Code)",
       "value": "0x20",
       "meaning": "The service ticket has expired.",
       "security_relevance": "Microsoft describes this as a common informational failure with little or no security relevance, so it should not be treated as a high-priority Kerberos attack signal by itself.",
@@ -135,8 +142,12 @@
       "answer": "No. The value means RC4-HMAC was used and is relevant to Kerberoasting exposure, but legacy applications and accounts can legitimately require RC4; validate service-account keys, supported encryption types, request volume, and client behavior."
     },
     {
-      "question": "Which encryption types are expected for modern 4769 events?",
-      "answer": "Microsoft identifies 0x11 as AES128 and 0x12 as AES256 and recommends investigating ticket encryption values outside those AES types on modern Windows environments."
+      "question": "What do 4769 encryption values 0x17 and 0x12 mean?",
+      "answer": "In TicketEncryptionType, 0x17 means RC4-HMAC and 0x12 AES256; 0x11 is AES128. These are algorithm identifiers, not the msDS-SupportedEncryptionTypes bitmask. Compare supported types and available keys before treating RC4 as unexpected. AES tickets can still be targeted for Kerberoasting."
+    },
+    {
+      "question": "Is Event ID 4769 Service Name the complete SPN?",
+      "answer": "No. ServiceName names the service account or computer. One account can own multiple SPNs, so a distinct ServiceName count cannot enumerate every requested SPN. Use directory SPN registration and additional telemetry for service attribution."
     }
   ],
   "sources": [
@@ -171,9 +182,9 @@
       "source_type": "detection-rule"
     }
   ],
-  "detection_notes": "T1558.003 Kerberoasting is indicated when Ticket Encryption Type is 0x17 (RC4-HMAC) for a service SPN in an AES-only domain. RC4 service tickets are cheaper to crack offline than AES tickets. Treat broad SPN collection as a hunting pattern rather than a Microsoft threshold: tune locally, for example Client Address requesting more than 20 distinct Service Name values in one hour, then validate the requester against known application, backup, and monitoring accounts.",
+  "detection_notes": "For T1558.003 Kerberoasting, hunt successful requests with Status 0x0 and TicketEncryptionType 0x17 (RC4-HMAC): issued service-ticket material can be attacked offline. RC4 is not proof of theft; compare ServiceSupportedEncryptionTypes and ServiceAvailableKeys when present, client-advertised types, and documented legacy dependencies. AES 0x11/0x12 is not immunity from Kerberoasting. More than 20 distinct ServiceName accounts per client in one hour is a locally tuned example, not a Microsoft threshold or a count of distinct SPNs. Validate the requester against application and backup baselines and correlate endpoint process activity. TicketOptions 0x40810000 is common normal behavior and must not trigger a verdict alone.",
   "kql_snippet": "SecurityEvent\n| where EventID == 4769\n| summarize ServiceCount = dcount(ServiceName), Requests = count() by IpAddress, TargetAccount, bin(TimeGenerated, 1h)\n| where ServiceCount > 20\n| order by ServiceCount desc",
   "spl_snippet": "index=wineventlog EventCode=4769\n| bucket _time span=1h\n| stats dc(Service_Name) as service_count count by _time, Client_Address, Account_Name\n| where service_count > 20",
-  "sample_log": "Account Name: jsmith@CORP.EXAMPLE\nService Name: MSSQLSvc/sql01.corp.example:1433\nClient Address: 10.x.x.x\nTicket Encryption Type: 0x12\nFailure Code: 0x0",
-  "source_url": "https://learn.microsoft.com/en-us/windows/security/threat-protection/auditing/event-4769"
+  "sample_log": "Account Name: jsmith@CORP.EXAMPLE\nService Name: svc_sql\nClient Address: 10.x.x.x\nTicket Options: 0x40810000\nTicket Encryption Type: 0x12\nFailure Code (XML Status): 0x0",
+  "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4769"
 }
