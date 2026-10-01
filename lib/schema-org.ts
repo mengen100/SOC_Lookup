@@ -55,7 +55,6 @@ export function buildEventStructuredData(event: EventPageRecord) {
       "@id": `${url}#article`,
       headline: eventPageTitle(event),
       description: eventDescription(event),
-      datePublished: event.last_reviewed,
       dateModified: event.last_reviewed,
       author: {
         "@type": "Organization",

@@ -103,6 +103,16 @@ test("builds stable TechArticle and visible-data FAQPage nodes", () => {
   );
 });
 
+test("does not turn an event review date into a publication date", () => {
+  const event = getEventByRoute("windows-events", "4625");
+  assert.ok(event);
+  const revised = { ...event, last_reviewed: "2026-10-01" };
+  const article = buildEventStructuredData(revised)["@graph"].find((item) => item["@type"] === "TechArticle");
+  assert.ok(article);
+  assert.equal(article.dateModified, revised.last_reviewed);
+  assert.equal("datePublished" in article, false);
+});
+
 test("includes every indexable route without fake static modification dates", () => {
   const entries = sitemap();
   assert.equal(entries.length, 118);
