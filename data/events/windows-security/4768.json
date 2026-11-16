@@ -5,13 +5,13 @@
   "name": "A Kerberos authentication ticket (TGT) was requested",
   "priority": "P1",
   "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
-  "last_reviewed": "2026-07-21",
+  "last_reviewed": "2026-11-16",
   "definition": "Event ID 4768 records a Kerberos ticket-granting ticket (TGT) request handled by a domain controller. Its Pre-Authentication Type is the primary log-based signal for AS-REP Roasting.",
-  "trigger_scenarios": "A domain controller logs the event on every TGT request, whether it succeeds, fails pre-authentication, or is rejected for policy reasons such as an unknown principal or disabled account.",
+  "trigger_scenarios": "Look for 4768 in the domain controller Security log for a Kerberos TGT outcome. Status 0x0 means a TGT was issued. For failures 0x18 (invalid preauthentication) and 0x10 (unsupported preauthentication data type), look for 4771 instead. A TGT is not proof that the account logged on to a destination host; check that host for 4624.",
   "key_fields": [
     {
       "field": "Pre-Authentication Type",
-      "explanation": "A value of 0 means the KDC issued a TGT without encrypted-timestamp pre-authentication. This occurs only when the account has the 'Do not require Kerberos preauthentication' flag and is the exact condition AS-REP Roasting uses."
+      "explanation": "PreAuthType 0 means no preauthentication was used. Pair it with Status 0x0 before treating it as ticket issuance without preauthentication, then check the account's preauthentication setting. A successful ticket request alone does not establish malicious intent."
     },
     {
       "field": "Ticket Encryption Type",
@@ -22,8 +22,8 @@
       "explanation": "The principal requesting the TGT. Compare privileged, service, and dormant accounts with the reviewed preauthentication-exception list."
     },
     {
-      "field": "Failure Code",
-      "explanation": "0x6 (KDC_ERR_C_PRINCIPAL_UNKNOWN) against many accounts from one source indicates username enumeration or a password-spray precursor."
+      "field": "Status (Result Code)",
+      "explanation": "Status is the XML field for Result Code. 0x6 means the client principal was not found. Repeated 0x6 across names may warrant enumeration triage; this is not evidence that any password was tried against a valid account."
     }
   ],
   "false_positives": [
@@ -45,7 +45,7 @@
       "source_url": "https://attack.mitre.org/techniques/T1558/004/"
     }
   ],
-  "detection_notes": "PreAuthType 0 for an account outside the reviewed exception list makes T1558.004 AS-REP Roasting possible because a requester can obtain material for offline password cracking without proving knowledge of the password. In an AES-only domain, TicketEncryptionType 0x17 RC4 is an additional compatibility deviation. A burst of ResultCode 0x6 across distinct account names from one client supports account-enumeration triage, not a password-spraying verdict, because the named principal was not found.",
+  "detection_notes": "For T1558.004 AS-REP Roasting, start with Status 0x0 and PreAuthType 0. The successful reply provides material that can be attacked offline when preauthentication is not required. Compare the account's preauthentication setting, approved exceptions, and the normalized client address. TicketEncryptionType 0x17 records RC4 use; it is not required to flag a successful request without preauthentication. Keep Status 0x6 requests for nonexistent principals separate from this hunt and from wrong-password 4771 events.",
   "kql_snippet": "SecurityEvent\n| where EventID == 4768\n| where PreAuthType == \"0\"\n| project TimeGenerated, Computer, TargetAccount, IpAddress, TicketEncryptionType, PreAuthType",
   "spl_snippet": "index=wineventlog EventCode=4768 Pre_Authentication_Type=0\n| table _time, host, Account_Name, Client_Address, Ticket_Encryption_Type",
   "sample_log": "Account Name: svc-legacy@CORP.EXAMPLE\nClient Address: 10.x.x.x\nTicket Encryption Type: 0x17\nPre-Authentication Type: 0\nFailure Code: 0x0",
@@ -117,7 +117,7 @@
       "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4768"
     },
     {
-      "field": "ResultCode",
+      "field": "Status (Result Code)",
       "value": "0x6",
       "meaning": "The requested client account was not found in the Kerberos database.",
       "security_relevance": "A burst across many names from one client can support account-enumeration triage, but it is not by itself evidence of password spraying.",
@@ -127,7 +127,7 @@
   "faqs": [
     {
       "question": "What does Windows Event ID 4768 mean?",
-      "answer": "Event ID 4768 records a Kerberos authentication service request for a ticket-granting ticket and can represent either a successful or failed request."
+      "answer": "4768 records a Kerberos ticket-granting ticket outcome on a domain controller. Status 0x0 means issuance, not a successful sign-in on an endpoint. For 0x10 or 0x18 preauthentication failures, check 4771 instead."
     },
     {
       "question": "Which 4768 value is associated with AS-REP roasting?",

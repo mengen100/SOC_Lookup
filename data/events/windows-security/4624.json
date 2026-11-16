@@ -5,7 +5,7 @@
   "name": "An account was successfully logged on",
   "priority": "P1",
   "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
-  "last_reviewed": "2026-07-21",
+  "last_reviewed": "2026-11-16",
   "definition": "Windows Security Event ID 4624 records a successful logon and provides the primary host-level record for determining who accessed a system, how they authenticated, and from where.",
   "trigger_scenarios": "Windows generates this event when a logon session is created successfully. It covers local console access, network access, RDP, scheduled tasks, services, and other authentication mechanisms.",
   "key_fields": [
@@ -19,7 +19,7 @@
     },
     {
       "field": "Network Information",
-      "explanation": "Workstation Name, Source Network Address, and Source Port identify the client when the logon is remote. These values are useful for lateral-movement timelines."
+      "explanation": "WorkstationName, IpAddress, and IpPort can identify the client, but population depends on what the authenticating service supplies. A missing IP address does not prove the logon was local."
     },
     {
       "field": "Authentication Package / Logon Process",
@@ -35,7 +35,8 @@
     "4625",
     "4634",
     "4648",
-    "4672"
+    "4672",
+    "5140"
   ],
   "attck_mapping": [
     {
@@ -46,7 +47,7 @@
       "source_url": "https://attack.mitre.org/techniques/T1078/"
     }
   ],
-  "detection_notes": "T1078 Valid Accounts triage should separate Logon Type 10 RemoteInteractive sessions from Type 3 network logons and compare the source with approved jump hosts and service paths. A Type 10 success immediately after 4625 failures, or a Type 3 session followed by ADMIN$ access in 5140, is more significant than an isolated successful logon; use Logon ID to bind the session to follow-on 4688 activity.",
+  "detection_notes": "For T1078 Valid Accounts, distinguish Logon Type 10 RemoteInteractive from Type 3 network access. Compare Type 10 source and account with approved jump-host use; for preceding 4625 failures, correlate account, destination, available source, and time rather than expecting a shared session ID. For a Type 3 session followed by ADMIN$ access, match 4624 TargetLogonId with 5140 SubjectLogonId on the same destination computer. Treat a successful logon or share access as a pivot, not proof of compromise.",
   "kql_snippet": "SecurityEvent\n| where EventID == 4624 and LogonType in (3, 10)\n| project TimeGenerated, Computer, Account, LogonType, IpAddress, WorkstationName, AuthenticationPackageName\n| order by TimeGenerated desc",
   "spl_snippet": "index=wineventlog EventCode=4624 Logon_Type IN (3, 10)\n| table _time, host, Account_Name, Logon_Type, Source_Network_Address, Workstation_Name",
   "sample_log": "Subject: Security ID: S-1-0-0\nNew Logon: Security ID: CORP\\jsmith\nLogon Type: 10\nWorkstation Name: WS-014\nSource Network Address: 10.x.x.x\nAuthentication Package: Kerberos",
@@ -129,7 +130,7 @@
     },
     {
       "question": "Does Event ID 4624 prove valid-account abuse?",
-      "answer": "No. It records successful authentication, most of which is legitimate; abuse requires correlation with account expectations, source, logon type, preceding failures, and follow-on activity."
+      "answer": "No. Check the account, source, logon type, and follow-on activity. For SMB investigations, join 4624 TargetLogonId to 5140 SubjectLogonId on the share server; do not join on the ID alone across hosts."
     }
   ],
   "sources": [

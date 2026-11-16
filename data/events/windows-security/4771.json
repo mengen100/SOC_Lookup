@@ -5,13 +5,13 @@
   "name": "Kerberos pre-authentication failed",
   "priority": "P2",
   "applicable_version": "Windows Server 2008 R2 and later; Windows 7 and later",
-  "last_reviewed": "2026-07-21",
+  "last_reviewed": "2026-11-16",
   "definition": "Event ID 4771 records a Kerberos pre-authentication failure on a domain controller.",
-  "trigger_scenarios": "The KDC generates the event when a client cannot satisfy Kerberos pre-authentication.",
+  "trigger_scenarios": "Look for 4771 in the domain controller Security log when Kerberos preauthentication fails. Windows does not generate this event for accounts configured not to require Kerberos preauthentication. Check 4768 for later TGT issuance and the destination host for 4624 or 4625; those host events describe logon outcomes, not KDC preauthentication.",
   "key_fields": [
     {
-      "field": "Failure Code",
-      "explanation": "0x18 is KDC_ERR_PREAUTH_FAILED, normally a bad password; 0x12 is KDC_ERR_CLIENT_REVOKED for disabled or locked accounts."
+      "field": "Status (Failure Code)",
+      "explanation": "The XML field is Status. 0x18 is invalid preauthentication, commonly a wrong password; 0x12 indicates a revoked client, such as a disabled, expired, or locked account. Distinguish the account state before classifying the failure."
     },
     {
       "field": "Pre-Authentication Type",
@@ -47,7 +47,7 @@
       "source_url": "https://attack.mitre.org/techniques/T1110/003/"
     }
   ],
-  "detection_notes": "T1110.001 Password Guessing appears as repeated FailureCode 0x18 against one TargetUserName, while T1110.003 Password Spraying appears as 0x18 across many accounts from one IpAddress. Exclude FailureCode 0x12 revoked-account cases, then correlate any later 4768 success and 4624 logon from the same client.",
+  "detection_notes": "With Status 0x18, compare repeated failures against one TargetUserName (T1110.001 Password Guessing candidate) with failures across many accounts from one IpAddress (T1110.003 Password Spraying candidate). Regular retries from a service after credential rotation can mimic guessing; shared source addresses can combine unrelated clients. Keep 0x12 revoked-account cases separate and check for 4740. For a subsequent success, correlate 4768 Status 0x0 and any destination-host 4624 by account, available client address, and time; a TGT alone does not establish endpoint access.",
   "kql_snippet": "SecurityEvent\n| where EventID == 4771 and Status == \"0x18\"\n| summarize Accounts=dcount(TargetAccount), Attempts=count() by IpAddress, bin(TimeGenerated, 15m)\n| where Accounts > 10",
   "spl_snippet": "index=wineventlog EventCode=4771 Failure_Code=0x18 | stats dc(Account_Name) as accounts count by Client_Address",
   "sample_log": "Account Name: jsmith@CORP.EXAMPLE\nClient Address: 10.x.x.x\nFailure Code: 0x18\nPre-Authentication Type: 2",
@@ -105,14 +105,14 @@
   ],
   "value_references": [
     {
-      "field": "FailureCode",
+      "field": "Status (Failure Code)",
       "value": "0x18",
       "meaning": "Kerberos preauthentication information was invalid, commonly because the password-derived key was wrong.",
       "security_relevance": "Repeated 0x18 failures against one account support password-guessing triage; the same client across many accounts supports password-spray triage.",
       "source_url": "https://learn.microsoft.com/en-us/previous-versions/windows/it-pro/windows-10/security/threat-protection/auditing/event-4771"
     },
     {
-      "field": "FailureCode",
+      "field": "Status (Failure Code)",
       "value": "0x12",
       "meaning": "The client's credentials were revoked, such as a disabled, expired, or locked account.",
       "security_relevance": "Separate revoked-account noise from bad-password activity before calculating brute-force breadth.",
@@ -126,7 +126,7 @@
     },
     {
       "question": "Which 4771 code is commonly associated with a bad password?",
-      "answer": "FailureCode 0x18 means the preauthentication information was invalid and is commonly generated when the password-derived key is wrong."
+      "answer": "Status 0x18 means the preauthentication information was invalid and commonly indicates a wrong password. It is a Kerberos error code, not a 4625 NTSTATUS value."
     },
     {
       "question": "How do password guessing and spraying differ in 4771?",
