@@ -13,3 +13,16 @@ The November Search Console audit found 25 crawled-but-not-indexed URLs. This pi
 ## Measurement
 
 Start the measurement window after confirming production deployment and record the next crawl time per pilot URL. Compare indexing and complete 28-day windows for clicks, impressions, and matched queries per page. Use 4768 as a nearby reference page from the same previous content refresh that does not receive the worked-example treatment; this is an observational comparison, not a controlled experiment. Check the Search Console generative AI performance report separately if the property has data. Record a missing report or insufficient volume rather than treating it as a zero or extrapolating from a handful of impressions.
+
+## Production baseline: 16 November 2026
+
+Production returned HTTP 200 and the investigation section in HTML for all three pilot URLs. The 4768 reference page returned HTTP 200 without the section. This is the first confirmed live observation, not the exact deployment timestamp.
+
+| Event | Group | Last crawl shown in URL Inspection | Indexing status |
+| --- | --- | --- | --- |
+| 4624 | Pilot | 26 September 2026 | Crawled, not indexed |
+| 4771 | Pilot | 26 September 2026 | Crawled, not indexed |
+| 5140 | Pilot | 23 August 2026 | Crawled, not indexed |
+| 4768 | Reference | 23 August 2026 | Crawled, not indexed |
+
+All observations predate the rollout. Do not attribute the current coverage to the examples. Check each URL for recrawl before interpreting the post-change performance; use finalized daily data and exclude the rollout day from the comparison. No indexing request was made during this check.
