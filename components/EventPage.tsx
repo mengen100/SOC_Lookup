@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { Breadcrumbs } from "./Breadcrumbs";
 import { CodeBlock } from "./CodeBlock";
 import { DetectionQueries } from "./DetectionQueries";
@@ -7,7 +9,8 @@ import { EventSources } from "./EventSources";
 import { EventValueTable } from "./EventValueTable";
 import { RelatedEvents } from "./RelatedEvents";
 import { buildEventStructuredData, eventPageTitle } from "../lib/schema-org";
-import type { EventPageRecord } from "../lib/events";
+import { getEventHref, type EventPageRecord } from "../lib/events";
+import { getInvestigationExample } from "../lib/investigation-examples";
 
 interface EventPageProps {
   event: EventPageRecord;
@@ -15,6 +18,7 @@ interface EventPageProps {
 
 export function EventPage({ event }: EventPageProps) {
   const structuredData = buildEventStructuredData(event);
+  const investigation = getInvestigationExample(event.source, event.id);
 
   return (
     <article className="mx-auto max-w-5xl px-4 py-10">
@@ -45,6 +49,20 @@ export function EventPage({ event }: EventPageProps) {
       </section>
 
       <div className="grid min-w-0 gap-8 py-8">
+        {investigation ? (
+          <section id="investigation-example" aria-labelledby="investigation-heading" className="min-w-0 border-b border-line pb-6">
+            <h2 id="investigation-heading" className="text-xl font-semibold text-ink">{investigation.title}</h2>
+            <p className="mt-3 break-words leading-7 text-steel">{investigation.observation}</p>
+            <ol className="mt-3 list-decimal space-y-2 pl-5 text-steel">
+              {investigation.steps.map(({ text, link }) => (
+                <li key={text} className="break-words leading-7">
+                  {text}{link ? (<> <Link className="font-medium text-accent underline underline-offset-2" href={getEventHref(event.source, link.id)}>{link.label}</Link>.</>) : null}
+                </li>
+              ))}
+            </ol>
+            <p className="mt-3 break-words leading-7 text-steel"><strong className="text-ink">Evidence limit:</strong> {investigation.limit}</p>
+          </section>
+        ) : null}
         {event.technical_metadata ? (
           <Section title="Technical Metadata">
             <EventMetadataTable event={event} />

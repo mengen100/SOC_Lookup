@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { validateEnrichedEvent } from "../lib/event-content-validation";
+import { getInvestigationExample } from "../lib/investigation-examples";
 import {
   type EventPageRecord,
   getCompleteEvents,
@@ -401,6 +402,22 @@ test("preserves source-verified distinctions in search-priority guides", () => {
   assert.ok(ticket.value_references?.some((reference) => reference.field === "TicketOptions" && reference.value === "0x40810000"));
   assert.equal(ticket.value_references?.some((reference) => reference.field === "FailureCode"), false);
   assert.match(ticket.sample_log, /Service Name: [^\n/:]+\n/);
+});
+
+test("investigation examples are scoped to Windows pilot events and link to completed guides", () => {
+  for (const id of ["4624", "4771", "5140"]) {
+    const example = getInvestigationExample("windows_security", id);
+    assert.ok(example, `Missing investigation example for ${id}`);
+    assert.equal(getInvestigationExample("sysmon", id), undefined);
+    assert.ok(example.steps.length >= 2);
+    assert.ok(example.steps.some((step) => step.link));
+    for (const step of example.steps) {
+      if (!step.link) continue;
+      assert.notEqual(step.link.id, id);
+      assert.ok(getEventByRoute("windows-events", step.link.id), `Missing linked event ${step.link.id}`);
+    }
+  }
+  assert.equal(getInvestigationExample("windows_security", "1102"), undefined);
 });
 
 test("returns completed events by public route", () => {
